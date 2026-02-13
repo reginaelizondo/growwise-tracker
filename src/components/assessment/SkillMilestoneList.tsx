@@ -94,10 +94,10 @@ export const SkillMilestoneList = ({
             {areaName} Area
           </p>
 
-          {/* Skill Name with icon */}
-          <div className="flex items-center justify-center gap-2.5">
+          {/* Skill Name with icon - centered */}
+          <div className="flex flex-col items-center gap-1.5">
             <img src={areaIcon} alt={areaName} className="w-8 h-8 object-contain" />
-            <h1 className="text-lg font-bold" style={{ color: areaColor }}>
+            <h1 className="text-lg font-bold text-center" style={{ color: areaColor }}>
               {skillName}
             </h1>
           </div>
