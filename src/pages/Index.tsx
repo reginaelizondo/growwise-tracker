@@ -88,7 +88,7 @@ const Index = () => {
             <img
               src={heroBabyPhoto}
               alt="Happy baby smiling"
-              className="w-[calc(100%+2rem)] max-w-xl h-80 md:h-96 rounded-3xl object-cover shadow-lg"
+              className="w-[calc(100%+2rem)] max-w-sm h-48 md:h-64 rounded-3xl object-cover shadow-lg"
             />
           </div>
 
