@@ -70,81 +70,82 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-warm">
-      {/* Hero Section */}
-      <section className="container mx-auto px-4 pt-12 pb-6 md:pt-20 md:pb-10">
-        <div className="max-w-lg mx-auto text-center animate-fade-in">
-          {/* Logo */}
-          <div className="flex justify-center mb-8">
-            <img src={kineduLogo} alt="Kinedu" className="h-10 md:h-12" />
+      {/* Logo */}
+      <div className="flex justify-center pt-8 pb-4 md:pt-12 md:pb-6">
+        <img src={kineduLogo} alt="Kinedu" className="h-10 md:h-12" />
+      </div>
+
+      {/* Hero Section — side by side on desktop, stacked on mobile */}
+      <section className="container mx-auto px-4 pb-6 md:pb-10">
+        <div className="max-w-3xl mx-auto animate-fade-in">
+          <div className="flex flex-col md:flex-row items-center gap-6 md:gap-10">
+            {/* Left: Copy + CTA */}
+            <div className="flex-1 text-center md:text-left">
+              <h1 className="text-2xl md:text-4xl font-bold text-primary mb-3 leading-tight">
+                Feel unsure about your baby's development?
+              </h1>
+
+              <p className="text-base md:text-lg text-muted-foreground mb-4 max-w-sm mx-auto md:mx-0">
+                Answer a few quick questions. Get your baby's personalized development report instantly.
+              </p>
+
+              <p className="text-sm font-medium text-muted-foreground mb-4">
+                Join <span className="font-bold text-foreground">500,000+</span> parents who've already checked
+              </p>
+
+              {!showAgeSelector && (
+                <Button
+                  variant="success"
+                  size="xl"
+                  className="rounded-full px-10 py-6 shadow-lg hover:shadow-xl transition-all text-lg mb-4"
+                  onClick={handleCtaClick}
+                >
+                  <span className="flex items-center gap-2">
+                    Start Assessment — It's Free
+                    <ArrowRight className="w-5 h-5" strokeWidth={3} />
+                  </span>
+                </Button>
+              )}
+
+              <div className="flex items-center justify-center md:justify-start gap-2 text-xs md:text-sm text-muted-foreground mb-4">
+                <span className="flex items-center gap-1">
+                  <Timer className="w-3.5 h-3.5 text-primary" />
+                  2 min
+                </span>
+                <span>·</span>
+                <span className="flex items-center gap-1">
+                  <Lock className="w-3.5 h-3.5 text-primary" />
+                  No credit card
+                </span>
+                <span>·</span>
+                <span className="flex items-center gap-1">
+                  <GraduationCap className="w-3.5 h-3.5 text-primary" />
+                  Stanford-backed
+                </span>
+              </div>
+
+              <div className="flex justify-center md:justify-start">
+                <AcademicLogosBar />
+              </div>
+            </div>
+
+            {/* Right: Baby photo */}
+            <div className="flex-shrink-0">
+              <img
+                src={heroBabyPhoto}
+                alt="Happy baby smiling"
+                className="w-52 md:w-64 h-64 md:h-80 rounded-3xl object-cover shadow-lg"
+              />
+            </div>
           </div>
 
-          {/* Emotional headline — message match with ad */}
-          <h1 className="text-2xl md:text-3xl font-bold text-primary mb-4">
-            Feel unsure about your baby's development?
-          </h1>
-
-          {/* Hero photo — full-width, natural feel */}
-          <div className="flex justify-center mb-5">
-            <img
-              src={heroBabyPhoto}
-              alt="Happy baby smiling"
-              className="w-40 md:w-48 h-56 md:h-72 rounded-3xl object-cover shadow-lg"
-            />
-          </div>
-
-          {/* Sub-copy */}
-          <p className="text-base md:text-lg text-muted-foreground mb-5 max-w-sm mx-auto">
-            Answer a few quick questions. Get your baby's personalized development report instantly.
-          </p>
-
-          {/* Social proof */}
-          <p className="text-sm font-medium text-muted-foreground mb-4">
-            Join <span className="font-bold text-foreground">500,000+</span> parents who've already checked
-          </p>
-
-          {/* CTA */}
-          {!showAgeSelector && (
-            <Button
-              variant="success"
-              size="xl"
-              className="rounded-full px-10 py-6 shadow-lg hover:shadow-xl transition-all text-lg mb-4"
-              onClick={handleCtaClick}
-            >
-              <span className="flex items-center gap-2">
-                Start Assessment — It's Free
-                <ArrowRight className="w-5 h-5" strokeWidth={3} />
-              </span>
-            </Button>
-          )}
-
-          {/* Trust bar */}
-          <div className="flex items-center justify-center gap-2 text-xs md:text-sm text-muted-foreground mb-4">
-            <span className="flex items-center gap-1">
-              <Timer className="w-3.5 h-3.5 text-primary" />
-              2 min
-            </span>
-            <span>·</span>
-            <span className="flex items-center gap-1">
-              <Lock className="w-3.5 h-3.5 text-primary" />
-              No credit card
-            </span>
-            <span>·</span>
-            <span className="flex items-center gap-1">
-              <GraduationCap className="w-3.5 h-3.5 text-primary" />
-              Stanford-backed
-            </span>
-          </div>
-
-          {/* Compact academic logos — above the fold */}
-          <AcademicLogosBar />
-
-          {/* Inline Age Selector — "Foot in the Door" */}
+          {/* Inline Age Selector — full width below */}
           {showAgeSelector && (
             <div
               ref={ageSelectorRef}
-              className="animate-fade-in bg-card rounded-2xl border border-border p-6 shadow-md mb-6"
+              className="animate-fade-in bg-card rounded-2xl border border-border p-6 shadow-md mt-6 max-w-lg mx-auto"
             >
-              <h2 className="text-lg font-semibold text-foreground mb-4">
+              <h2 className="text-lg font-semibold text-foreground mb-4 text-center">
                 How old is your baby?
               </h2>
               <div className="grid grid-cols-2 gap-2.5">
