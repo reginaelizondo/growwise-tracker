@@ -1,5 +1,7 @@
-import { Check, ChevronLeft, X } from "lucide-react";
+import { useState } from "react";
+import { Check, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import kineduLogo from "@/assets/logo-kinedu-blue.png";
 
@@ -49,120 +51,136 @@ export const SkillMilestoneList = ({
   babyAgeMonths,
   overallProgress,
 }: SkillMilestoneListProps) => {
-  const displayName = babyName || 'baby';
-  const answeredCount = milestones.filter(m => responses[m.milestone_id]).length;
-  const allAnswered = answeredCount === milestones.length;
+  // Count checked (yes) milestones
+  const checkedCount = milestones.filter(m => responses[m.milestone_id] === "yes").length;
+
+  // Toggle: if already yes, set to no (uncheck), otherwise set to yes
+  const handleToggle = (milestoneId: number) => {
+    const currentAnswer = responses[milestoneId];
+    if (currentAnswer === "yes") {
+      onResponse(milestoneId, "no");
+    } else {
+      onResponse(milestoneId, "yes");
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-warm">
-      {/* Sticky header */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border/50 px-4 pt-3 pb-2">
-        {/* Progress bar */}
+    <div className="min-h-screen bg-gradient-warm py-4 px-4">
+      <div className="container max-w-2xl mx-auto">
+        {/* Global Progress Bar */}
         {overallProgress !== undefined && (
-          <div className="max-w-2xl mx-auto mb-2">
-            <div className="flex justify-center mb-1.5">
-              <img src={kineduLogo} alt="Kinedu" className="h-5" />
+          <div className="mb-4">
+            <div className="flex justify-center mb-2">
+              <img src={kineduLogo} alt="Kinedu" className="h-6" />
             </div>
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-[10px] font-medium text-muted-foreground">Your report</span>
-              <span className="text-[10px] font-bold text-primary">{Math.round(overallProgress)}%</span>
+            <div className="flex justify-between items-center mb-1.5">
+              <span className="text-[11px] font-medium text-muted-foreground">Your report</span>
+              <span className="text-[11px] font-bold text-primary">{Math.round(overallProgress)}% complete</span>
             </div>
-            <Progress value={overallProgress} className="h-1.5 bg-muted/40" />
+            <Progress value={overallProgress} className="h-2 bg-muted/40" />
           </div>
         )}
 
-        {/* Skill header - one compact line */}
-        <div className="max-w-2xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2 min-w-0 flex-1">
-            {skillNumber > 1 && onGoToLastSkill && (
-              <button onClick={onGoToLastSkill} className="flex-shrink-0 p-1 -ml-1 text-muted-foreground hover:text-foreground">
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-            )}
-            <img src={areaIcon} alt={areaName} className="w-5 h-5 object-contain flex-shrink-0" />
-            <span className="text-sm font-semibold truncate" style={{ color: areaColor }}>
-              {areaName} · {skillName}
-            </span>
-          </div>
-          <span className="text-[10px] text-muted-foreground flex-shrink-0 ml-2">
-            {skillNumber}/{totalSkills}
-          </span>
-        </div>
-      </div>
+        {/* Combined Area Header Card */}
+        <div 
+          className="rounded-2xl p-4 mb-4"
+          style={{ backgroundColor: `hsl(var(--${areaName === 'Cognitive' ? 'cognitive' : areaName === 'Physical' ? 'physical' : areaName === 'Linguistic' ? 'linguistic' : 'emotional'}) / 0.08)` }}
+        >
+          {/* Baby info + Area - gray text */}
+          <p className="text-center text-xs text-muted-foreground font-medium mb-1">
+            {babyName || 'Baby'} • {babyAgeMonths} {babyAgeMonths === 1 ? 'month' : 'months'}
+          </p>
+          <p className="text-center text-xs text-muted-foreground mb-3">
+            {areaName} Area
+          </p>
 
-      {/* Content */}
-      <div className="container max-w-2xl mx-auto px-4 pt-3 pb-4">
-        {/* Question prompt */}
-        <p className="text-sm font-semibold text-foreground mb-3">
-          Does {displayName} do these?
+          {/* Skill Name with icon - centered */}
+          <div className="flex flex-col items-center gap-1.5">
+            <img src={areaIcon} alt={areaName} className="w-8 h-8 object-contain" />
+            <h1 className="text-lg font-bold text-center" style={{ color: areaColor }}>
+              {skillName}
+            </h1>
+          </div>
+        </div>
+
+        {/* Go to Last Skill */}
+        {skillNumber > 1 && onGoToLastSkill && (
+          <div className="flex justify-center">
+            <Button
+              onClick={onGoToLastSkill}
+              variant="ghost"
+              size="sm"
+              className="mb-2 text-xs text-muted-foreground font-bold"
+            >
+              <ChevronLeft className="w-4 h-4 mr-1" />
+              Previous Skill
+            </Button>
+          </div>
+        )}
+
+        {/* Instruction text */}
+        <p className="text-center text-sm text-muted-foreground mb-3 font-medium">
+          Check all the milestones {babyName || 'baby'} can do
         </p>
 
-        {/* Milestones List - compact */}
-        <div className="space-y-2 mb-5">
+        {/* Milestones List */}
+        <div className="space-y-3 mb-6">
           {milestones.map((milestone) => {
-            const answer = responses[milestone.milestone_id];
-            const isYes = answer === "yes";
-            const isNo = answer === "no";
-            const isAnswered = isYes || isNo;
+            const isChecked = responses[milestone.milestone_id] === "yes";
 
             return (
-              <div 
+              <Card 
                 key={milestone.milestone_id} 
-                className={`rounded-xl border transition-all duration-150 ${
-                  isYes ? 'border-green-300 bg-green-50/50' : 
-                  isNo ? 'border-muted bg-muted/20' : 
-                  'border-border bg-background shadow-sm'
+                className={`p-3 border-2 transition-all duration-200 cursor-pointer hover:shadow-md ${
+                  isChecked ? 'shadow-sm' : 'shadow-soft'
                 }`}
+                style={{
+                  borderColor: isChecked ? areaColor : 'hsl(var(--border))',
+                }}
+                onClick={() => handleToggle(milestone.milestone_id)}
               >
-                <div className="flex items-center gap-2 px-3 py-2.5">
-                  <p className={`flex-1 text-[13px] leading-snug ${
-                    isNo ? 'text-muted-foreground' : 'text-foreground'
-                  }`}>
-                    {milestone.description || milestone.question}
-                  </p>
-                  
-                  {/* Yes / No buttons */}
-                  <div className="flex gap-1.5 flex-shrink-0">
-                    <button
-                      onClick={() => onResponse(milestone.milestone_id, "yes")}
-                      className={`w-8 h-8 rounded-full flex items-center justify-center transition-all text-xs font-bold ${
-                        isYes 
-                          ? 'bg-green-500 text-white shadow-sm' 
-                          : 'bg-muted/50 text-muted-foreground hover:bg-green-100 hover:text-green-600'
-                      }`}
-                    >
-                      <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
-                    </button>
-                    <button
-                      onClick={() => onResponse(milestone.milestone_id, "no")}
-                      className={`w-8 h-8 rounded-full flex items-center justify-center transition-all text-xs font-bold ${
-                        isNo 
-                          ? 'bg-muted text-muted-foreground shadow-sm' 
-                          : 'bg-muted/50 text-muted-foreground hover:bg-red-50 hover:text-red-400'
-                      }`}
-                    >
-                      <X className="w-3.5 h-3.5" strokeWidth={2.5} />
-                    </button>
+                <div className="flex items-center gap-3">
+                  <div className="flex-1">
+                    <p className="text-xs text-foreground leading-relaxed font-medium">
+                      {milestone.description || milestone.question}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      Usually seen between {Math.max(0, milestone.age - 1)}–{milestone.age + 1} months
+                    </p>
                   </div>
+                  
+                  {/* Check button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggle(milestone.milestone_id);
+                    }}
+                    className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
+                      isChecked 
+                        ? 'text-white shadow-md scale-105' 
+                        : 'bg-muted/60 text-muted-foreground hover:bg-muted'
+                    }`}
+                    style={{
+                      backgroundColor: isChecked ? areaColor : undefined
+                    }}
+                  >
+                    <Check className="w-4 h-4" strokeWidth={isChecked ? 3 : 2} />
+                  </button>
                 </div>
-              </div>
+              </Card>
             );
           })}
         </div>
 
+
         {/* Next Skill Button */}
         <Button
           onClick={onNextSkill}
-          className="w-full py-5 text-base font-semibold rounded-xl shadow-lg"
+          className="w-full py-6 text-lg font-semibold rounded-xl shadow-lg"
           style={{ backgroundColor: areaColor }}
         >
-          {isLastSkill ? `See ${areaName} results` : "Next Skill →"}
+          {isLastSkill ? `Go to ${areaName} feedback` : "Next Skill →"}
         </Button>
-
-        {/* Answered counter */}
-        <p className="text-center text-[10px] text-muted-foreground mt-2">
-          {answeredCount} of {milestones.length} answered
-        </p>
       </div>
     </div>
   );
