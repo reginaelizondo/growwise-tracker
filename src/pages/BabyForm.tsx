@@ -173,7 +173,7 @@ const BabyForm = () => {
         {step === 1 && !showMotivation && (
           <div className="animate-fade-in space-y-8">
             <div className="text-center">
-              <h1 className="text-2xl font-bold text-foreground mb-2">What's your baby's name?</h1>
+              <h1 className="text-2xl font-bold text-primary mb-2">What's your baby's name?</h1>
               <p className="text-sm text-muted-foreground">Optional — you can skip this</p>
             </div>
 
