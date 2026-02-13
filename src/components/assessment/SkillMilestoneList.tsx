@@ -82,7 +82,10 @@ export const SkillMilestoneList = ({
         )}
 
         {/* Combined Area Header Card */}
-        <div className="mb-4">
+        <div 
+          className="rounded-2xl p-4 mb-4"
+          style={{ backgroundColor: `hsl(var(--${areaName === 'Cognitive' ? 'cognitive' : areaName === 'Physical' ? 'physical' : areaName === 'Linguistic' ? 'linguistic' : 'emotional'}) / 0.08)` }}
+        >
           {/* Baby info + Area - gray text */}
           <p className="text-center text-xs text-muted-foreground font-medium mb-1">
             {babyName || 'Baby'} • {babyAgeMonths} {babyAgeMonths === 1 ? 'month' : 'months'}
