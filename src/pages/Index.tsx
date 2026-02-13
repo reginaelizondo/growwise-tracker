@@ -4,9 +4,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import kineduLogo from "@/assets/logo-kinedu-blue.png";
-import heroBabyPhoto from "@/assets/hero-baby-photo.jpg";
+import heroBabyPhoto from "@/assets/hero-baby-real.jpg";
 import { getSessionId } from "@/hooks/useSessionId";
 import SocialProofBlock from "@/components/SocialProofBlock";
+import WhyTrustUs from "@/components/WhyTrustUs";
 
 const ageRanges = [
   { label: "0–3 months", value: "0-3" },
@@ -162,6 +163,13 @@ const Index = () => {
       <section className="container mx-auto px-4 pb-8 md:pb-12">
         <div className="max-w-lg mx-auto">
           <SocialProofBlock />
+        </div>
+      </section>
+
+      {/* Why Trust Us */}
+      <section className="container mx-auto px-4 pb-8 md:pb-12">
+        <div className="max-w-lg mx-auto">
+          <WhyTrustUs />
         </div>
       </section>
 
