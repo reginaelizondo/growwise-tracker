@@ -1,49 +1,51 @@
 import { Star } from "lucide-react";
 
-const testimonials = [{
-  quote: "Kinedu made me feel confident I'm doing the right things for my baby.",
-  name: "Maria",
-  context: "mom of a 6-month-old"
-}, {
-  quote: "The daily activities are so easy to follow — my daughter loves them!",
-  name: "Kelly",
-  context: "mom of a 1-year-old"
-}];
+const testimonials = [
+  {
+    quote: "This is an app every first-time mom should have. Beyond tracking my baby's milestones and getting daily activity suggestions, the real gem is the masterclasses. They truly guide you through learning to be a mom.",
+    name: "Victoria",
+  },
+  {
+    quote: "After using it for three months, I realized it's totally worth it. Live classes where experts share knowledge, data tracking from diapers to sleep patterns — it helps me stay organized and on top of everything!",
+    name: "Angela",
+  },
+];
 
 const SocialProofBlock = () => {
   return (
-    <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-2xl p-7 text-center w-full shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
-      {/* Stars + Rating */}
-      <div className="mb-6">
-        <div className="flex justify-center gap-1 mb-4">
-          {[1, 2, 3, 4, 5].map(star => (
-            <Star key={star} className="w-6 h-6 fill-yellow-400 text-yellow-400" />
-          ))}
-        </div>
-        <p className="text-sm text-[#6B7280]">Rated 5 out of 5</p>
-      </div>
+    <div className="bg-card border border-border rounded-2xl p-6 text-center w-full shadow-sm">
+      {/* Header */}
+      <p className="text-lg font-bold text-foreground mb-1">
+        You're in good company.
+      </p>
+      <p className="text-sm text-muted-foreground mb-5">
+        Trusted by <span className="font-bold text-primary">10M+ families</span> worldwide
+      </p>
 
       {/* Testimonials */}
-      <div className="space-y-7 mb-7">
+      <div className="space-y-5 mb-5">
         {testimonials.map((testimonial, index) => (
-          <blockquote key={index} className="max-w-[85%] mx-auto">
-            <p className="text-base text-[#1F2937] leading-[1.7]">
+          <blockquote key={index} className="bg-muted/30 rounded-xl p-4 text-left">
+            <div className="flex gap-0.5 mb-2">
+              {[1, 2, 3, 4, 5].map(star => (
+                <Star key={star} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+              ))}
+            </div>
+            <p className="text-sm text-foreground leading-relaxed">
               "{testimonial.quote}"
             </p>
-            <p className="text-sm text-[#6B7280] mt-3">
-              — {testimonial.name}, {testimonial.context}
+            <p className="text-xs text-muted-foreground mt-2 text-right">
+              — {testimonial.name}
             </p>
           </blockquote>
         ))}
       </div>
 
-      {/* Divider - centered, 80% width */}
-      <div className="w-4/5 mx-auto border-t border-[#E5E7EB] my-5" />
-
-      {/* Trust stat */}
-      <p className="text-sm font-medium text-[#6B7280]">
-        Trusted by 10M+ parents worldwide
-      </p>
+      {/* App Store badges */}
+      <div className="flex items-center justify-center gap-6 text-xs text-muted-foreground">
+        <span className="font-medium">🏆 App of the Day</span>
+        <span className="font-medium">⭐ Editor's Choice</span>
+      </div>
     </div>
   );
 };
