@@ -83,13 +83,21 @@ const Index = () => {
             Feel unsure about your baby's development?
           </h1>
 
-          {/* Hero photo — full-width, natural feel */}
+          {/* Hero photo with decorative elements */}
           <div className="flex justify-center mb-5">
-            <img
-              src={heroBabyPhoto}
-              alt="Happy baby smiling"
-              className="w-40 md:w-48 h-56 md:h-72 rounded-3xl object-cover shadow-lg"
-            />
+            <div className="relative">
+              {/* Decorative elements */}
+              <div className="absolute -top-3 -left-4 w-5 h-5 rounded-full border-2 border-orange-400 opacity-80" />
+              <div className="absolute -top-2 right--3 w-4 h-4 rounded-full bg-purple-500 opacity-70" />
+              <div className="absolute top-1/2 -right-6 w-8 h-3 rounded-sm bg-pink-400 opacity-60" />
+              <div className="absolute -bottom-2 -left-5 w-5 h-5 rounded-full bg-blue-500 opacity-70" />
+              <div className="absolute bottom-4 -right-4 text-green-500 text-xl font-bold opacity-70">+</div>
+              <img
+                src={heroBabyPhoto}
+                alt="Happy baby smiling"
+                className="w-40 md:w-48 h-56 md:h-72 rounded-full object-cover shadow-lg border-4 border-white"
+              />
+            </div>
           </div>
 
           {/* Sub-copy */}
