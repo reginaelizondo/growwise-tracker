@@ -64,136 +64,82 @@ export const SkillMilestoneList = ({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-warm py-6 px-4">
+    <div className="min-h-screen bg-gradient-warm pt-0 px-3 pb-6">
       <div className="container max-w-2xl mx-auto">
-        {/* Global Progress Bar */}
-        {globalProgress !== undefined && <GlobalProgressBar progressPercent={globalProgress} />}
-
-        {/* Baby info - plain text */}
-        {babyName && (
-          <p className="text-center text-sm text-muted-foreground font-semibold mb-2">
-            {babyName} • {babyAgeMonths} {babyAgeMonths === 1 ? 'month' : 'months'}
-          </p>
-        )}
-
-        {/* Go to Last Skill - only show if not on first skill */}
-        {skillNumber > 1 && onGoToLastSkill && (
-          <div className="flex justify-center">
-            <Button
-              onClick={onGoToLastSkill}
-              variant="ghost"
-              size="sm"
-              className="mb-3 text-xs text-muted-foreground font-bold"
-            >
-              <ChevronLeft className="w-4 h-4 mr-1" />
-              Go to Last Skill
-            </Button>
-          </div>
-        )}
-
-        {/* Header */}
-        <div className="flex items-center justify-center gap-3 mb-4">
-          <img 
-            src={areaIcon} 
-            alt={areaName} 
-            className="w-10 h-10 object-contain"
-          />
-          <div className="text-center">
-            <h2 className="text-lg font-semibold" style={{ color: areaColor }}>
-              {areaName}
+        {/* Sticky compact header */}
+        <div className="sticky top-0 z-20 bg-gradient-warm pt-3 pb-2">
+          {globalProgress !== undefined && <GlobalProgressBar progressPercent={globalProgress} />}
+          
+          {/* Compact skill header: icon + skill name + back button */}
+          <div className="flex items-center gap-2 mt-1">
+            {skillNumber > 1 && onGoToLastSkill && (
+              <button
+                onClick={onGoToLastSkill}
+                className="p-1 text-muted-foreground hover:text-foreground"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+            )}
+            <img src={areaIcon} alt={areaName} className="w-6 h-6 object-contain" />
+            <h2 className="text-sm font-bold truncate" style={{ color: areaColor }}>
+              {skillName}
             </h2>
-            <p className="text-sm text-muted-foreground">
-              Skill {skillNumber} of {totalSkills}
-            </p>
           </div>
         </div>
 
-        {/* Skill Name */}
-        <Card className="p-6 mb-4 border-0 shadow-soft">
-          <h1 className="text-2xl md:text-3xl font-bold text-center" style={{ color: areaColor }}>
-            {skillName}
-          </h1>
-          <div 
-            className="w-20 h-1 mx-auto mt-3 rounded-full opacity-40"
-            style={{ backgroundColor: areaColor }}
-          />
-        </Card>
+        {/* Instruction */}
+        <p className="text-xs text-muted-foreground text-center mt-2 mb-3">
+          Check the ones {babyName || 'baby'} can already do ✓
+        </p>
 
-        {/* Progress indicator */}
-        <div className="flex items-center justify-center gap-2 mb-3 px-1">
-          <span className="text-sm font-medium" style={{ color: areaColor }}>
-            {checkedCount} of {milestones.length} checked
-          </span>
-          <div className="flex gap-1">
-            {milestones.map((m) => (
-              <div
-                key={m.milestone_id}
-                className="w-2 h-2 rounded-full transition-all"
-                style={{
-                  backgroundColor: responses[m.milestone_id] === "yes"
-                    ? areaColor 
-                    : 'hsl(var(--muted))',
-                  opacity: responses[m.milestone_id] === "yes" ? 1 : 0.4
-                }}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Milestones List */}
-        <div className="space-y-3 mb-6">
+        {/* Milestones List - compact */}
+        <div className="space-y-1.5 mb-4">
           {milestones.map((milestone) => {
             const isChecked = responses[milestone.milestone_id] === "yes";
 
             return (
-              <Card 
+              <div 
                 key={milestone.milestone_id} 
-                className={`p-3 border-2 transition-all duration-200 cursor-pointer hover:shadow-md ${
-                  isChecked ? 'shadow-sm' : 'shadow-soft'
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg border transition-all duration-150 cursor-pointer ${
+                  isChecked ? 'border-current bg-opacity-5' : 'border-border bg-card'
                 }`}
                 style={{
-                  borderColor: isChecked ? areaColor : 'hsl(var(--border))',
+                  borderColor: isChecked ? areaColor : undefined,
+                  backgroundColor: isChecked ? `${areaColor}08` : undefined,
                 }}
                 onClick={() => handleToggle(milestone.milestone_id)}
               >
-                <div className="flex items-center gap-3">
-                  <div className="flex-1">
-                    <p className="text-xs text-foreground leading-relaxed font-medium">
-                      {milestone.description || milestone.question}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground mt-1">
-                      Usually seen between {Math.max(0, milestone.age - 1)}–{milestone.age + 1} months
-                    </p>
-                  </div>
-                  
-                  {/* Check button */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleToggle(milestone.milestone_id);
-                    }}
-                    className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
-                      isChecked 
-                        ? 'text-white shadow-md scale-105' 
-                        : 'bg-muted/60 text-muted-foreground hover:bg-muted'
-                    }`}
-                    style={{
-                      backgroundColor: isChecked ? areaColor : undefined
-                    }}
-                  >
-                    <Check className="w-4 h-4" strokeWidth={isChecked ? 3 : 2} />
-                  </button>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-foreground leading-snug font-medium">
+                    {milestone.description || milestone.question}
+                  </p>
                 </div>
-              </Card>
+                
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleToggle(milestone.milestone_id);
+                  }}
+                  className={`w-7 h-7 rounded-full flex items-center justify-center transition-all duration-150 flex-shrink-0 ${
+                    isChecked 
+                      ? 'text-white scale-105' 
+                      : 'bg-muted/50 text-muted-foreground'
+                  }`}
+                  style={{
+                    backgroundColor: isChecked ? areaColor : undefined
+                  }}
+                >
+                  <Check className="w-3.5 h-3.5" strokeWidth={isChecked ? 3 : 2} />
+                </button>
+              </div>
             );
           })}
         </div>
 
-
         {/* Next Skill Button */}
         <Button
           onClick={onNextSkill}
-          className="w-full py-6 text-lg font-semibold rounded-xl shadow-lg"
+          className="w-full py-5 text-base font-semibold rounded-xl shadow-lg"
           style={{ backgroundColor: areaColor }}
         >
           {isLastSkill ? `Go to ${areaName} feedback` : "Next Skill →"}
