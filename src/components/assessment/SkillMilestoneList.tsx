@@ -65,75 +65,76 @@ export const SkillMilestoneList = ({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-warm py-6 px-4">
+    <div className="min-h-screen bg-gradient-warm py-4 px-4">
       <div className="container max-w-2xl mx-auto">
         {/* Global Progress Bar */}
         {overallProgress !== undefined && (
-          <div className="mb-6">
-            <div className="flex justify-center mb-3">
-              <img src={kineduLogo} alt="Kinedu" className="h-7" />
+          <div className="mb-4">
+            <div className="flex justify-center mb-2">
+              <img src={kineduLogo} alt="Kinedu" className="h-6" />
             </div>
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-xs font-medium text-muted-foreground">Your report</span>
-              <span className="text-xs font-bold text-primary">{Math.round(overallProgress)}% complete</span>
+            <div className="flex justify-between items-center mb-1.5">
+              <span className="text-[11px] font-medium text-muted-foreground">Your report</span>
+              <span className="text-[11px] font-bold text-primary">{Math.round(overallProgress)}% complete</span>
             </div>
-            <Progress value={overallProgress} className="h-2.5 bg-muted/50" />
+            <Progress value={overallProgress} className="h-2 bg-muted/40" />
           </div>
         )}
-        {/* Baby info - plain text */}
-        {babyName && (
-          <p className="text-center text-sm text-muted-foreground font-semibold mb-2">
-            {babyName} • {babyAgeMonths} {babyAgeMonths === 1 ? 'month' : 'months'}
-          </p>
-        )}
 
-        {/* Go to Last Skill - only show if not on first skill */}
+        {/* Combined Area Header Card */}
+        <div 
+          className="rounded-2xl p-4 mb-4"
+          style={{ backgroundColor: `hsl(var(--${areaName === 'Cognitive' ? 'cognitive' : areaName === 'Physical' ? 'physical' : areaName === 'Linguistic' ? 'linguistic' : 'emotional'}) / 0.08)` }}
+        >
+          {/* Baby info */}
+          {babyName && (
+            <p className="text-center text-xs text-muted-foreground font-medium mb-2">
+              {babyName} • {babyAgeMonths} {babyAgeMonths === 1 ? 'month' : 'months'}
+            </p>
+          )}
+
+          {/* Area + Skill info */}
+          <div className="flex items-center justify-center gap-2.5 mb-3">
+            <img src={areaIcon} alt={areaName} className="w-9 h-9 object-contain" />
+            <div>
+              <h2 className="text-base font-bold leading-tight" style={{ color: areaColor }}>
+                {areaName}
+              </h2>
+              <p className="text-[11px] text-muted-foreground">
+                Skill {skillNumber} of {totalSkills}
+              </p>
+            </div>
+          </div>
+
+          {/* Skill Name */}
+          <h1 className="text-xl font-bold text-center mb-1" style={{ color: areaColor }}>
+            {skillName}
+          </h1>
+          <div 
+            className="w-14 h-0.5 mx-auto rounded-full opacity-30"
+            style={{ backgroundColor: areaColor }}
+          />
+        </div>
+
+        {/* Go to Last Skill */}
         {skillNumber > 1 && onGoToLastSkill && (
           <div className="flex justify-center">
             <Button
               onClick={onGoToLastSkill}
               variant="ghost"
               size="sm"
-              className="mb-3 text-xs text-muted-foreground font-bold"
+              className="mb-2 text-xs text-muted-foreground font-bold"
             >
               <ChevronLeft className="w-4 h-4 mr-1" />
-              Go to Last Skill
+              Previous Skill
             </Button>
           </div>
         )}
 
-        {/* Header */}
-        <div className="flex items-center justify-center gap-3 mb-4">
-          <img 
-            src={areaIcon} 
-            alt={areaName} 
-            className="w-10 h-10 object-contain"
-          />
-          <div className="text-center">
-            <h2 className="text-lg font-semibold" style={{ color: areaColor }}>
-              {areaName}
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Skill {skillNumber} of {totalSkills}
-            </p>
-          </div>
-        </div>
-
-        {/* Skill Name */}
-        <Card className="p-6 mb-4 border-0 shadow-soft">
-          <h1 className="text-2xl md:text-3xl font-bold text-center" style={{ color: areaColor }}>
-            {skillName}
-          </h1>
-          <div 
-            className="w-20 h-1 mx-auto mt-3 rounded-full opacity-40"
-            style={{ backgroundColor: areaColor }}
-          />
-        </Card>
-
-        {/* Progress indicator */}
+        {/* Progress dots */}
         <div className="flex items-center justify-center gap-2 mb-3 px-1">
-          <span className="text-sm font-medium" style={{ color: areaColor }}>
-            {checkedCount} of {milestones.length} checked
+          <span className="text-xs font-semibold" style={{ color: areaColor }}>
+            {checkedCount}/{milestones.length}
           </span>
           <div className="flex gap-1">
             {milestones.map((m) => (
@@ -144,7 +145,7 @@ export const SkillMilestoneList = ({
                   backgroundColor: responses[m.milestone_id] === "yes"
                     ? areaColor 
                     : 'hsl(var(--muted))',
-                  opacity: responses[m.milestone_id] === "yes" ? 1 : 0.4
+                  opacity: responses[m.milestone_id] === "yes" ? 1 : 0.35
                 }}
               />
             ))}
