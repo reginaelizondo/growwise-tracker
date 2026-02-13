@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CSV to SQL Generator</title>
+</head>
+<body>
+    <h1>Genera SQL desde los 9 CSVs</h1>
+    <p>Arrastra los 9 archivos CSV aquí para generar el SQL completo:</p>
+    <div id="dropZone" style="border: 2px dashed #ccc; padding: 20px; margin: 20px 0;">
+        Arrastra los CSVs aquí
+    </div>
+    <button onclick="generateSQL()" style="padding: 10px 20px;">Generar SQL</button>
+    <textarea id="output" style="width: 100%; height: 400px; margin-top: 20px;" placeholder="El SQL aparecerá aquí..."></textarea>
+    <button onclick="downloadSQL()" style="padding: 10px 20px; margin-top: 10px;">Descargar SQL</button>
+
+    <script>
+        const skillMapping = {
+            'Babbling': { id: 3, name: 'Babbling' },
+            'Coordination': { id: 8, name: 'Coordination' },
+            'Foundations_of_Social_Development': { id: 22, name: 'Foundations of Social Development' },
+            'Head_Control': { id: 12, name: 'Head Control' },
+            'Memory_and_Attention': { id: 17, name: 'Memory and Attention' },
+            'Newborn_Reflexes_and_Posture': { id: 19, name: 'Newborn Reflexes and Posture' },
+            'Object_Exploration': { id: 7, name: 'Object Exploration' },
+            'Secure_Attachment': { id: 2, name: 'Secure Attachment' },
+            'Sensory_Development': { id: 6, name: 'Sensory Development' }
+        };
+
+        let csvFiles = [];
+        let allInserts = [];
+
+        const dropZone = document.getElementById('dropZone');
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.style.background = '#f0f0f0';
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.style.background = 'white';
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.style.background = 'white';
+            csvFiles = Array.from(e.dataTransfer.files).filter(f => f.name.endsWith('.csv'));
+            dropZone.textContent = `${csvFiles.length} archivos cargados`;
+        });
+
+        function parseCSV(content, skillKey) {
+            const lines = content.trim().split('\n');
+            const headers = lines[0].split(',');
+            
+            // Extract percentiles from header row (columns 2 onwards, first 100)
+            const percentiles = [];
+            for (let i = 1; i <= 100 && i < headers.length; i++) {
+                const val = headers[i].trim();
+                if (val && !isNaN(parseFloat(val))) {
+                    percentiles.push(parseFloat(val));
+                }
+            }
+
+            const inserts = [];
+            const skillInfo = skillMapping[skillKey];
+            if (!skillInfo) return inserts;
+
+            // Parse data rows (ages 0-24)
+            for (let row = 1; row < lines.length && row <= 25; row++) {
+                const cols = lines[row].split(',');
+                const age = parseInt(cols[0]);
+                if (isNaN(age)) continue;
+
+                for (let col = 0; col < percentiles.length; col++) {
+                    const cellValue = cols[col + 1];
+                    if (!cellValue) continue;
+
+                    // Convert "13%" to 0.13
+                    let prob = cellValue.includes('%') 
+                        ? parseFloat(cellValue.replace('%', '')) / 100
+                        : parseFloat(cellValue);
+
+                    if (isNaN(prob)) continue;
+
+                    const percentile = percentiles[col].toFixed(2);
+                    const probability = prob.toFixed(4);
+                    inserts.push(`(${skillInfo.id}, '${skillInfo.name.replace(/'/g, "''")}', ${age}, ${percentile}, ${probability}, 'en')`);
+                }
+            }
+            return inserts;
+        }
+
+        async function generateSQL() {
+            if (csvFiles.length === 0) {
+                alert('Por favor arrastra los archivos CSV primero');
+                return;
+            }
+
+            allInserts = [];
+            let processedFiles = 0;
+
+            for (const file of csvFiles) {
+                const content = await file.text();
+                const fileName = file.name.replace(/[-\d\.]/g, '').replace('.csv', '');
+                
+                // Try to match skill name
+                let skillKey = null;
+                for (const key in skillMapping) {
+                    if (fileName.toLowerCase().includes(key.toLowerCase().split('_')[0])) {
+                        skillKey = key;
+                        break;
+                    }
+                }
+
+                if (skillKey) {
+                    const inserts = parseCSV(content, skillKey);
+                    allInserts.push(...inserts);
+                    processedFiles++;
+                }
+            }
+
+            // Generate SQL in batches of 500
+            let sql = `-- Generated SQL for ${processedFiles} skills\n`;
+            sql += `-- Total records: ${allInserts.length}\n\n`;
+
+            for (let i = 0; i < allInserts.length; i += 500) {
+                const batch = allInserts.slice(i, i + 500);
+                sql += `-- Batch ${Math.floor(i/500) + 1}\n`;
+                sql += `INSERT INTO skill_percentile_curves (skill_id, skill_name, age_months, percentile, probability, locale) VALUES\n`;
+                sql += batch.join(',\n');
+                sql += ';\n\n';
+            }
+
+            document.getElementById('output').value = sql;
+            alert(`SQL generado: ${processedFiles} skills, ${allInserts.length} registros`);
+        }
+
+        function downloadSQL() {
+            const sql = document.getElementById('output').value;
+            if (!sql) {
+                alert('Primero genera el SQL');
+                return;
+            }
+
+            const blob = new Blob([sql], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'load_all_percentile_data.sql';
+            a.click();
+        }
+    </script>
+</body>
+</html>

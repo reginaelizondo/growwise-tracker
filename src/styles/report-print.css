@@ -1,0 +1,275 @@
+/* Print styles for Report PDF */
+
+/* Default: Hide print-only elements on screen */
+.print-only {
+  display: none;
+}
+
+.screen-only {
+  display: block;
+}
+
+@media print {
+  /* Show/hide elements */
+  .screen-only {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  /* Page configuration */
+  @page {
+    size: letter portrait;
+    margin: 0.5in 0.75in;
+  }
+
+  /* First page fills entire page */
+  .print-first-page {
+    min-height: 9in;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    padding-bottom: 0.5in;
+  }
+
+  /* Prevent page breaks inside elements */
+  .page-break-inside-avoid {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Force page breaks */
+  .page-break {
+    page-break-after: always;
+    break-after: page;
+  }
+
+  /* Hide interactive elements */
+  button,
+  .hover\:bg-muted\/50,
+  [role="button"] {
+    display: none !important;
+  }
+
+  /* Preserve colors for print */
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Typography optimization */
+  body {
+    font-size: 10pt;
+    line-height: 1.2;
+    color: #000;
+  }
+
+  h1 {
+    font-size: 16pt;
+    margin-bottom: 0.3em;
+  }
+
+  h2 {
+    font-size: 13pt;
+    margin-bottom: 0.25em;
+  }
+
+  h3 {
+    font-size: 11pt;
+    margin-bottom: 0.2em;
+  }
+
+  p {
+    margin-bottom: 0.3em;
+  }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1em;
+  }
+
+  td,
+  th {
+    padding: 8px;
+    border: 1px solid #ddd;
+    text-align: left;
+  }
+
+  th {
+    font-weight: 600;
+    background-color: #f5f5f5;
+  }
+
+  /* Cards and containers */
+  .print-card {
+    border: 1px solid #e5e5e5;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 12px;
+    background: white;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .print-card-large {
+    padding: 20px;
+    margin-bottom: 12px;
+  }
+
+  .print-card-header {
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid;
+  }
+
+  /* Badges */
+  .print-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 9pt;
+    font-weight: 600;
+    border: 1px solid currentColor;
+    margin-right: 8px;
+  }
+
+  /* Lists */
+  ul {
+    margin: 0.5em 0;
+    padding-left: 1.5em;
+  }
+
+  li {
+    margin-bottom: 0.3em;
+  }
+
+  /* Grid layouts */
+  .print-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  /* Gauges and visual elements */
+  .print-gauge {
+    text-align: center;
+    padding: 12px;
+  }
+
+  .print-gauge-value {
+    font-size: 24pt;
+    font-weight: bold;
+    display: block;
+  }
+
+  .print-gauge-label {
+    font-size: 10pt;
+    color: #666;
+  }
+
+  /* Activity cards */
+  .print-activity {
+    padding: 12px;
+    border-left: 3px solid;
+    background-color: #f9f9f9;
+    margin-bottom: 8px;
+  }
+
+  /* Checkmarks */
+  .print-check {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 16px;
+    font-size: 12px;
+  }
+
+  .print-check.mastered {
+    background-color: #fbbf24;
+    color: white;
+  }
+
+  .print-check.on-track {
+    background-color: #10b981;
+    color: white;
+  }
+
+  .print-check.reinforce {
+    background-color: #3b82f6;
+    color: white;
+  }
+
+  /* Spacing utilities */
+  .print-mt-4 {
+    margin-top: 10px;
+  }
+
+  .print-mb-4 {
+    margin-bottom: 10px;
+  }
+
+  .print-mb-2 {
+    margin-bottom: 6px;
+  }
+
+  .print-mb-6 {
+    margin-bottom: 10px;
+  }
+
+  .print-mt-2 {
+    margin-top: 6px;
+  }
+
+  .print-text-center {
+    text-align: center;
+  }
+
+  .print-text-sm {
+    font-size: 9pt;
+  }
+
+  .print-text-xs {
+    font-size: 8pt;
+  }
+
+  .print-font-bold {
+    font-weight: 600;
+  }
+
+  /* Remove shadows and transitions */
+  * {
+    box-shadow: none !important;
+    transition: none !important;
+    animation: none !important;
+  }
+
+  /* Ensure backgrounds print */
+  .bg-muted,
+  .bg-card {
+    background-color: #f5f5f5 !important;
+  }
+
+  /* Footer styling */
+  .print-footer {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid #ddd;
+    font-size: 9pt;
+    color: #666;
+    text-align: center;
+  }
+
+  /* Pace gauge enlargement for print */
+  .pace-gauge-container {
+    transform: scale(1.8);
+    transform-origin: center;
+    margin: 40px 0;
+  }
+}
