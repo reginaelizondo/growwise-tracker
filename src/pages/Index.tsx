@@ -5,7 +5,7 @@ import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import kineduLogo from "@/assets/logo-kinedu-blue.png";
 import heroBabyPhoto from "@/assets/hero-baby-real.jpg";
-import reportPreview from "@/assets/report-preview-blurred.png";
+// report preview removed
 import { getSessionId } from "@/hooks/useSessionId";
 import SocialProofBlock from "@/components/SocialProofBlock";
 import WhyTrustUs from "@/components/WhyTrustUs";
@@ -164,34 +164,8 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Report Preview — curiosity trigger */}
-      <section className="container mx-auto px-4 pb-8 md:pb-12">
-        <div className="max-w-lg mx-auto text-center">
-          <p className="text-sm font-semibold text-foreground mb-3">
-            Here's a sneak peek of your report
-          </p>
-          <div className="relative rounded-2xl overflow-hidden shadow-md border border-border">
-            <img
-              src={reportPreview}
-              alt="Sample development report preview"
-              className="w-full object-cover blur-[2px]"
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background/90 flex items-end justify-center pb-6">
-              <Button
-                variant="success"
-                size="lg"
-                className="rounded-full px-8 shadow-lg"
-                onClick={handleCtaClick}
-              >
-                <span className="flex items-center gap-2">
-                  Unlock Your Report
-                  <ArrowRight className="w-4 h-4" strokeWidth={3} />
-                </span>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
+
+
 
       {/* Social Proof Block */}
       <section className="container mx-auto px-4 pb-8 md:pb-12">
