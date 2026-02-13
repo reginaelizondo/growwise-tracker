@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Check, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { GlobalProgressBar } from "./GlobalProgressBar";
 
 interface Milestone {
   milestone_id: number;
@@ -29,6 +30,7 @@ interface SkillMilestoneListProps {
   isLastSkill: boolean;
   babyName?: string;
   babyAgeMonths?: number;
+  globalProgress?: number;
 }
 
 export const SkillMilestoneList = ({
@@ -46,6 +48,7 @@ export const SkillMilestoneList = ({
   isLastSkill,
   babyName,
   babyAgeMonths,
+  globalProgress,
 }: SkillMilestoneListProps) => {
   // Count checked (yes) milestones
   const checkedCount = milestones.filter(m => responses[m.milestone_id] === "yes").length;
@@ -63,6 +66,9 @@ export const SkillMilestoneList = ({
   return (
     <div className="min-h-screen bg-gradient-warm py-6 px-4">
       <div className="container max-w-2xl mx-auto">
+        {/* Global Progress Bar */}
+        {globalProgress !== undefined && <GlobalProgressBar progressPercent={globalProgress} />}
+
         {/* Baby info - plain text */}
         {babyName && (
           <p className="text-center text-sm text-muted-foreground font-semibold mb-2">
