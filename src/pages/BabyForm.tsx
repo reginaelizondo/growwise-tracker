@@ -363,14 +363,21 @@ const BabyForm = () => {
           <div className="animate-fade-in space-y-8">
             <div className="text-center">
               <h1 className="text-2xl font-bold text-foreground mb-2">
-                What areas would you like to assess for {displayName}?
+                Let's personalize {displayName}'s assessment
               </h1>
-              <p className="text-sm text-muted-foreground">Select the areas you'd like to include</p>
+              <p className="text-sm text-muted-foreground">Choose the areas you'd like to explore</p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               {areaOptions.map((area) => {
                 const isSelected = selectedAreas.includes(area.id);
+                const colorVar = {
+                  2: "--cognitive",
+                  1: "--physical",
+                  3: "--linguistic",
+                  4: "--emotional",
+                }[area.id];
+                
                 return (
                   <button
                     key={area.id}
@@ -384,8 +391,11 @@ const BabyForm = () => {
                     )}
                   >
                     {isSelected && (
-                      <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                        <Check className="w-3 h-3 text-primary-foreground" />
+                      <div 
+                        className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center"
+                        style={{ backgroundColor: `hsl(var(${colorVar}))` }}
+                      >
+                        <Check className="w-3 h-3 text-white" />
                       </div>
                     )}
                     <img src={area.icon} alt={area.name} className="w-12 h-12 object-contain" />
