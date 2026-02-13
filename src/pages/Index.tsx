@@ -84,11 +84,11 @@ const Index = () => {
           </h1>
 
           {/* Hero photo — full-width, natural feel */}
-          <div className="flex justify-center mb-5 -mx-4">
+          <div className="flex justify-center mb-5">
             <img
               src={heroBabyPhoto}
               alt="Happy baby smiling"
-              className="w-[calc(100%+2rem)] max-w-sm h-48 md:h-64 rounded-3xl object-cover shadow-lg"
+              className="w-40 md:w-48 h-56 md:h-72 rounded-3xl object-cover shadow-lg"
             />
           </div>
 
