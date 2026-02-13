@@ -2250,6 +2250,20 @@ const Assessment = () => {
   const totalCount = milestones.length;
   const isLastQuestion = currentQuestionIndex === milestones.length - 1;
   const currentAnswer = responses[currentMilestone?.milestone_id];
+
+  // Reusable global progress bar for all screens
+  const GlobalProgressBar = () => (
+    <div className="w-full max-w-3xl mx-auto mb-6">
+      <div className="flex justify-center mb-4">
+        <img src={logoKinedu} alt="Kinedu" className="h-8" />
+      </div>
+      <div className="flex justify-between items-center mb-2">
+        <span className="text-xs font-medium text-muted-foreground">Your report</span>
+        <span className="text-xs font-bold text-primary">{Math.round(progress)}% complete</span>
+      </div>
+      <Progress value={progress} className="h-2.5 bg-muted/50" />
+    </div>
+  );
   
   // Check if we're at the start of a new skill
   const isFirstQuestionOfSkill = currentSkillInfo && currentQuestionIndex === currentSkillInfo.start_index;
@@ -2261,7 +2275,9 @@ const Assessment = () => {
     const areaColorVar = `hsl(var(--${areaColorKey}))`;
     
     return (
-      <div className="min-h-screen bg-gradient-warm flex items-center justify-center py-8 px-4">
+      <div className="min-h-screen bg-gradient-warm py-6 px-4">
+        <GlobalProgressBar />
+        <div className="flex justify-center">
         <Card className="max-w-2xl w-full p-8 md:p-12 shadow-soft animate-fade-in border-0">
           {/* Skill name */}
           <div className="flex flex-col items-center mb-3">
@@ -2342,6 +2358,7 @@ const Assessment = () => {
             Go to last question
           </button>
         </Card>
+        </div>
       </div>
     );
   }
@@ -2370,7 +2387,9 @@ const Assessment = () => {
     const areaColorVar = `hsl(var(--${areaColorKey}))`;
 
     return (
-      <div className="min-h-screen bg-gradient-warm flex items-center justify-center py-8 px-4">
+      <div className="min-h-screen bg-gradient-warm py-6 px-4">
+        <GlobalProgressBar />
+        <div className="flex justify-center">
         <Card className="max-w-2xl w-full p-8 md:p-12 shadow-soft animate-fade-in border-0">
           {/* Title */}
           
@@ -2590,6 +2609,7 @@ const Assessment = () => {
             Let's keep going
           </button>
         </Card>
+        </div>
       </div>
     );
   }
@@ -2656,7 +2676,9 @@ const Assessment = () => {
     }
     
     return (
-      <div className="min-h-screen bg-gradient-warm flex items-center justify-center py-8 px-4">
+      <div className="min-h-screen bg-gradient-warm py-6 px-4">
+        <GlobalProgressBar />
+        <div className="flex justify-center">
         <Card className="max-w-2xl w-full p-8 md:p-12 shadow-soft animate-fade-in border-0">
             {/* Area Icon */}
           <div className="flex flex-col items-center mb-4">
@@ -2757,6 +2779,7 @@ const Assessment = () => {
             Start Questions
           </button>
         </Card>
+        </div>
       </div>
     );
   }
@@ -2764,7 +2787,9 @@ const Assessment = () => {
   // Area Introduction Screen
   if (showAreaIntro && introArea) {
     return (
-      <div className="min-h-screen bg-gradient-warm flex items-center justify-center py-8 px-4">
+      <div className="min-h-screen bg-gradient-warm py-6 px-4">
+        <GlobalProgressBar />
+        <div className="flex justify-center">
         <Card className="max-w-2xl w-full p-8 md:p-12 shadow-card animate-fade-in text-center">
           {/* Area Logo */}
           <div className="flex justify-center mb-6">
@@ -2802,6 +2827,7 @@ const Assessment = () => {
             Start Assessment
           </Button>
         </Card>
+        </div>
       </div>
     );
   }
@@ -2824,7 +2850,9 @@ const Assessment = () => {
     const isLastSkillOfArea = currentArea && previousIndex === currentArea.end_index;
 
     return (
-      <div className="min-h-screen bg-gradient-warm flex items-center justify-center py-4 px-4">
+      <div className="min-h-screen bg-gradient-warm py-6 px-4">
+        <GlobalProgressBar />
+        <div className="flex justify-center">
         <Card className="max-w-2xl w-full p-6 md:p-8 shadow-soft animate-fade-in border-0">
           {/* Header with Icon and Title - closer together */}
           <div className="flex flex-col items-center mb-6">
@@ -2957,6 +2985,7 @@ const Assessment = () => {
             Last Question
           </button>
         </Card>
+        </div>
       </div>
     );
   }
@@ -3012,7 +3041,9 @@ const Assessment = () => {
     };
 
     return (
-      <div className="min-h-screen bg-gradient-warm flex items-center justify-center py-8 px-4">
+      <div className="min-h-screen bg-gradient-warm py-6 px-4">
+        <GlobalProgressBar />
+        <div className="flex justify-center">
         <Card className="max-w-3xl w-full p-6 md:p-10 shadow-soft animate-fade-in border-0">
           {/* Header */}
           <div className="text-center mb-6">
@@ -3180,6 +3211,7 @@ const Assessment = () => {
             </button>
           </div>
         </Card>
+        </div>
       </div>
     );
   }
@@ -3190,7 +3222,9 @@ const Assessment = () => {
     const totalQuestions = milestones.length;
     
     return (
-      <div className="min-h-screen bg-gradient-warm flex items-center justify-center py-8 px-4">
+      <div className="min-h-screen bg-gradient-warm py-6 px-4">
+        <GlobalProgressBar />
+        <div className="flex justify-center">
         <Card className="max-w-2xl w-full p-6 md:p-10 shadow-soft animate-scale-in border-0">
           {/* Title with better spacing */}
           <div className="text-center mb-8">
@@ -3251,6 +3285,7 @@ const Assessment = () => {
             </Button>
           </div>
         </Card>
+        </div>
       </div>
     );
   }

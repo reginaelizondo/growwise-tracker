@@ -7,6 +7,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { AreaActivityRecommendation } from "@/components/AreaActivityRecommendation";
+import { GlobalProgressBar } from "./GlobalProgressBar";
 
 interface SkillSummary {
   skill_id: number;
@@ -26,6 +27,7 @@ interface AreaSummaryProps {
   isLastArea: boolean;
   babyAgeMonths: number;
   babyName?: string;
+  globalProgress?: number;
 }
 
 export const AreaSummary = ({
@@ -38,6 +40,7 @@ export const AreaSummary = ({
   isLastArea,
   babyAgeMonths,
   babyName,
+  globalProgress,
 }: AreaSummaryProps) => {
   const isMobile = useIsMobile();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -111,6 +114,9 @@ export const AreaSummary = ({
   return (
     <div className="min-h-screen bg-gradient-warm py-6 px-4">
       <div className="container max-w-2xl mx-auto">
+        {/* Global Progress Bar */}
+        {globalProgress !== undefined && <GlobalProgressBar progressPercent={globalProgress} />}
+
         {/* Baby Info */}
         {babyName && (
           <p className="text-center text-sm text-muted-foreground font-semibold mb-4">

@@ -520,6 +520,13 @@ const AssessmentNew = () => {
     );
   }
 
+  // Calculate global progress (22% from baby form + 78% from assessment)
+  const totalMilestones = areas.reduce((sum, a) => sum + a.skills.reduce((s, sk) => s + sk.milestones.length, 0), 0);
+  const answeredCount = Object.keys(responses).length;
+  const globalProgress = totalMilestones > 0 
+    ? Math.min(100, 22 + (answeredCount / totalMilestones) * 78)
+    : 22;
+
   // Skill view
   if (viewState.type === 'skill') {
     const { areaIndex, skillIndex } = viewState;
@@ -543,6 +550,7 @@ const AssessmentNew = () => {
         isLastSkill={skillIndex >= currentArea.skills.length - 1}
         babyName={baby?.name}
         babyAgeMonths={assessment?.reference_age_months}
+        globalProgress={globalProgress}
       />
     );
   }
@@ -575,6 +583,7 @@ const AssessmentNew = () => {
         isLastArea={areaIndex >= areas.length - 1}
         babyAgeMonths={assessment?.reference_age_months ?? 0}
         babyName={baby?.name}
+        globalProgress={globalProgress}
       />
     );
   }
