@@ -363,9 +363,9 @@ const BabyForm = () => {
           <div className="animate-fade-in space-y-8">
             <div className="text-center">
               <h1 className="text-2xl font-bold text-foreground mb-2">
-                Let's personalize {displayName}'s assessment
+                What should we focus on for {displayName}?
               </h1>
-              <p className="text-sm text-muted-foreground">Choose the areas you'd like to explore</p>
+              <p className="text-sm text-muted-foreground">Pick one or more developmental areas</p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -383,12 +383,14 @@ const BabyForm = () => {
                     key={area.id}
                     type="button"
                     onClick={() => toggleArea(area.id)}
-                    className={cn(
-                      "relative flex flex-col items-center gap-3 p-5 rounded-2xl border-2 transition-all duration-200",
-                      isSelected
-                        ? "border-primary bg-primary/5 shadow-md scale-[1.02]"
-                        : "border-border bg-card hover:border-muted-foreground/30"
-                    )}
+                    className={cn("relative flex flex-col items-center gap-3 p-5 rounded-2xl border-2 transition-all duration-200 bg-card", !isSelected && "border-border hover:border-muted-foreground/30")}
+                    style={isSelected ? {
+                      borderColor: `hsl(var(${colorVar}))`,
+                      backgroundColor: `hsl(var(${colorVar}) / 0.05)`,
+                      transform: 'scale(1.02)',
+                      boxShadow: `0 4px 12px hsl(var(${colorVar}) / 0.2)`
+                    } : undefined}
+                    data-unselected={!isSelected ? "true" : undefined}
                   >
                     {isSelected && (
                       <div 
