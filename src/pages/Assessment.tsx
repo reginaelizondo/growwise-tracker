@@ -1784,9 +1784,10 @@ const Assessment = () => {
   };
 
   const calculateProgress = () => {
-    if (milestones.length === 0) return 0;
-    // Calculate progress based on current position in the assessment
-    return ((currentQuestionIndex + 1) / milestones.length) * 100;
+    if (milestones.length === 0) return 22;
+    // Start at 22% (from baby form steps) and fill remaining 78% based on assessment progress
+    const assessmentProgress = ((currentQuestionIndex + 1) / milestones.length) * 78;
+    return Math.min(100, 22 + assessmentProgress);
   };
 
   const handleComplete = async () => {
@@ -3266,37 +3267,32 @@ const Assessment = () => {
   return (
     <div className="min-h-screen bg-gradient-warm py-4 sm:py-6 px-3 sm:px-4">
       <div className="container max-w-3xl mx-auto">
-        {/* Header with Progress */}
+        {/* Logo */}
+        <div className="flex justify-center mb-4">
+          <img src={logoKinedu} alt="Kinedu" className="h-8" />
+        </div>
+
+        {/* Global Progress Bar */}
         <div className="mb-6 sm:mb-8">
-          <div className="flex items-center justify-between mb-3 sm:mb-4 py-2">
-            <Button variant="ghost" size="sm" asChild className="h-8 px-2 sm:px-3">
-              <Link to="/">
-                <ArrowLeft className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">Exit</span>
-              </Link>
-            </Button>
-
-            <div className="text-center flex-1 mx-2 sm:mx-4">
-              <p 
-                className="text-sm sm:text-base font-semibold"
-                style={{ color: `hsl(var(--${getAreaColorVariable(currentMilestone.area_id)}))` }}
-              >
-                Skill {skills.findIndex(s => s.skill_id === currentSkillInfo?.skill_id) + 1} of {skills.length} • Full Assessment
-              </p>
-              <p className="text-xs sm:text-sm text-muted-foreground">
-                {baby.name || "Your baby"} • {assessment.reference_age_months} months
-              </p>
-            </div>
-
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-xs font-medium text-muted-foreground">Your report</span>
+            <span className="text-xs font-bold text-primary">{Math.round(progress)}% complete</span>
           </div>
-
           <Progress
             value={progress} 
-            className="h-2"
-            style={{
-              '--progress-color': `hsl(var(--${getAreaColorVariable(currentMilestone.area_id)}))`,
-            } as React.CSSProperties}
+            className="h-2.5 bg-muted/50"
           />
+          <div className="flex items-center justify-between mt-2">
+            <p className="text-xs text-muted-foreground">
+              {baby.name || "Your baby"} • {assessment.reference_age_months} months
+            </p>
+            <p 
+              className="text-xs font-medium"
+              style={{ color: `hsl(var(--${getAreaColorVariable(currentMilestone.area_id)}))` }}
+            >
+              Skill {skills.findIndex(s => s.skill_id === currentSkillInfo?.skill_id) + 1} of {skills.length}
+            </p>
+          </div>
         </div>
 
         {/* Question Card */}
