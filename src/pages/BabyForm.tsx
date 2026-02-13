@@ -66,11 +66,7 @@ const BabyForm = () => {
   };
 
   const handleNextStep = () => {
-    setShowMotivation(true);
-    setTimeout(() => {
-      setShowMotivation(false);
-      setStep(2);
-    }, 1500);
+    setStep(2);
   };
 
   const handleSubmit = async () => {
@@ -78,61 +74,69 @@ const BabyForm = () => {
       toast.error("Please select the birth date");
       return;
     }
-    setLoading(true);
+    
+    // Show motivational transition first
+    setShowMotivation(true);
+    
+    // Wait for animation, then proceed
+    setTimeout(async () => {
+      setLoading(true);
 
-    try {
-      await supabase.from('page_events').insert({
-        event_type: 'profile_continue_clicked',
-        event_data: { source: 'baby_form' },
-        user_agent: navigator.userAgent,
-        session_id: getSessionId()
-      });
-    } catch (err) {
-      console.error('Tracking error:', err);
-    }
-
-    try {
-      const birthDateStr = format(birthDate, "yyyy-MM-dd");
-      const { data: baby, error: babyError } = await supabase
-        .from("babies")
-        .insert({
-          name: babyName || "Baby",
-          birthdate: birthDateStr,
-          gestational_weeks: parseInt(gestationalWeeks),
-          user_id: userId,
-        })
-        .select()
-        .single();
-      if (babyError) throw babyError;
-
-      const babyBirthDate = new Date(baby.birthdate);
-      const today = new Date();
-      const chronologicalMonths = differenceInMonths(today, babyBirthDate);
-      let referenceAgeMonths = chronologicalMonths;
-      if (baby.gestational_weeks && baby.gestational_weeks < 37) {
-        const correctionWeeks = 40 - baby.gestational_weeks;
-        const correctionMonths = Math.round(correctionWeeks / 4.33);
-        referenceAgeMonths = Math.max(0, chronologicalMonths - correctionMonths);
+      try {
+        await supabase.from('page_events').insert({
+          event_type: 'profile_continue_clicked',
+          event_data: { source: 'baby_form' },
+          user_agent: navigator.userAgent,
+          session_id: getSessionId()
+        });
+      } catch (err) {
+        console.error('Tracking error:', err);
       }
 
-      const { data: assessment, error: assessmentError } = await supabase
-        .from("assessments")
-        .insert({
-          baby_id: baby.id,
-          reference_age_months: referenceAgeMonths,
-          locale: "en",
-        })
-        .select()
-        .single();
-      if (assessmentError) throw assessmentError;
+      try {
+        const birthDateStr = format(birthDate, "yyyy-MM-dd");
+        const { data: baby, error: babyError } = await supabase
+          .from("babies")
+          .insert({
+            name: babyName || "Baby",
+            birthdate: birthDateStr,
+            gestational_weeks: parseInt(gestationalWeeks),
+            user_id: userId,
+          })
+          .select()
+          .single();
+        if (babyError) throw babyError;
 
-      navigate(`/assessment/${assessment.id}`);
-    } catch (error: any) {
-      console.error("Error creating baby:", error);
-      toast.error(error.message || "Failed to start assessment");
-    } finally {
-      setLoading(false);
-    }
+        const babyBirthDate = new Date(baby.birthdate);
+        const today = new Date();
+        const chronologicalMonths = differenceInMonths(today, babyBirthDate);
+        let referenceAgeMonths = chronologicalMonths;
+        if (baby.gestational_weeks && baby.gestational_weeks < 37) {
+          const correctionWeeks = 40 - baby.gestational_weeks;
+          const correctionMonths = Math.round(correctionWeeks / 4.33);
+          referenceAgeMonths = Math.max(0, chronologicalMonths - correctionMonths);
+        }
+
+        const { data: assessment, error: assessmentError } = await supabase
+          .from("assessments")
+          .insert({
+            baby_id: baby.id,
+            reference_age_months: referenceAgeMonths,
+            locale: "en",
+          })
+          .select()
+          .single();
+        if (assessmentError) throw assessmentError;
+
+        navigate(`/assessment/${assessment.id}`);
+      } catch (error: any) {
+        console.error("Error creating baby:", error);
+        toast.error(error.message || "Failed to start assessment");
+        setShowMotivation(false);
+      } finally {
+        setLoading(false);
+      }
+    }, 1800);
   };
 
   const correctedAge = calculateCorrectedAge();
