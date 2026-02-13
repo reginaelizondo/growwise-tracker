@@ -6,13 +6,17 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Baby, ChevronDown, ArrowRight, ArrowLeft, Sparkles } from "lucide-react";
+import { Baby, ChevronDown, ArrowRight, ArrowLeft, Sparkles, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { differenceInMonths, format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { getSessionId } from "@/hooks/useSessionId";
 import { Progress } from "@/components/ui/progress";
 import kineduLogo from "@/assets/logo-kinedu-blue.png";
+import logoCognitive from "@/assets/Logo_Cognitive_HD.png";
+import logoPhysical from "@/assets/Logo_Physical_HD.png";
+import logoLinguistic from "@/assets/Logo_Linguistic_HD.png";
+import logoEmotional from "@/assets/Logo_Emotional_HD.png";
 
 const months = [
   "January", "February", "March", "April", "May", "June",
@@ -39,6 +43,22 @@ const BabyForm = () => {
   const [birthYear, setBirthYear] = useState("");
   const [gestationalWeeks, setGestationalWeeks] = useState("40");
   const [showMotivation, setShowMotivation] = useState(false);
+  const [selectedAreas, setSelectedAreas] = useState<number[]>([2, 1, 3, 4]); // All selected by default
+
+  const areaOptions = [
+    { id: 2, name: "Cognitive", icon: logoCognitive, color: "hsl(var(--cognitive))" },
+    { id: 1, name: "Physical", icon: logoPhysical, color: "hsl(var(--physical))" },
+    { id: 3, name: "Linguistic", icon: logoLinguistic, color: "hsl(var(--linguistic))" },
+    { id: 4, name: "Socio-Emotional", icon: logoEmotional, color: "hsl(var(--emotional))" },
+  ];
+
+  const toggleArea = (areaId: number) => {
+    setSelectedAreas(prev =>
+      prev.includes(areaId)
+        ? prev.filter(id => id !== areaId)
+        : [...prev, areaId]
+    );
+  };
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -66,10 +86,22 @@ const BabyForm = () => {
   };
 
   const handleNextStep = () => {
-    setStep(2);
+    if (step === 1) {
+      setStep(2);
+    } else if (step === 2) {
+      if (!birthDate) {
+        toast.error("Please select the birth date");
+        return;
+      }
+      setStep(3);
+    }
   };
 
   const handleSubmit = async () => {
+    if (selectedAreas.length === 0) {
+      toast.error("Please select at least one area");
+      return;
+    }
     if (!birthDate) {
       toast.error("Please select the birth date");
       return;
@@ -128,6 +160,8 @@ const BabyForm = () => {
           .single();
         if (assessmentError) throw assessmentError;
 
+        // Store selected areas for the assessment
+        localStorage.setItem(`assessment_areas_${assessment.id}`, JSON.stringify(selectedAreas));
         navigate(`/assessment/${assessment.id}`);
       } catch (error: any) {
         console.error("Error creating baby:", error);
@@ -141,7 +175,7 @@ const BabyForm = () => {
 
   const correctedAge = calculateCorrectedAge();
   const isPremature = parseInt(gestationalWeeks) < 37;
-  const progressValue = step === 1 ? 10 : 22;
+  const progressValue = step === 1 ? 10 : step === 2 ? 16 : 22;
   const daysInMonth = getDaysInMonth(parseInt(birthMonth), parseInt(birthYear));
   const dayOptions = Array.from({ length: daysInMonth }, (_, i) => i + 1);
   const displayName = babyName || "your baby";
@@ -306,12 +340,76 @@ const BabyForm = () => {
               <Button
                 variant="success"
                 className="w-full h-14 text-lg font-bold rounded-full shadow-lg hover:shadow-xl transition-all group"
+                onClick={handleNextStep}
+                disabled={!birthDate}
+              >
+                Continue
+                <ArrowRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
+              </Button>
+              <button
+                type="button"
+                className="w-full text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors flex items-center justify-center gap-1"
+                onClick={() => setStep(1)}
+              >
+                <ArrowLeft className="w-3 h-3" />
+                Back
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Area Selection */}
+        {step === 3 && !showMotivation && (
+          <div className="animate-fade-in space-y-8">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold text-foreground mb-2">
+                What areas would you like to assess for {displayName}?
+              </h1>
+              <p className="text-sm text-muted-foreground">Select the areas you'd like to include</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              {areaOptions.map((area) => {
+                const isSelected = selectedAreas.includes(area.id);
+                return (
+                  <button
+                    key={area.id}
+                    type="button"
+                    onClick={() => toggleArea(area.id)}
+                    className={cn(
+                      "relative flex flex-col items-center gap-3 p-5 rounded-2xl border-2 transition-all duration-200",
+                      isSelected
+                        ? "border-primary bg-primary/5 shadow-md scale-[1.02]"
+                        : "border-border bg-card hover:border-muted-foreground/30"
+                    )}
+                  >
+                    {isSelected && (
+                      <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                        <Check className="w-3 h-3 text-primary-foreground" />
+                      </div>
+                    )}
+                    <img src={area.icon} alt={area.name} className="w-12 h-12 object-contain" />
+                    <span className={cn(
+                      "text-sm font-semibold text-center",
+                      isSelected ? "text-foreground" : "text-muted-foreground"
+                    )}>
+                      {area.name}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="space-y-3">
+              <Button
+                variant="success"
+                className="w-full h-14 text-lg font-bold rounded-full shadow-lg hover:shadow-xl transition-all group"
                 onClick={handleSubmit}
-                disabled={loading || !birthDate}
+                disabled={loading || selectedAreas.length === 0}
               >
                 {loading ? "Starting..." : (
                   <>
-                    Continue
+                    Start Assessment
                     <ArrowRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
                   </>
                 )}
@@ -319,7 +417,7 @@ const BabyForm = () => {
               <button
                 type="button"
                 className="w-full text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors flex items-center justify-center gap-1"
-                onClick={() => setStep(1)}
+                onClick={() => setStep(2)}
               >
                 <ArrowLeft className="w-3 h-3" />
                 Back

@@ -261,8 +261,12 @@ const AssessmentNew = () => {
         });
 
         // Build areas array in correct order
+        // Get selected areas from localStorage (default to all)
+        const storedAreas = localStorage.getItem(`assessment_areas_${id}`);
+        const selectedAreaIds: number[] = storedAreas ? JSON.parse(storedAreas) : areaOrder;
+
         const areasArray: AreaInfo[] = areaOrder
-          .filter(areaId => areaMap.has(areaId))
+          .filter(areaId => areaMap.has(areaId) && selectedAreaIds.includes(areaId))
           .map(areaId => {
             const skillMap = areaMap.get(areaId)!;
             const skills: SkillInfo[] = Array.from(skillMap.entries()).map(([skillId, milestones]) => ({
