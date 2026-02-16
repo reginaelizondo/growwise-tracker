@@ -38,6 +38,7 @@ const BabyForm = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [prematureOpen, setPrematureOpen] = useState(false);
   const [babyName, setBabyName] = useState("");
+  const [parentEmail, setParentEmail] = useState("");
   const [birthMonth, setBirthMonth] = useState("");
   const [birthDay, setBirthDay] = useState("");
   const [birthYear, setBirthYear] = useState("");
@@ -84,8 +85,14 @@ const BabyForm = () => {
     return chronologicalMonths;
   };
 
+  const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
   const handleNextStep = () => {
     if (step === 1) {
+      if (!parentEmail || !isValidEmail(parentEmail)) {
+        toast.error("Please enter a valid email address");
+        return;
+      }
       setStep(2);
     } else if (step === 2) {
       if (!birthDate) {
@@ -128,6 +135,7 @@ const BabyForm = () => {
           birthdate: birthDateStr,
           gestational_weeks: parseInt(gestationalWeeks),
           user_id: userId,
+          email: parentEmail,
         })
         .select()
         .single();
@@ -204,6 +212,18 @@ const BabyForm = () => {
               className="h-14 text-lg bg-card border-border rounded-2xl text-center"
               autoFocus
             />
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-foreground">Your email <span className="text-destructive">*</span></Label>
+              <Input
+                type="email"
+                placeholder="parent@email.com"
+                value={parentEmail}
+                onChange={(e) => setParentEmail(e.target.value)}
+                className="h-14 text-lg bg-card border-border rounded-2xl text-center"
+              />
+              <p className="text-xs text-muted-foreground text-center">We'll send you the assessment results</p>
+            </div>
 
             <Button
               variant="success"
