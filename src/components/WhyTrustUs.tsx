@@ -35,11 +35,11 @@ const WhyTrustUs = () => {
             className="flex items-center gap-4 bg-card border border-border rounded-xl p-4 text-left shadow-sm"
           >
             {item.logo ? (
-              <img src={item.logo} alt={item.alt} className="w-10 h-10 object-contain flex-shrink-0" />
+              <img src={item.logo} alt={item.alt} className="w-12 h-12 object-contain flex-shrink-0" />
             ) : (
-              <span className="text-2xl flex-shrink-0">{item.icon}</span>
+              <span className="text-3xl flex-shrink-0 w-12 h-12 flex items-center justify-center">{item.icon}</span>
             )}
-            <p className="text-sm font-medium text-foreground leading-snug">
+            <p className="text-sm font-semibold text-foreground leading-snug">
               {item.text}
             </p>
           </div>
