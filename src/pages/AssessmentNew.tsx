@@ -457,7 +457,14 @@ const AssessmentNew = () => {
     const { areaIndex } = viewState;
     const currentArea = areas[areaIndex];
 
-    // Mark all unanswered milestones in all skills of this area as "no"
+    // Collect all milestone IDs and check which have answers
+    const allAreaMilestoneIds: number[] = [];
+    currentArea.skills.forEach(skill => {
+      skill.milestones.forEach(m => allAreaMilestoneIds.push(m.milestone_id));
+    });
+    const hasAnswers = allAreaMilestoneIds.some(mid => responses[mid]);
+
+    // Mark all unanswered milestones as "no"
     const newResponses = { ...responses };
     const batchInserts: any[] = [];
     currentArea.skills.forEach(skill => {
@@ -487,9 +494,38 @@ const AssessmentNew = () => {
       }
     }
 
-    // Calculate scores and go to area summary
-    await calculateSkillScores(areaIndex);
-    setViewState({ type: 'areaSummary', areaIndex });
+    if (hasAnswers) {
+      // Has answers → show area summary
+      await calculateSkillScores(areaIndex);
+      setViewState({ type: 'areaSummary', areaIndex });
+    } else {
+      // No answers → skip summary entirely
+      if (areaIndex >= areas.length - 1) {
+        // Last area → complete assessment
+        try {
+          await supabase
+            .from("assessments")
+            .update({ completed_at: new Date().toISOString() })
+            .eq("id", id);
+
+          localStorage.setItem('assessment_draft', JSON.stringify({
+            baby_id: baby?.id,
+            assessment_id: id,
+            timestamp: new Date().toISOString()
+          }));
+
+          toast.success("Assessment completed!");
+          window.location.href = 'https://app.kinedu.com/ia-signuppage/?swc=ia-report';
+        } catch (error) {
+          console.error("Error completing assessment:", error);
+          toast.error("Failed to complete assessment");
+        }
+      } else {
+        // Not last → jump to next area
+        setViewState({ type: 'skill', areaIndex: areaIndex + 1, skillIndex: 0 });
+      }
+    }
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
