@@ -35,11 +35,13 @@ const areaColors: Record<number, string> = {
   4: '#F06292',
 }
 
-const areaEmojis: Record<number, string> = {
-  1: '🏃',
-  2: '🧠',
-  3: '💬',
-  4: '❤️',
+const BASE_IMG_URL = 'https://growwise-tracker.lovable.app/images'
+
+const areaIcons: Record<number, string> = {
+  1: `${BASE_IMG_URL}/Logo_Physical_HD.png`,
+  2: `${BASE_IMG_URL}/Logo_Cognitive_HD.png`,
+  3: `${BASE_IMG_URL}/Logo_Linguistic_HD.png`,
+  4: `${BASE_IMG_URL}/Logo_Emotional_HD.png`,
 }
 
 const areaNames: Record<number, string> = {
@@ -117,7 +119,7 @@ function buildEmailHtml(babyName: string, ageMonths: number, areas: AreaResult[]
   // Area cards
   const areaCardsHtml = areas.map(a => {
     const color = areaColors[a.area_id] || '#333'
-    const emoji = areaEmojis[a.area_id] || '📊'
+    const iconUrl = areaIcons[a.area_id] || ''
     const areaPaceColor = getPaceColor(a.pace)
 
     const skillRows = a.skills.map(s => {
@@ -142,7 +144,7 @@ function buildEmailHtml(babyName: string, ageMonths: number, areas: AreaResult[]
           <td style="padding: 16px;">
             <table width="100%" cellpadding="0" cellspacing="0">
               <tr>
-                <td><span style="font-size: 18px; font-weight: 700; color: ${color};">${emoji} ${a.area_name}</span></td>
+                <td><img src="${iconUrl}" alt="${a.area_name}" style="width: 28px; height: 28px; vertical-align: middle; margin-right: 8px;" /><span style="font-size: 18px; font-weight: 700; color: ${color};">${a.area_name}</span></td>
                 <td style="text-align: right;"><span style="font-size: 16px; font-weight: 700; color: ${areaPaceColor};">${a.pace.toFixed(1)}x</span></td>
               </tr>
             </table>
@@ -287,16 +289,20 @@ function buildEmailHtml(babyName: string, ageMonths: number, areas: AreaResult[]
           <td style="padding: 0 24px 24px;">
             <table width="100%" cellpadding="0" cellspacing="0" style="background: #f8fafc; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden;">
               <tr><td style="padding: 24px; text-align: center;">
-                <div style="font-size: 28px; margin-bottom: 8px;">📱</div>
+                <img src="${BASE_IMG_URL}/logo-kinedu-blue.png" alt="Kinedu" style="height: 32px; margin-bottom: 12px;" />
                 <h3 style="font-size: 18px; font-weight: 700; color: #333; margin: 0 0 4px;">Download the Kinedu app</h3>
                 <p style="font-size: 14px; color: #888; margin: 0 0 16px;">Available on iPhone and Android</p>
                 <table cellpadding="0" cellspacing="0" style="margin: 0 auto;">
                   <tr>
                     <td style="padding-right: 8px;">
-                      <a href="https://apps.apple.com/app/kinedu-baby-development/id740356884" style="display: inline-block; background: #000; color: #fff; text-decoration: none; padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 600;">🍎 App Store</a>
+                      <a href="https://apps.apple.com/app/kinedu-baby-development/id740356884">
+                        <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store" style="height: 40px;" />
+                      </a>
                     </td>
                     <td style="padding-left: 8px;">
-                      <a href="https://play.google.com/store/apps/details?id=com.kinedu" style="display: inline-block; background: #000; color: #fff; text-decoration: none; padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 600;">▶️ Google Play</a>
+                      <a href="https://play.google.com/store/apps/details?id=com.kinedu">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Get it on Google Play" style="height: 40px;" />
+                      </a>
                     </td>
                   </tr>
                 </table>
