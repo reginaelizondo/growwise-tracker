@@ -29,10 +29,10 @@ interface SkillResult {
 }
 
 const areaColors: Record<number, string> = {
-  1: '#00A3E0', // Physical - blue
-  2: '#00C853', // Cognitive - green
-  3: '#FF8A00', // Linguistic - orange
-  4: '#F06292', // Socio-Emotional - pink
+  1: '#00A3E0',
+  2: '#00C853',
+  3: '#FF8A00',
+  4: '#F06292',
 }
 
 const areaEmojis: Record<number, string> = {
@@ -50,19 +50,13 @@ const areaNames: Record<number, string> = {
 }
 
 function calculatePace(percentile: number): number {
-  const P_MIN = 0.0
-  const P_MAX = 2.0
-  const P0 = 0.5
-  const GAMMA_UP = 1.0
-  const GAMMA_DOWN = 1.2
+  const P_MIN = 0.0, P_MAX = 2.0, P0 = 0.5, GAMMA_UP = 1.0, GAMMA_DOWN = 1.2
   const r = Math.max(0, Math.min(100, percentile)) / 100.0
   let pace
   if (r >= P0) {
-    const s = (r - P0) / (1 - P0)
-    pace = 1 + (P_MAX - 1) * Math.pow(s, GAMMA_UP)
+    pace = 1 + (P_MAX - 1) * Math.pow((r - P0) / (1 - P0), GAMMA_UP)
   } else {
-    const t = (P0 - r) / P0
-    pace = 1 - (1 - P_MIN) * Math.pow(t, GAMMA_DOWN)
+    pace = 1 - (1 - P_MIN) * Math.pow((P0 - r) / P0, GAMMA_DOWN)
   }
   return Math.round(Math.max(P_MIN, Math.min(P_MAX, pace)) * 10) / 10
 }
@@ -105,21 +99,22 @@ function getSkillContext(skillName: string): string {
   return 'Important for overall development'
 }
 
+const LOGO_URL = 'https://growwise-tracker.lovable.app/images/logo-kinedu-blue.png'
+const CTA_URL = 'https://app.kinedu.com/ia-signuppage/?swc=ia-report'
+
 function buildEmailHtml(babyName: string, ageMonths: number, areas: AreaResult[], overallPace: number): string {
   const paceInfo = getPaceMessage(overallPace)
   const paceColor = getPaceColor(overallPace)
 
-  // Find 2 weakest skills across all areas
+  // Find 2 weakest skills
   const allSkills = areas.flatMap(a => a.skills)
-  const sortedSkills = [...allSkills].sort((a, b) => a.percentage - b.percentage)
-  const weakestSkills = sortedSkills.slice(0, 2)
+  const weakestSkills = [...allSkills].sort((a, b) => a.percentage - b.percentage).slice(0, 2)
 
-  // Snapshot intro text
   const snapshotText = overallPace >= 1.0
     ? `${babyName} is progressing well overall.`
     : `${babyName} is developing steadily.`
 
-  // Build area cards
+  // Area cards
   const areaCardsHtml = areas.map(a => {
     const color = areaColors[a.area_id] || '#333'
     const emoji = areaEmojis[a.area_id] || '📊'
@@ -142,19 +137,13 @@ function buildEmailHtml(babyName: string, ageMonths: number, areas: AreaResult[]
 
     return `
       <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 16px; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden;">
-        <tr>
-          <td style="height: 4px; background: ${color};"></td>
-        </tr>
+        <tr><td style="height: 4px; background: ${color};"></td></tr>
         <tr>
           <td style="padding: 16px;">
             <table width="100%" cellpadding="0" cellspacing="0">
               <tr>
-                <td>
-                  <span style="font-size: 18px; font-weight: 700; color: ${color};">${emoji} ${a.area_name}</span>
-                </td>
-                <td style="text-align: right;">
-                  <span style="font-size: 16px; font-weight: 700; color: ${areaPaceColor};">${a.pace.toFixed(1)}x</span>
-                </td>
+                <td><span style="font-size: 18px; font-weight: 700; color: ${color};">${emoji} ${a.area_name}</span></td>
+                <td style="text-align: right;"><span style="font-size: 16px; font-weight: 700; color: ${areaPaceColor};">${a.pace.toFixed(1)}x</span></td>
               </tr>
             </table>
             <div style="font-size: 13px; color: #888; margin-top: 4px;">${a.masteredCount}/${a.totalMilestones} milestones mastered · ${a.percentage}%</div>
@@ -164,15 +153,13 @@ function buildEmailHtml(babyName: string, ageMonths: number, areas: AreaResult[]
       </table>`
   }).join('')
 
-  // Weakest skills list for snapshot
+  // Weakest skills for snapshot
   const weakSkillsList = weakestSkills.map(s => `
     <tr>
       <td style="padding: 6px 0;">
         <table width="100%" cellpadding="0" cellspacing="0">
           <tr>
-            <td style="width: 8px; vertical-align: top; padding-top: 6px;">
-              <div style="width: 8px; height: 8px; border-radius: 50%; background: #F59E0B;"></div>
-            </td>
+            <td style="width: 8px; vertical-align: top; padding-top: 6px;"><div style="width: 8px; height: 8px; border-radius: 50%; background: #F59E0B;"></div></td>
             <td style="padding-left: 12px;">
               <div style="font-size: 15px; font-weight: 700; color: #333;">${s.skill_name} <span style="font-weight: 400; color: #D97706;">${s.percentage}%</span></div>
               <div style="font-size: 13px; color: #6B7280; margin-top: 2px;">${getSkillContext(s.skill_name)}</div>
@@ -195,11 +182,54 @@ function buildEmailHtml(babyName: string, ageMonths: number, areas: AreaResult[]
         <!-- Header -->
         <tr>
           <td style="background: linear-gradient(135deg, #1a73e8, #4a90d9); padding: 32px 24px; text-align: center;">
-            <img src="https://growwise-tracker.lovable.app/images/logo_kinedu.png" alt="Kinedu" style="height: 36px; margin-bottom: 16px;" />
+            <img src="${LOGO_URL}" alt="Kinedu" style="height: 40px; margin-bottom: 16px;" />
             <h1 style="color: #ffffff; font-size: 26px; margin: 0 0 8px 0; font-weight: 800;">${babyName}'s Development Report</h1>
             <p style="color: rgba(255,255,255,0.85); font-size: 15px; margin: 0;">Age: ${ageMonths} months</p>
           </td>
         </tr>
+
+        <!-- Horizontal Timeline - How Kinedu helps -->
+        <tr>
+          <td style="padding: 24px 24px 0;">
+            <h2 style="font-size: 20px; font-weight: 700; color: #333; text-align: center; margin: 0 0 20px;">How Kinedu helps ${babyName} grow</h2>
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <!-- Step 1: Done -->
+                <td width="33%" style="text-align: center; vertical-align: top; padding: 0 4px;">
+                  <div style="width: 44px; height: 44px; border-radius: 50%; background: #4CAF50; margin: 0 auto 8px; line-height: 44px; text-align: center;">
+                    <span style="color: #fff; font-size: 20px;">✓</span>
+                  </div>
+                  <div style="font-size: 14px; font-weight: 700; color: #333;">Take the assessment</div>
+                  <div style="display: inline-block; margin-top: 6px; background: #E8F5E9; color: #4CAF50; font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 10px;">Done!</div>
+                </td>
+                <!-- Step 2 -->
+                <td width="33%" style="text-align: center; vertical-align: top; padding: 0 4px;">
+                  <div style="width: 44px; height: 44px; border-radius: 50%; background: #1a73e8; margin: 0 auto 8px; line-height: 44px; text-align: center;">
+                    <span style="color: #fff; font-size: 18px; font-weight: 700;">2</span>
+                  </div>
+                  <div style="font-size: 14px; font-weight: 700; color: #333;">Get your daily activities plan</div>
+                  <div style="font-size: 12px; color: #888; margin-top: 4px;">5-10 min activities for ${babyName}'s stage</div>
+                </td>
+                <!-- Step 3 -->
+                <td width="33%" style="text-align: center; vertical-align: top; padding: 0 4px;">
+                  <div style="width: 44px; height: 44px; border-radius: 50%; background: #1a73e8; margin: 0 auto 8px; line-height: 44px; text-align: center;">
+                    <span style="color: #fff; font-size: 18px; font-weight: 700;">3</span>
+                  </div>
+                  <div style="font-size: 14px; font-weight: 700; color: #333;">Track progress as ${babyName} develops</div>
+                  <div style="font-size: 12px; color: #888; margin-top: 4px;">We adapt as ${babyName} grows</div>
+                </td>
+              </tr>
+            </table>
+            <!-- CTA Button -->
+            <div style="text-align: center; margin-top: 20px;">
+              <a href="${CTA_URL}" style="display: inline-block; background: #1a73e8; color: #ffffff; text-decoration: none; padding: 14px 40px; border-radius: 10px; font-weight: 700; font-size: 16px;">Start 7-day free trial</a>
+              <p style="font-size: 12px; color: #888; margin: 8px 0 0;">No commitment required</p>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Divider -->
+        <tr><td style="padding: 24px 24px 0;"><div style="border-top: 1px solid #e0e0e0;"></div></td></tr>
 
         <!-- Snapshot Card -->
         <tr>
@@ -234,27 +264,42 @@ function buildEmailHtml(babyName: string, ageMonths: number, areas: AreaResult[]
         </tr>
 
         <!-- Area Breakdown Title -->
-        <tr>
-          <td style="padding: 24px 24px 12px;">
-            <h2 style="font-size: 18px; color: #333; margin: 0; font-weight: 700;">Development by Area</h2>
-          </td>
-        </tr>
+        <tr><td style="padding: 24px 24px 12px;"><h2 style="font-size: 18px; color: #333; margin: 0; font-weight: 700;">Development by Area</h2></td></tr>
 
         <!-- Area Cards -->
-        <tr>
-          <td style="padding: 0 24px;">
-            ${areaCardsHtml}
-          </td>
-        </tr>
+        <tr><td style="padding: 0 24px;">${areaCardsHtml}</td></tr>
 
         <!-- CTA -->
         <tr>
-          <td style="padding: 8px 24px 32px;">
+          <td style="padding: 8px 24px 24px;">
             <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #f0f7ff, #e8f0fe); border-radius: 12px; overflow: hidden;">
               <tr><td style="padding: 28px; text-align: center;">
                 <h3 style="color: #1a73e8; font-size: 20px; margin: 0 0 8px; font-weight: 700;">Want personalized activities?</h3>
                 <p style="color: #555; font-size: 14px; margin: 0 0 20px;">Download Kinedu for 1,800+ activities tailored to ${babyName}'s development stage.</p>
-                <a href="https://app.kinedu.com/ia-signuppage/?swc=ia-report" style="display: inline-block; background: #1a73e8; color: #ffffff; text-decoration: none; padding: 14px 36px; border-radius: 10px; font-weight: 700; font-size: 16px;">Start 7-Day Free Trial</a>
+                <a href="${CTA_URL}" style="display: inline-block; background: #1a73e8; color: #ffffff; text-decoration: none; padding: 14px 36px; border-radius: 10px; font-weight: 700; font-size: 16px;">Start 7-Day Free Trial</a>
+              </td></tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- App Download Section -->
+        <tr>
+          <td style="padding: 0 24px 24px;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background: #f8fafc; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden;">
+              <tr><td style="padding: 24px; text-align: center;">
+                <div style="font-size: 28px; margin-bottom: 8px;">📱</div>
+                <h3 style="font-size: 18px; font-weight: 700; color: #333; margin: 0 0 4px;">Download the Kinedu app</h3>
+                <p style="font-size: 14px; color: #888; margin: 0 0 16px;">Available on iPhone and Android</p>
+                <table cellpadding="0" cellspacing="0" style="margin: 0 auto;">
+                  <tr>
+                    <td style="padding-right: 8px;">
+                      <a href="https://apps.apple.com/app/kinedu-baby-development/id740356884" style="display: inline-block; background: #000; color: #fff; text-decoration: none; padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 600;">🍎 App Store</a>
+                    </td>
+                    <td style="padding-left: 8px;">
+                      <a href="https://play.google.com/store/apps/details?id=com.kinedu" style="display: inline-block; background: #000; color: #fff; text-decoration: none; padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 600;">▶️ Google Play</a>
+                    </td>
+                  </tr>
+                </table>
               </td></tr>
             </table>
           </td>
@@ -283,8 +328,7 @@ Deno.serve(async (req) => {
 
     if (!assessment_id || !baby_id) {
       return new Response(JSON.stringify({ error: 'Missing assessment_id or baby_id' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
@@ -294,8 +338,7 @@ Deno.serve(async (req) => {
 
     if (!resendKey) {
       return new Response(JSON.stringify({ error: 'RESEND_API_KEY not configured' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
@@ -333,21 +376,45 @@ Deno.serve(async (req) => {
     // Get unique skill IDs and fetch skill names from external DB
     const skillIds = [...new Set(responses.map(r => r.skill_id).filter(Boolean))] as number[]
     
-    let skillNameMap = new Map<number, string>()
+    const skillNameMap = new Map<number, string>()
     if (skillIds.length > 0) {
-      const { data: skillsData } = await externalSupabase
-        .from('milestones')
-        .select('skill_id, skill_name')
+      // Query external Supabase - skills_locales has skill_id + title
+      const { data: skillsData, error: skillsError } = await externalSupabase
+        .from('skills_locales')
+        .select('skill_id, title')
         .in('skill_id', skillIds)
+        .eq('locale', 'en')
+      
+      console.log('External skills query result:', JSON.stringify({ skillIds, count: skillsData?.length, error: skillsError?.message }))
       
       if (skillsData) {
         for (const s of skillsData) {
           if (!skillNameMap.has(s.skill_id)) {
-            skillNameMap.set(s.skill_id, s.skill_name)
+            skillNameMap.set(s.skill_id, s.title)
+          }
+        }
+      }
+
+      // Fallback: if skills_locales didn't work, try milestones table
+      if (skillNameMap.size === 0) {
+        const { data: milestonesData } = await externalSupabase
+          .from('milestones')
+          .select('skill_id, skill_name')
+          .in('skill_id', skillIds)
+        
+        console.log('External milestones fallback:', JSON.stringify({ count: milestonesData?.length }))
+        
+        if (milestonesData) {
+          for (const s of milestonesData) {
+            if (!skillNameMap.has(s.skill_id)) {
+              skillNameMap.set(s.skill_id, s.skill_name)
+            }
           }
         }
       }
     }
+
+    console.log('Skill name map:', JSON.stringify(Object.fromEntries(skillNameMap)))
 
     // Group by area and skill
     const areaSkillMap = new Map<number, Map<number, { total: number; mastered: number }>>()
@@ -358,13 +425,11 @@ Deno.serve(async (req) => {
       const skillId = r.skill_id ?? 0
       if (areaId === 0) continue
 
-      // Area totals
       if (!areaTotals.has(areaId)) areaTotals.set(areaId, { total: 0, mastered: 0 })
       const at = areaTotals.get(areaId)!
       at.total++
       if (r.answer === 'yes') at.mastered++
 
-      // Skill within area
       if (skillId > 0) {
         if (!areaSkillMap.has(areaId)) areaSkillMap.set(areaId, new Map())
         const skillMap = areaSkillMap.get(areaId)!
@@ -395,7 +460,6 @@ Deno.serve(async (req) => {
           }
           skills.sort((a, b) => a.percentage - b.percentage)
         }
-
         return {
           area_id: areaId,
           area_name: areaNames[areaId] || `Area ${areaId}`,
@@ -407,7 +471,6 @@ Deno.serve(async (req) => {
         }
       })
 
-    // Calculate overall pace
     const avgPercentage = areas.length > 0
       ? areas.reduce((sum, a) => sum + a.percentage, 0) / areas.length
       : 50
