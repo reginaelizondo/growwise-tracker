@@ -462,21 +462,6 @@ const AssessmentNew = () => {
     }
   };
 
-  // Handle skip area
-  const handleSkipArea = () => {
-    if (viewState.type !== 'skill') return;
-    const { areaIndex } = viewState;
-
-    if (areaIndex >= areas.length - 1) {
-      // Last area — complete assessment
-      handleContinueFromSummary();
-      setViewState({ type: 'areaSummary', areaIndex });
-    } else {
-      setViewState({ type: 'skill', areaIndex: areaIndex + 1, skillIndex: 0 });
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
-
   // Handle continue from area summary
   const handleContinueFromSummary = async () => {
     if (viewState.type !== 'areaSummary') return;
@@ -581,7 +566,6 @@ const AssessmentNew = () => {
         babyName={baby?.name}
         babyAgeMonths={assessment?.reference_age_months}
         overallProgress={overallProgress}
-        onSkipArea={handleSkipArea}
       />
     );
   }

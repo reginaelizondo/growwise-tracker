@@ -111,27 +111,37 @@ export const AreaSummary = ({
   return (
     <div className="min-h-screen bg-gradient-warm py-4 px-4">
       <div className="container max-w-2xl mx-auto">
-        {/* Header Card - matching skill assessment style */}
-        <div 
-          className="rounded-2xl p-4 mb-4"
-          style={{ backgroundColor: `${areaColor}12` }}
-        >
-          {/* Baby info */}
-          {babyName && (
-            <p className="text-center text-xs text-muted-foreground font-medium mb-1">
-              {babyName} • {babyAgeMonths} {babyAgeMonths === 1 ? 'month' : 'months'}
-            </p>
-          )}
-          <p className="text-center text-xs font-bold mb-3" style={{ color: areaColor }}>
-            {areaName} Area
+        {/* Baby Info */}
+        {babyName && (
+          <p className="text-center text-xs text-muted-foreground font-medium mb-1">
+            {babyName} • {babyAgeMonths} {babyAgeMonths === 1 ? 'month' : 'months'}
           </p>
+        )}
 
-          {/* Icon + Title centered */}
-          <div className="flex flex-col items-center gap-1.5">
-            <img src={areaIcon} alt={areaName} className="w-8 h-8 object-contain" />
-            <h1 className="text-lg font-bold text-center" style={{ color: areaColor }}>
-              Summary
-            </h1>
+        {/* Header Card */}
+        <div 
+          className="rounded-2xl p-3 mb-4"
+          style={{ backgroundColor: `${areaColor}10` }}
+        >
+          <div className="flex items-center justify-center gap-3">
+            <div 
+              className="w-11 h-11 rounded-xl flex items-center justify-center shadow-sm"
+              style={{ backgroundColor: `${areaColor}15` }}
+            >
+              <img 
+                src={areaIcon} 
+                alt={areaName} 
+                className="w-7 h-7 object-contain"
+              />
+            </div>
+            <div>
+              <h1 className="text-xl font-extrabold tracking-tight" style={{ color: areaColor }}>
+                {areaName}
+              </h1>
+              <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest">
+                Summary
+              </p>
+            </div>
           </div>
         </div>
 

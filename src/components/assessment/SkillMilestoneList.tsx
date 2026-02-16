@@ -28,7 +28,6 @@ interface SkillMilestoneListProps {
   onResponse: (milestoneId: number, answer: "yes" | "no") => void;
   onNextSkill: () => void;
   onGoToLastSkill?: () => void;
-  onSkipArea?: () => void;
   isLastSkill: boolean;
   babyName?: string;
   babyAgeMonths?: number;
@@ -47,7 +46,6 @@ export const SkillMilestoneList = ({
   onResponse,
   onNextSkill,
   onGoToLastSkill,
-  onSkipArea,
   isLastSkill,
   babyName,
   babyAgeMonths,
@@ -183,16 +181,6 @@ export const SkillMilestoneList = ({
         >
           {isLastSkill ? `Go to ${areaName} feedback` : "Next Skill →"}
         </Button>
-
-        {/* Skip Area */}
-        {onSkipArea && (
-          <button
-            onClick={onSkipArea}
-            className="w-full mt-3 text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors text-center py-2"
-          >
-            Skip this area
-          </button>
-        )}
       </div>
     </div>
   );
