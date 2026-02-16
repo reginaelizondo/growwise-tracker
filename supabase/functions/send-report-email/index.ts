@@ -342,12 +342,12 @@ function buildEmailHtml(babyName: string, ageMonths: number, areas: AreaResult[]
               <tr>
                 <td style="padding-right: 5px;">
                   <a href="https://apps.apple.com/app/kinedu-baby-development/id740356884">
-                    <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store" style="height: 40px;" />
+                    <img src="${STORAGE_URL}/app-store-badge.png" alt="Download on the App Store" style="height: 40px;" />
                   </a>
                 </td>
                 <td style="padding-left: 5px;">
                   <a href="https://play.google.com/store/apps/details?id=com.kinedu">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Get it on Google Play" style="height: 40px;" />
+                    <img src="${STORAGE_URL}/google-play-badge.png" alt="Get it on Google Play" style="height: 40px;" />
                   </a>
                 </td>
               </tr>
