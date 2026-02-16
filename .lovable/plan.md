@@ -1,60 +1,115 @@
 
+# Post-Assessment Results Page - Two Paths
 
-## Subir imagenes a storage publico para el email
+## Overview
+Replace the current behavior (redirect to Kinedu signup after assessment) with a new results page that shows assessment results and maximizes email capture + trial conversion. Two paths based on whether the user provided email at registration.
 
-### Problema actual
-El email usa emojis y texto en lugar de los logos reales porque las imagenes del proyecto (`src/assets/`) no son accesibles por URL publica. Los emails necesitan URLs publicas para mostrar imagenes.
+## Current Behavior
+- Assessment completion in `AssessmentNew.tsx` redirects directly to `https://app.kinedu.com/ia-signuppage/?swc=ia-report`
+- The existing `Report.tsx` page is a detailed report accessible via `/report/:id`
 
-### Solucion
-Crear un bucket publico en storage llamado `email-assets`, subir las imagenes necesarias, y actualizar el HTML del email para usar esas URLs.
+## New Behavior
+- Assessment completion navigates to `/report/:id` instead of redirecting externally
+- The Report page is completely redesigned with two paths
 
-### Imagenes a subir
+---
 
-| Imagen | Archivo fuente | Destino en bucket |
-|--------|---------------|-------------------|
-| Logo Kinedu | `src/assets/logo-kinedu-blue.png` | `email-assets/logo-kinedu-blue.png` |
-| Physical | `src/assets/Logo_Physical_HD.png` | `email-assets/Logo_Physical_HD.png` |
-| Cognitive | `src/assets/Logo_Cognitive_HD.png` | `email-assets/Logo_Cognitive_HD.png` |
-| Linguistic | `src/assets/Logo_Linguistic_HD.png` | `email-assets/Logo_Linguistic_HD.png` |
-| Emotional | `src/assets/Logo_Emotional_HD.png` | `email-assets/Logo_Emotional_HD.png` |
-| App Store badge | URL externa de Apple | Se usa directo de Apple CDN |
-| Google Play badge | URL externa de Wikipedia/Google | Se usa directo de Google CDN |
+## Path A: User HAS email (baby.email exists)
 
-### Pasos
+Single scrollable page with:
 
-1. **Crear bucket publico** `email-assets` via migracion SQL
+1. **Celebration header** - Party emoji, "Great job completing [Name]'s assessment!", "We've sent the full report to your email" (email fires automatically)
+2. **4 Area Cards (2x2 grid)** - Each card: area icon + name + percentage + pace gauge + progress bar + milestone count. Colors: Physical #00A3E0, Cognitive #00C853, Language #FF8A00, Social #F06292
+3. **Strengths and Focus Areas** - Green card for top strengths, yellow/amber card for areas needing support (skills sorted by score)
+4. **Timeline "How Kinedu helps [Name] grow"** - Step 1: checkmark "Take the assessment - Done!", Step 2: "Get personalized daily activities", Step 3: "Track progress as [Name] develops"
+5. **Sticky bottom CTA** - "Start [Name]'s Plan -- 7 Days Free", always visible on mobile, with "No commitment required" below
 
-2. **Politica RLS** para lectura publica (SELECT para anon)
+## Path B: User has NO email (baby.email is null)
 
-3. **Subir las 5 imagenes** al bucket (logo + 4 areas) -- esto requiere que el usuario las suba manualmente desde Cloud View, o podemos referenciar las imagenes desde el dominio del proyecto publicado (`https://growwise-tracker.lovable.app/assets/...`)
+### Screen 1: Teaser + Email Capture
 
-**Alternativa mas rapida**: Como el proyecto ya esta publicado en `https://growwise-tracker.lovable.app`, podemos usar las URLs publicas del build de Vite directamente. Las imagenes en `src/assets/` se incluyen en el build y son accesibles via el dominio publicado. Solo necesitamos encontrar los hashes correctos del build.
+1. **Celebration header** - "[Name]'s assessment is complete!" + "Here's a preview of his development."
+2. **4 Area Cards (2x2 grid)** - Same as Path A, fully visible (the hook)
+3. **Blurred skill details** - Individual skills appear but with CSS blur + gradient fade to white. Lock icon with "Unlock [Name]'s full report" + email input + "Unlock Full Report" button + "We'll also email you the results"
 
-**Alternativa recomendada**: Usar las imagenes desde `public/images/` que ya son accesibles sin hash. Actualmente solo hay `logo-kinedu-blue.png` ahi. Podemos copiar las demas a `public/images/`.
+### Screen 2: After email submission (same page, animated unlock)
 
-4. **Actualizar el edge function** `send-report-email/index.ts`:
-   - Reemplazar emojis de areas por tags `<img>` con las URLs publicas
-   - Reemplazar el logo del header por `<img>` con URL publica
-   - Usar las badges oficiales de App Store y Google Play (SVG de Apple y Google CDN)
+- Blur fades away revealing full skill details
+- Strengths and Focus Areas cards appear
+- Timeline shows 2 completed steps (assessment + results)
+- Email report fires in background
+- Sticky CTA remains
 
-### Seccion tecnica
+---
 
-**Archivos a modificar:**
-- `supabase/functions/send-report-email/index.ts` -- actualizar URLs de imagenes en el HTML
+## Technical Plan
 
-**Archivos a crear:**
-- Copiar imagenes a `public/images/`:
-  - `public/images/Logo_Physical_HD.png`
-  - `public/images/Logo_Cognitive_HD.png`
-  - `public/images/Logo_Linguistic_HD.png`
-  - `public/images/Logo_Emotional_HD.png`
+### 1. Modify `AssessmentNew.tsx` completion handlers
+- Change `window.location.href = 'https://app.kinedu.com/ia-signuppage/...'` to `navigate('/report/' + id)` in both `handleSkipArea` and `handleContinueFromSummary`
+- Keep the email fire-and-forget and `completed_at` update
 
-**URLs que se usaran en el email:**
-- Logo: `https://growwise-tracker.lovable.app/images/logo-kinedu-blue.png`
-- Physical: `https://growwise-tracker.lovable.app/images/Logo_Physical_HD.png`
-- Cognitive: `https://growwise-tracker.lovable.app/images/Logo_Cognitive_HD.png`
-- Linguistic: `https://growwise-tracker.lovable.app/images/Logo_Linguistic_HD.png`
-- Emotional: `https://growwise-tracker.lovable.app/images/Logo_Emotional_HD.png`
-- App Store: `https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg`
-- Google Play: `https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg`
+### 2. Rewrite `Report.tsx` (complete overhaul)
+- Add state: `hasEmail` (derived from `baby.email`), `emailUnlocked` (for Path B after submit), `userEmail` (input field)
+- Reuse existing data fetching logic (assessment, responses, milestones, skill calculations)
+- Remove existing complex report layout (gauges, collapsibles, recommended activities, print view, etc.)
+- Build new simplified layout:
 
+**Shared components:**
+- `CelebrationHeader` - emoji + congratulations text
+- `AreaCard` - icon, name, percentage, pace, progress bar, milestone count (2x2 grid)
+- `StrengthsFocusCards` - green strengths card + amber focus areas card
+- `KineduTimeline` - 3-step vertical timeline with completion states
+- `EmailCaptureOverlay` - blurred section with email form (Path B only)
+- `MobileStickyCta` (already exists, update text to "Start [Name]'s Plan -- 7 Days Free")
+
+**Rendering logic:**
+```
+if Path A (hasEmail):
+  CelebrationHeader (with email sent message)
+  AreaCards (2x2)
+  StrengthsFocusCards
+  KineduTimeline (1 step done)
+  MobileStickyCta
+
+if Path B (no email, not unlocked):
+  CelebrationHeader (preview message)
+  AreaCards (2x2) -- fully visible
+  BlurredSkillDetails + EmailCaptureOverlay
+  MobileStickyCta
+
+if Path B (email submitted, unlocked):
+  CelebrationHeader (updated)
+  AreaCards (2x2)
+  SkillDetails (animated reveal)
+  StrengthsFocusCards
+  KineduTimeline (2 steps done)
+  MobileStickyCta
+```
+
+### 3. Email capture (Path B)
+- On submit: update `babies` table with email, fire `send-report-email` edge function
+- Set `emailUnlocked = true` to trigger smooth CSS transition (blur removal)
+- Track event `email_captured_post_assessment`
+
+### 4. Update `MobileStickyCta` component
+- Change button text to "Start [Name]'s Plan -- 7 Days Free"
+- Add "No commitment required" text below button
+- Style: green background, always visible on mobile
+
+### 5. Styling
+- Background: warm cream `#FBF9F6`
+- Card borders: `#E8E4DF`
+- Border radius: 16-18px
+- Font: system (Nunito if available)
+- Area colors: Physical #00A3E0, Cognitive #00C853, Linguistic #FF8A00, Socio-Emotional #F06292
+- Blur transition: CSS `filter: blur()` with `transition: filter 0.6s ease-out`
+
+### 6. Files to modify
+- `src/pages/AssessmentNew.tsx` - Change redirect to navigate to report
+- `src/pages/Report.tsx` - Complete rewrite with new two-path layout
+- `src/components/MobileStickyCta.tsx` - Update text and add "No commitment" subtitle
+
+### 7. Files to keep unchanged
+- Edge function `send-report-email` - Already works
+- Database schema - `babies.email` already supports null
+- All existing components not related to the report page
