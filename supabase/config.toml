@@ -1,1 +1,28 @@
 project_id = "ogyvfohbhwxwwxlwyjth"
+
+[functions.send-report-email]
+verify_jwt = false
+
+[functions.generate-activity-image]
+verify_jwt = false
+
+[functions.generate-chart-insight]
+verify_jwt = false
+
+[functions.generate-completion-insight]
+verify_jwt = false
+
+[functions.generate-stage-expectations]
+verify_jwt = false
+
+[functions.interpret-area-results]
+verify_jwt = false
+
+[functions.interpret-skill-results]
+verify_jwt = false
+
+[functions.analytics-query]
+verify_jwt = false
+
+[functions.delete-assessment]
+verify_jwt = false
