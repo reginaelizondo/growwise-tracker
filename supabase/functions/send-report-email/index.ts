@@ -449,9 +449,16 @@ Deno.serve(async (req) => {
     ])
 
     const baby = babyResult.data
-    if (babyResult.error || !baby?.email) {
-      return new Response(JSON.stringify({ error: 'No email found for this baby' }), {
-        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    if (babyResult.error || !baby) {
+      return new Response(JSON.stringify({ error: 'Baby not found' }), {
+        status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    // If no email, skip sending — this is valid for Path B (email captured later)
+    if (!baby.email) {
+      return new Response(JSON.stringify({ skipped: true, reason: 'No email on file yet' }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
