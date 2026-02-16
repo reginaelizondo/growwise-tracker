@@ -89,7 +89,7 @@ const BabyForm = () => {
 
   const handleNextStep = () => {
     if (step === 1) {
-      if (!parentEmail || !isValidEmail(parentEmail)) {
+      if (parentEmail && !isValidEmail(parentEmail)) {
         toast.error("Please enter a valid email address");
         return;
       }
@@ -135,7 +135,7 @@ const BabyForm = () => {
           birthdate: birthDateStr,
           gestational_weeks: parseInt(gestationalWeeks),
           user_id: userId,
-          email: parentEmail,
+          email: parentEmail || null,
         })
         .select()
         .single();
@@ -214,7 +214,7 @@ const BabyForm = () => {
             />
 
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground">Your email <span className="text-destructive">*</span></Label>
+              <Label className="text-sm font-medium text-primary text-center block">Your email</Label>
               <Input
                 type="email"
                 placeholder="parent@email.com"
