@@ -214,7 +214,7 @@ Deno.serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Kinedu Assessment <onboarding@resend.dev>',
+        from: 'Kinedu Assessment <reports@kinedu.com>',
         to: [baby.email],
         subject: `${baby.name || 'Your baby'}'s Development Report is ready! 📊`,
         html,
