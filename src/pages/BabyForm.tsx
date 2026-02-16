@@ -358,7 +358,7 @@ const BabyForm = () => {
           <div className="animate-fade-in space-y-8">
             <div className="text-center">
               <h1 className="text-2xl font-bold text-primary mb-2">What's your email?</h1>
-              <p className="text-sm text-muted-foreground">Optional — we'll send you {displayName}'s results</p>
+              <p className="text-sm text-muted-foreground"><span className="font-bold">Optional</span> — we'll send you {displayName}'s results</p>
             </div>
 
             <Input
