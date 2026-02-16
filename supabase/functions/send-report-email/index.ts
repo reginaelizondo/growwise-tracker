@@ -35,13 +35,13 @@ const areaColors: Record<number, string> = {
   4: '#F06292',
 }
 
-const BASE_IMG_URL = 'https://growwise-tracker.lovable.app/images'
+const STORAGE_URL = 'https://ogyvfohbhwxwwxlwyjth.supabase.co/storage/v1/object/public/email-assets'
 
 const areaIcons: Record<number, string> = {
-  1: `${BASE_IMG_URL}/Logo_Physical_HD.png`,
-  2: `${BASE_IMG_URL}/Logo_Cognitive_HD.png`,
-  3: `${BASE_IMG_URL}/Logo_Linguistic_HD.png`,
-  4: `${BASE_IMG_URL}/Logo_Emotional_HD.png`,
+  1: `${STORAGE_URL}/Logo_Physical_HD.png`,
+  2: `${STORAGE_URL}/Logo_Cognitive_HD.png`,
+  3: `${STORAGE_URL}/Logo_Linguistic_HD.png`,
+  4: `${STORAGE_URL}/Logo_Emotional_HD.png`,
 }
 
 const areaNames: Record<number, string> = {
@@ -101,7 +101,7 @@ function getSkillContext(skillName: string): string {
   return 'Important for overall development'
 }
 
-const LOGO_URL = 'https://growwise-tracker.lovable.app/images/logo-kinedu-blue.png'
+const LOGO_URL = 'https://ogyvfohbhwxwwxlwyjth.supabase.co/storage/v1/object/public/email-assets/logo-kinedu-blue.png'
 const CTA_URL = 'https://app.kinedu.com/ia-signuppage/?swc=ia-report'
 
 function buildEmailHtml(babyName: string, ageMonths: number, areas: AreaResult[], overallPace: number): string {
