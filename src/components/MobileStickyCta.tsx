@@ -10,10 +10,8 @@ interface MobileStickyCtaProps {
 export const MobileStickyCta = ({ babyName, assessmentId, babyId }: MobileStickyCtaProps) => {
   const handleClick = () => {
     console.log('🔵 Mobile sticky CTA clicked', { assessmentId, babyId });
-    // Open URL immediately to avoid popup blocker on mobile
     window.location.href = 'https://app.kinedu.com/ia-signuppage/?swc=ia-report';
     
-    // Track event in background
     if (assessmentId && babyId) {
       supabase.from('assessment_events').insert({
         assessment_id: assessmentId,
@@ -30,29 +28,33 @@ export const MobileStickyCta = ({ babyName, assessmentId, babyId }: MobileSticky
 
   return (
     <div 
-      className="fixed bottom-0 left-0 right-0 z-[1000] lg:hidden animate-[slide-in-bottom_0.4s_ease-out_0.5s_both]"
+      className="fixed bottom-0 left-0 right-0 z-[1000] animate-[slide-in-bottom_0.4s_ease-out_0.5s_both]"
       style={{
-        boxShadow: '0 -2px 16px rgba(0,0,0,0.15)',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)'
       }}
     >
       <div 
-        className="bg-card px-4 py-3"
+        className="bg-card/95 backdrop-blur-md px-4 pt-3 pb-2"
         style={{
           borderTopLeftRadius: '16px',
-          borderTopRightRadius: '16px'
+          borderTopRightRadius: '16px',
+          boxShadow: '0 -2px 16px rgba(0,0,0,0.15)',
         }}
       >
         <Button
           size="lg"
-          className="w-full h-[60px] shadow-lg hover:shadow-xl transition-all font-semibold text-[17px] rounded-none bg-primary hover:bg-primary/90 text-white"
+          className="w-full h-[56px] shadow-lg hover:shadow-xl transition-all font-bold text-[17px] text-white"
           style={{
-            borderRadius: '0'
+            borderRadius: '14px',
+            background: 'hsl(145, 60%, 45%)',
           }}
           onClick={handleClick}
         >
-          Start {babyName}'s free 7-day plan
+          Start {babyName}'s Plan — 7 Days Free
         </Button>
+        <p className="text-center text-xs text-muted-foreground mt-1.5 mb-1">
+          No commitment required
+        </p>
       </div>
     </div>
   );

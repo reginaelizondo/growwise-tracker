@@ -524,7 +524,7 @@ const AssessmentNew = () => {
           }).catch(err => console.error('Email send error:', err));
 
           toast.success("Assessment completed!");
-          window.location.href = 'https://app.kinedu.com/ia-signuppage/?swc=ia-report';
+          navigate(`/report/${id}`);
         } catch (error) {
           console.error("Error completing assessment:", error);
           toast.error("Failed to complete assessment");
@@ -580,8 +580,7 @@ const AssessmentNew = () => {
         }).catch(err => console.error('Email send error:', err));
 
         toast.success("Assessment completed!");
-        // Redirect to Kinedu signup page
-        window.location.href = 'https://app.kinedu.com/ia-signuppage/?swc=ia-report';
+        navigate(`/report/${id}`);
       } catch (error) {
         console.error("Error completing assessment:", error);
         toast.error("Failed to complete assessment");
