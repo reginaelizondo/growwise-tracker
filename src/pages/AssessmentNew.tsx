@@ -514,6 +514,15 @@ const AssessmentNew = () => {
             timestamp: new Date().toISOString()
           }));
 
+          // Fire-and-forget email
+          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+          const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+          fetch(`${supabaseUrl}/functions/v1/send-report-email`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'apikey': supabaseKey, 'Authorization': `Bearer ${supabaseKey}` },
+            body: JSON.stringify({ assessment_id: id, baby_id: baby?.id }),
+          }).catch(err => console.error('Email send error:', err));
+
           toast.success("Assessment completed!");
           window.location.href = 'https://app.kinedu.com/ia-signuppage/?swc=ia-report';
         } catch (error) {
@@ -560,6 +569,15 @@ const AssessmentNew = () => {
           assessment_id: id,
           timestamp: new Date().toISOString()
         }));
+
+        // Fire-and-forget email
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+        fetch(`${supabaseUrl}/functions/v1/send-report-email`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': supabaseKey, 'Authorization': `Bearer ${supabaseKey}` },
+          body: JSON.stringify({ assessment_id: id, baby_id: baby?.id }),
+        }).catch(err => console.error('Email send error:', err));
 
         toast.success("Assessment completed!");
         // Redirect to Kinedu signup page
