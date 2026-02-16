@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { externalSupabase } from "@/integrations/supabase/external-client";
@@ -501,12 +501,25 @@ const AssessmentNew = () => {
 
   // Loading state
   if (loading || viewState.type === 'loading') {
+    const name = baby?.name;
     return (
-      <div className="min-h-screen bg-gradient-warm flex items-center justify-center">
-        <Card className="p-6 text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading assessment...</p>
-        </Card>
+      <div className="min-h-screen bg-gradient-warm flex items-center justify-center px-4">
+        <div className="flex flex-col items-center space-y-6">
+          <div className="relative flex items-center justify-center">
+            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+              <Sparkles className="w-9 h-9 text-primary animate-pulse" />
+            </div>
+            <div className="absolute inset-0 w-20 h-20 rounded-full border-[3px] border-primary/20 border-t-primary animate-spin" style={{ animationDuration: '1.2s' }} />
+          </div>
+          <div className="space-y-2 text-center">
+            <p className="text-xl font-bold text-primary">
+              {name ? `Personalizing ${name}'s assessment` : "Personalizing your assessment"}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Building milestones based on age & selected areas…
+            </p>
+          </div>
+        </div>
       </div>
     );
   }
