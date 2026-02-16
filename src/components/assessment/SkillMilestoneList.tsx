@@ -90,7 +90,7 @@ export const SkillMilestoneList = ({
           <p className="text-center text-xs text-muted-foreground font-medium mb-1">
             {babyName || 'Baby'} • {babyAgeMonths} {babyAgeMonths === 1 ? 'month' : 'months'}
           </p>
-          <p className="text-center text-xs text-muted-foreground mb-3">
+          <p className="text-center text-xs font-bold mb-3" style={{ color: areaColor }}>
             {areaName} Area
           </p>
 
