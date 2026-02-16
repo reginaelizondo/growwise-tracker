@@ -365,8 +365,8 @@ const Report = () => {
           )}
         </div>
 
-        {/* 2. Area Cards - 2x2 grid */}
-        <div className="grid grid-cols-2 gap-3">
+        {/* 2. Area Cards - responsive grid */}
+        <div className={`grid gap-3 ${areaResults.length === 1 ? 'grid-cols-1 max-w-xs mx-auto' : 'grid-cols-2'}`}>
           {areaResults.map(area => {
             const color = AREA_COLORS[area.area_id];
             const icon = AREA_ICONS[area.area_id];
@@ -405,27 +405,42 @@ const Report = () => {
 
         {/* 3. Skill details (blurred or visible) */}
         {!showFullDetails ? (
-          /* Path B: Blurred skills + email capture */
-          <div className="relative">
+          /* Path B: Email capture with preview behind */
+          <div className="relative" style={{ minHeight: '340px' }}>
             {/* Blurred skill list */}
             <div className="space-y-2 select-none" style={{ filter: 'blur(6px)', pointerEvents: 'none' }}>
-              {allSkillResults.slice(0, 6).map(skill => (
-                <div key={skill.skill_id} className="rounded-xl p-3 border bg-white" style={{ borderColor: '#E8E4DF' }}>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">{skill.skill_name}</span>
-                    <span className="text-sm font-bold">{skill.score}%</span>
+              {allSkillResults.length > 0 ? (
+                allSkillResults.slice(0, 6).map(skill => (
+                  <div key={skill.skill_id} className="rounded-xl p-3 border bg-white" style={{ borderColor: '#E8E4DF' }}>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium">{skill.skill_name}</span>
+                      <span className="text-sm font-bold">{skill.score}%</span>
+                    </div>
+                    <div className="w-full h-1.5 rounded-full mt-2" style={{ background: '#eee' }}>
+                      <div className="h-full rounded-full" style={{ width: `${skill.score}%`, background: AREA_COLORS[skill.area_id] }} />
+                    </div>
                   </div>
-                  <div className="w-full h-1.5 rounded-full mt-2" style={{ background: '#eee' }}>
-                    <div className="h-full rounded-full" style={{ width: `${skill.score}%`, background: AREA_COLORS[skill.area_id] }} />
+                ))
+              ) : (
+                /* Placeholder rows when no skills to show */
+                Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="rounded-xl p-3 border bg-white" style={{ borderColor: '#E8E4DF' }}>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium text-muted-foreground">Skill details</span>
+                      <span className="text-sm font-bold text-muted-foreground">—%</span>
+                    </div>
+                    <div className="w-full h-1.5 rounded-full mt-2" style={{ background: '#eee' }}>
+                      <div className="h-full rounded-full" style={{ width: '40%', background: '#ccc' }} />
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
-            {/* Gradient overlay */}
+            {/* Gradient overlay with email capture */}
             <div 
-              className="absolute inset-0 flex flex-col items-center justify-center"
+              className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl"
               style={{
-                background: 'linear-gradient(180deg, rgba(251,249,246,0.3) 0%, rgba(251,249,246,0.95) 50%, rgba(251,249,246,1) 100%)',
+                background: 'linear-gradient(180deg, rgba(251,249,246,0.2) 0%, rgba(251,249,246,0.9) 40%, rgba(251,249,246,1) 70%)',
               }}
             >
               <Lock className="w-8 h-8 text-muted-foreground mb-3" />
