@@ -46,7 +46,7 @@ export const MobileStickyCta = ({ babyName, assessmentId, babyId }: MobileSticky
           className="w-full h-[56px] shadow-lg hover:shadow-xl transition-all font-bold text-[17px] text-white"
           style={{
             borderRadius: '14px',
-            background: 'hsl(145, 60%, 45%)',
+            background: 'hsl(210, 80%, 45%)',
           }}
           onClick={handleClick}
         >
