@@ -105,218 +105,308 @@ const LOGO_URL = 'https://growwise-tracker.lovable.app/images/logo-kinedu-blue.p
 const CTA_URL = 'https://app.kinedu.com/ia-signuppage/?swc=ia-report'
 
 function buildEmailHtml(babyName: string, ageMonths: number, areas: AreaResult[], overallPace: number): string {
-  const paceInfo = getPaceMessage(overallPace)
-  const paceColor = getPaceColor(overallPace)
-
-  // Find 2 weakest skills
+  // Find weakest skills (up to 4)
   const allSkills = areas.flatMap(a => a.skills)
-  const weakestSkills = [...allSkills].sort((a, b) => a.percentage - b.percentage).slice(0, 2)
+  const weakestSkills = [...allSkills].sort((a, b) => a.percentage - b.percentage).slice(0, 4)
 
-  const snapshotText = overallPace >= 1.0
-    ? `${babyName} is progressing well overall.`
-    : `${babyName} is developing steadily.`
+  // Find strongest area
+  const sortedAreas = [...areas].sort((a, b) => b.percentage - a.percentage)
+  const strongestArea = sortedAreas[0]
 
-  // Area cards
-  const areaCardsHtml = areas.map(a => {
-    const color = areaColors[a.area_id] || '#333'
-    const iconUrl = areaIcons[a.area_id] || ''
-    const areaPaceColor = getPaceColor(a.pace)
+  // Area display names for the 2x2 grid
+  const areaDisplayNames: Record<number, string> = { 1: 'Physical', 2: 'Cognitive', 3: 'Language', 4: 'Social' }
+  const areaEmojiFallback: Record<number, string> = { 1: '🏃', 2: '🧠', 3: '💬', 4: '❤️' }
 
-    const skillRows = a.skills.map(s => {
-      const icon = getSkillStatusIcon(s.percentage)
-      const barWidth = Math.max(5, s.percentage)
-      return `
-        <tr>
-          <td style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0;">
-            <div style="font-size: 14px; font-weight: 600; color: #333;">${icon} ${s.skill_name}</div>
-            <div style="margin-top: 6px; background: #f0f0f0; border-radius: 4px; height: 8px; overflow: hidden;">
-              <div style="width: ${barWidth}%; height: 8px; background: ${color}; border-radius: 4px;"></div>
-            </div>
-            <div style="font-size: 12px; color: #888; margin-top: 4px;">${s.percentage}% · ${getSkillStatusLabel(s.percentage)}</div>
-          </td>
-        </tr>`
-    }).join('')
-
+  // Build 2x2 area grid
+  const areaById = new Map(areas.map(a => [a.area_id, a]))
+  
+  function areaCard(areaId: number): string {
+    const a = areaById.get(areaId)
+    if (!a) return ''
+    const color = areaColors[areaId] || '#333'
+    const iconUrl = areaIcons[areaId] || ''
+    const name = areaDisplayNames[areaId] || a.area_name
+    const isBest = strongestArea && strongestArea.area_id === areaId
     return `
-      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 16px; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden;">
-        <tr><td style="height: 4px; background: ${color};"></td></tr>
-        <tr>
-          <td style="padding: 16px;">
-            <table width="100%" cellpadding="0" cellspacing="0">
-              <tr>
-                <td><img src="${iconUrl}" alt="${a.area_name}" style="width: 28px; height: 28px; vertical-align: middle; margin-right: 8px;" /><span style="font-size: 18px; font-weight: 700; color: ${color};">${a.area_name}</span></td>
-                <td style="text-align: right;"><span style="font-size: 16px; font-weight: 700; color: ${areaPaceColor};">${a.pace.toFixed(1)}x</span></td>
-              </tr>
-            </table>
-            <div style="font-size: 13px; color: #888; margin-top: 4px;">${a.masteredCount}/${a.totalMilestones} milestones mastered · ${a.percentage}%</div>
-          </td>
-        </tr>
-        ${skillRows}
+      <table width="100%" cellpadding="0" cellspacing="0" style="background: #FBF9F6; border-radius: 16px; overflow: hidden; border: 1.5px solid #E8E4DF;">
+        <tr><td style="height: 3px; background: ${color};"></td></tr>
+        <tr><td style="padding: 14px 14px 12px;">
+          <table width="100%" cellpadding="0" cellspacing="0"><tr>
+            <td><img src="${iconUrl}" alt="${name}" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 4px;" /> <span style="font-size: 14px; font-weight: 800; color: ${color};">${name}</span></td>
+            <td style="text-align: right;"><span style="font-size: 16px; font-weight: 800; color: ${color};">${a.percentage}%</span></td>
+          </tr></table>
+          <div style="margin-top: 8px; background: #E8E4DF; border-radius: 4px; height: 6px; overflow: hidden;">
+            <div style="width: ${Math.max(5, a.percentage)}%; height: 6px; background: ${color}; border-radius: 4px;"></div>
+          </div>
+          <div style="margin-top: 6px; font-size: 11px; color: #A0AEC0; font-weight: 600;">${a.masteredCount} of ${a.totalMilestones} milestones${isBest ? ' ⭐' : ''}</div>
+        </td></tr>
       </table>`
+  }
+
+  // Focus skills rows
+  const focusRows = weakestSkills.map((s, i) => {
+    const pctColor = s.percentage <= 15 ? '#E53E3E' : '#DD6B20'
+    const isLast = i === weakestSkills.length - 1
+    return `
+      <tr>
+        <td style="padding: 7px 0;${!isLast ? ' border-bottom: 1px solid #FEEBC8;' : ''}">
+          <table width="100%" cellpadding="0" cellspacing="0"><tr>
+            <td><span style="font-size: 13px; font-weight: 700; color: #2D3748;">${s.skill_name}</span></td>
+            <td style="text-align: right; width: 50px;"><span style="font-size: 13px; font-weight: 800; color: ${pctColor};">${s.percentage}%</span></td>
+          </tr></table>
+        </td>
+      </tr>`
   }).join('')
 
-  // Weakest skills for snapshot
-  const weakSkillsList = weakestSkills.map(s => `
-    <tr>
-      <td style="padding: 6px 0;">
-        <table width="100%" cellpadding="0" cellspacing="0">
-          <tr>
-            <td style="width: 8px; vertical-align: top; padding-top: 6px;"><div style="width: 8px; height: 8px; border-radius: 50%; background: #F59E0B;"></div></td>
-            <td style="padding-left: 12px;">
-              <div style="font-size: 15px; font-weight: 700; color: #333;">${s.skill_name} <span style="font-weight: 400; color: #D97706;">${s.percentage}%</span></div>
-              <div style="font-size: 13px; color: #6B7280; margin-top: 2px;">${getSkillContext(s.skill_name)}</div>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  `).join('')
+  // Preheader text
+  const preheader = `${babyName} has strengths in ${areaDisplayNames[strongestArea?.area_id] || 'social'} skills — but ${weakestSkills.length} areas need your attention in the next 60 days.`
 
-  return `
-<!DOCTYPE html>
+  return `<!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-<body style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 20px 0;">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${babyName}'s Development Report</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #FBF9F6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif; -webkit-font-smoothing: antialiased;">
+  <div style="display: none; max-height: 0; overflow: hidden; font-size: 1px; line-height: 1px; color: #FBF9F6;">
+    ${preheader}
+  </div>
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #FBF9F6; padding: 16px 0 32px;">
     <tr><td align="center">
-      <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.08);">
-        
-        <!-- Header -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 480px; background-color: #FFFFFF; border-radius: 24px; overflow: hidden; box-shadow: 0 1px 16px rgba(0,0,0,0.04);">
+
+        <!-- HEADER -->
         <tr>
-          <td style="background: linear-gradient(135deg, #1a73e8, #4a90d9); padding: 32px 24px; text-align: center;">
-            <img src="${LOGO_URL}" alt="Kinedu" style="height: 40px; margin-bottom: 16px;" />
-            <h1 style="color: #ffffff; font-size: 26px; margin: 0 0 8px 0; font-weight: 800;">${babyName}'s Development Report</h1>
-            <p style="color: rgba(255,255,255,0.85); font-size: 15px; margin: 0;">Age: ${ageMonths} months</p>
+          <td style="padding: 24px 24px 0; text-align: center;">
+            <img src="${LOGO_URL}" alt="Kinedu" style="height: 30px;" />
           </td>
         </tr>
 
-        <!-- Horizontal Timeline - How Kinedu helps -->
+        <!-- EMOTIONAL HERO -->
         <tr>
-          <td style="padding: 24px 24px 0;">
-            <h2 style="font-size: 20px; font-weight: 700; color: #333; text-align: center; margin: 0 0 20px;">How Kinedu helps ${babyName} grow</h2>
-            <table width="100%" cellpadding="0" cellspacing="0">
+          <td style="padding: 24px 24px 20px; text-align: center;">
+            <h1 style="font-size: 26px; font-weight: 800; color: #2D3748; margin: 0 0 10px; line-height: 1.25;">
+              Good news — ${babyName} is<br/>doing great in some areas 🌟
+            </h1>
+            <p style="font-size: 15px; color: #718096; margin: 0; line-height: 1.5;">
+              But there are a few skills that need<br/>your help in the next 60 days.
+            </p>
+          </td>
+        </tr>
+
+        <!-- HOW KINEDU HELPS -->
+        <tr>
+          <td style="padding: 4px 20px 24px;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background: #FBF9F6; border-radius: 18px; border: 1.5px solid #E8E4DF; overflow: hidden;">
               <tr>
-                <!-- Step 1: Done -->
-                <td width="33%" style="text-align: center; vertical-align: top; padding: 0 4px;">
-                  <div style="width: 44px; height: 44px; border-radius: 50%; background: #4CAF50; margin: 0 auto 8px; line-height: 44px; text-align: center;">
-                    <span style="color: #fff; font-size: 20px;">✓</span>
-                  </div>
-                  <div style="font-size: 14px; font-weight: 700; color: #333;">Take the assessment</div>
-                  <div style="display: inline-block; margin-top: 6px; background: #E8F5E9; color: #4CAF50; font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 10px;">Done!</div>
-                </td>
-                <!-- Step 2 -->
-                <td width="33%" style="text-align: center; vertical-align: top; padding: 0 4px;">
-                  <div style="width: 44px; height: 44px; border-radius: 50%; background: #1a73e8; margin: 0 auto 8px; line-height: 44px; text-align: center;">
-                    <span style="color: #fff; font-size: 18px; font-weight: 700;">2</span>
-                  </div>
-                  <div style="font-size: 14px; font-weight: 700; color: #333;">Get your daily activities plan</div>
-                  <div style="font-size: 12px; color: #888; margin-top: 4px;">5-10 min activities for ${babyName}'s stage</div>
-                </td>
-                <!-- Step 3 -->
-                <td width="33%" style="text-align: center; vertical-align: top; padding: 0 4px;">
-                  <div style="width: 44px; height: 44px; border-radius: 50%; background: #1a73e8; margin: 0 auto 8px; line-height: 44px; text-align: center;">
-                    <span style="color: #fff; font-size: 18px; font-weight: 700;">3</span>
-                  </div>
-                  <div style="font-size: 14px; font-weight: 700; color: #333;">Track progress as ${babyName} develops</div>
-                  <div style="font-size: 12px; color: #888; margin-top: 4px;">We adapt as ${babyName} grows</div>
+                <td style="padding: 22px 20px;">
+                  <h2 style="font-size: 19px; font-weight: 800; color: #2D3748; text-align: center; margin: 0 0 20px;">How Kinedu helps ${babyName} grow</h2>
+                  <!-- Step 1 -->
+                  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 16px;">
+                    <tr>
+                      <td style="width: 44px; vertical-align: top;">
+                        <div style="width: 38px; height: 38px; border-radius: 50%; background: #48BB78; text-align: center; line-height: 38px;">
+                          <span style="color: #fff; font-size: 16px;">✓</span>
+                        </div>
+                      </td>
+                      <td style="padding-left: 12px; vertical-align: middle;">
+                        <span style="font-size: 15px; font-weight: 700; color: #2D3748;">Take the assessment</span>
+                        <span style="display: inline-block; margin-left: 6px; background: #C6F6D5; color: #276749; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 8px;">Done!</span>
+                      </td>
+                    </tr>
+                  </table>
+                  <!-- Step 2 -->
+                  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 16px;">
+                    <tr>
+                      <td style="width: 44px; vertical-align: top;">
+                        <div style="width: 38px; height: 38px; border-radius: 50%; background: #3182CE; text-align: center; line-height: 38px;">
+                          <span style="color: #fff; font-size: 16px; font-weight: 800;">2</span>
+                        </div>
+                      </td>
+                      <td style="padding-left: 12px; vertical-align: top;">
+                        <div style="font-size: 15px; font-weight: 700; color: #2D3748;">Get your personalized daily activities plan</div>
+                        <div style="font-size: 13px; color: #A0AEC0; margin-top: 2px;">5-10 minute activities designed for ${babyName}'s exact developmental stage</div>
+                      </td>
+                    </tr>
+                  </table>
+                  <!-- Step 3 -->
+                  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
+                    <tr>
+                      <td style="width: 44px; vertical-align: top;">
+                        <div style="width: 38px; height: 38px; border-radius: 50%; background: #3182CE; text-align: center; line-height: 38px;">
+                          <span style="color: #fff; font-size: 16px; font-weight: 800;">3</span>
+                        </div>
+                      </td>
+                      <td style="padding-left: 12px; vertical-align: top;">
+                        <div style="font-size: 15px; font-weight: 700; color: #2D3748;">Track progress as ${babyName} develops</div>
+                        <div style="font-size: 13px; color: #A0AEC0; margin-top: 2px;">We adapt recommendations as ${babyName} grows</div>
+                      </td>
+                    </tr>
+                  </table>
+                  <!-- CTA -->
+                  <a href="${CTA_URL}" style="display: block; background: linear-gradient(135deg, #22C55E, #16A34A); color: #ffffff; text-decoration: none; padding: 15px 24px; border-radius: 14px; font-weight: 800; font-size: 16px; text-align: center; box-shadow: 0 4px 12px rgba(34,197,94,0.3);">
+                    Start 7-Day Free Trial
+                  </a>
+                  <p style="font-size: 12px; color: #A0AEC0; margin: 8px 0 0; text-align: center;">No commitment required</p>
                 </td>
               </tr>
             </table>
-            <!-- CTA Button -->
-            <div style="text-align: center; margin-top: 20px;">
-              <a href="${CTA_URL}" style="display: inline-block; background: #1a73e8; color: #ffffff; text-decoration: none; padding: 14px 40px; border-radius: 10px; font-weight: 700; font-size: 16px;">Start 7-day free trial</a>
-              <p style="font-size: 12px; color: #888; margin: 8px 0 0;">No commitment required</p>
-            </div>
+          </td>
+        </tr>
+
+        <!-- RESULTS OVERVIEW - 2x2 grid -->
+        <tr>
+          <td style="padding: 0 20px 20px;">
+            <!-- Row 1 -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 8px;">
+              <tr>
+                <td width="49%" style="padding-right: 4px;">${areaCard(1)}</td>
+                <td width="49%" style="padding-left: 4px;">${areaCard(2)}</td>
+              </tr>
+            </table>
+            <!-- Row 2 -->
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td width="49%" style="padding-right: 4px;">${areaCard(3)}</td>
+                <td width="49%" style="padding-left: 4px;">${areaCard(4)}</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- FOCUS AREAS -->
+        <tr>
+          <td style="padding: 0 20px 20px;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background: #FFFBEB; border: 1.5px solid #FEEBC8; border-radius: 18px; overflow: hidden;">
+              <tr>
+                <td style="padding: 18px 18px 14px;">
+                  <p style="font-size: 14px; font-weight: 800; color: #975A16; margin: 0 0 4px;">🎯 Skills that need attention</p>
+                  <p style="font-size: 13px; color: #B7791F; margin: 0 0 14px;">These respond quickly to guided play:</p>
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    ${focusRows}
+                  </table>
+                  <div style="margin-top: 14px; padding-top: 14px; border-top: 1.5px solid #FEEBC8;">
+                    <p style="font-size: 13px; color: #975A16; margin: 0; text-align: center; font-weight: 700;">
+                      At ${ageMonths} months, ${babyName}'s brain forms <strong style="color: #C05621;">1M+ connections per second</strong>.
+                    </p>
+                  </div>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- PERSONALIZED PLAN -->
+        <tr>
+          <td style="padding: 0 20px 6px;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(180deg, #EEF6FF, #E0EFFF); border: 1.5px solid #BDD8F7; border-radius: 18px; overflow: hidden;">
+              <tr>
+                <td style="padding: 22px 20px; text-align: center;">
+                  <p style="font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: #1A3A6B; margin: 0 0 6px; font-weight: 900;">✨ Your Personalized Plan</p>
+                  <p style="font-size: 14px; color: #4A6FA5; margin: 0 0 18px; line-height: 1.4;">
+                    Kinedu created a daily play plan<br/>targeting ${babyName}'s focus areas.
+                  </p>
+                  <table width="100%" cellpadding="0" cellspacing="0" style="text-align: left; margin-bottom: 20px;">
+                    <tr><td style="padding: 5px 0;"><table cellpadding="0" cellspacing="0"><tr>
+                      <td style="width: 28px; vertical-align: middle;"><span style="font-size: 16px;">🎯</span></td>
+                      <td><span style="font-size: 13px; color: #2D3748; font-weight: 700;">Daily activities for ${babyName}'s specific needs</span></td>
+                    </tr></table></td></tr>
+                    <tr><td style="padding: 5px 0;"><table cellpadding="0" cellspacing="0"><tr>
+                      <td style="width: 28px; vertical-align: middle;"><span style="font-size: 16px;">⏱️</span></td>
+                      <td><span style="font-size: 13px; color: #2D3748; font-weight: 700;">Just 5-10 minutes a day</span></td>
+                    </tr></table></td></tr>
+                    <tr><td style="padding: 5px 0;"><table cellpadding="0" cellspacing="0"><tr>
+                      <td style="width: 28px; vertical-align: middle;"><span style="font-size: 16px;">🧸</span></td>
+                      <td><span style="font-size: 13px; color: #2D3748; font-weight: 700;">1,800+ expert-designed activities</span></td>
+                    </tr></table></td></tr>
+                    <tr><td style="padding: 5px 0;"><table cellpadding="0" cellspacing="0"><tr>
+                      <td style="width: 28px; vertical-align: middle;"><span style="font-size: 16px;">📈</span></td>
+                      <td><span style="font-size: 13px; color: #2D3748; font-weight: 700;">Parents see results in 2-4 weeks</span></td>
+                    </tr></table></td></tr>
+                  </table>
+                  <a href="${CTA_URL}" style="display: block; background: linear-gradient(135deg, #22C55E, #16A34A); color: #ffffff; text-decoration: none; padding: 15px 24px; border-radius: 14px; font-weight: 800; font-size: 16px; text-align: center; box-shadow: 0 4px 12px rgba(34,197,94,0.3);">
+                    Start 7-Day Free Trial
+                  </a>
+                  <p style="font-size: 12px; color: #90A4B8; margin: 8px 0 0;">No commitment required</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- App Store badges -->
+        <tr>
+          <td style="padding: 10px 20px 20px; text-align: center;">
+            <table cellpadding="0" cellspacing="0" style="margin: 0 auto;">
+              <tr>
+                <td style="padding-right: 5px;">
+                  <a href="https://apps.apple.com/app/kinedu-baby-development/id740356884">
+                    <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store" style="height: 40px;" />
+                  </a>
+                </td>
+                <td style="padding-left: 5px;">
+                  <a href="https://play.google.com/store/apps/details?id=com.kinedu">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Get it on Google Play" style="height: 40px;" />
+                  </a>
+                </td>
+              </tr>
+            </table>
           </td>
         </tr>
 
         <!-- Divider -->
-        <tr><td style="padding: 24px 24px 0;"><div style="border-top: 1px solid #e0e0e0;"></div></td></tr>
+        <tr><td style="padding: 0 24px;"><div style="border-top: 1.5px solid #F0EDE8;"></div></td></tr>
 
-        <!-- Snapshot Card -->
+        <!-- TESTIMONIAL -->
         <tr>
-          <td style="padding: 24px 24px 0;">
-            <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #FFFBEB, #FEF3C7); border: 1px solid #FDE68A; border-radius: 12px; overflow: hidden;">
-              <tr><td style="padding: 24px; text-align: center;">
-                <div style="width: 40px; height: 40px; border-radius: 50%; background: #FEF3C7; margin: 0 auto 12px; line-height: 40px; font-size: 20px;">📈</div>
-                <h2 style="font-size: 20px; font-weight: 700; color: #333; margin: 0 0 8px;">${babyName}'s Snapshot</h2>
-                <p style="font-size: 15px; color: #333; margin: 0 0 16px;">${snapshotText} Right now, the biggest growth opportunities are:</p>
-                <table width="90%" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
-                  ${weakSkillsList}
-                </table>
-                <div style="border-top: 1px solid rgba(245,158,11,0.3); margin-top: 16px; padding-top: 16px;">
-                  <p style="font-size: 15px; color: #333; margin: 0;"><strong>The next 60 days are key.</strong> Daily guided play can significantly accelerate these skills.</p>
-                </div>
-              </td></tr>
+          <td style="padding: 20px 20px 16px;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background: #FBF9F6; border-radius: 16px; border: 1.5px solid #E8E4DF;">
+              <tr>
+                <td style="padding: 18px 18px;">
+                  <div style="font-size: 14px; margin-bottom: 8px;">⭐⭐⭐⭐⭐</div>
+                  <p style="font-size: 14px; color: #4A5568; margin: 0 0 8px; line-height: 1.5; font-style: italic;">
+                    "Within 2 minutes I had a full picture of my son's development. Turns out he was ahead in some areas I didn't expect. Every parent should do this."
+                  </p>
+                  <p style="font-size: 13px; font-weight: 700; color: #2D3748; margin: 0;">— Jessica R.</p>
+                </td>
+              </tr>
             </table>
           </td>
         </tr>
 
-        <!-- Overall Pace -->
+        <!-- TRUST BADGES -->
         <tr>
-          <td style="padding: 24px 24px 0;">
-            <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #f8fafc, #eef2ff); border: 1px solid #e0e7ff; border-radius: 12px; overflow: hidden;">
-              <tr><td style="padding: 24px; text-align: center;">
-                <p style="font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: #888; margin: 0 0 8px;">Overall Development Pace</p>
-                <div style="font-size: 56px; font-weight: 900; color: ${paceColor}; margin: 0; line-height: 1.1;">${overallPace.toFixed(1)}x</div>
-                <p style="font-size: 15px; color: #555; margin: 12px 0 0;">${paceInfo.emoji} ${paceInfo.message}</p>
-              </td></tr>
+          <td style="padding: 0 20px 24px; text-align: center;">
+            <p style="font-size: 13px; font-weight: 700; color: #4A5568; margin: 0 0 4px;">Trusted by 10M+ families</p>
+            <p style="font-size: 12px; color: #A0AEC0; margin: 0 0 12px;">⭐ 4.8 rating · App of the Day</p>
+            <table cellpadding="0" cellspacing="0" style="margin: 0 auto;">
+              <tr>
+                <td style="padding: 0 10px; text-align: center;">
+                  <span style="font-size: 18px;">🏆</span>
+                  <div style="font-size: 10px; color: #A0AEC0; font-weight: 600;">MIT Solve</div>
+                </td>
+                <td style="padding: 0 10px; text-align: center;">
+                  <span style="font-size: 18px;">🎓</span>
+                  <div style="font-size: 10px; color: #A0AEC0; font-weight: 600;">Harvard</div>
+                </td>
+                <td style="padding: 0 10px; text-align: center;">
+                  <span style="font-size: 18px;">📚</span>
+                  <div style="font-size: 10px; color: #A0AEC0; font-weight: 600;">Stanford</div>
+                </td>
+              </tr>
             </table>
           </td>
         </tr>
 
-        <!-- Area Breakdown Title -->
-        <tr><td style="padding: 24px 24px 12px;"><h2 style="font-size: 18px; color: #333; margin: 0; font-weight: 700;">Development by Area</h2></td></tr>
-
-        <!-- Area Cards -->
-        <tr><td style="padding: 0 24px;">${areaCardsHtml}</td></tr>
-
-        <!-- CTA -->
+        <!-- FOOTER -->
         <tr>
-          <td style="padding: 8px 24px 24px;">
-            <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #f0f7ff, #e8f0fe); border-radius: 12px; overflow: hidden;">
-              <tr><td style="padding: 28px; text-align: center;">
-                <h3 style="color: #1a73e8; font-size: 20px; margin: 0 0 8px; font-weight: 700;">Want personalized activities?</h3>
-                <p style="color: #555; font-size: 14px; margin: 0 0 20px;">Download Kinedu for 1,800+ activities tailored to ${babyName}'s development stage.</p>
-                <a href="${CTA_URL}" style="display: inline-block; background: #1a73e8; color: #ffffff; text-decoration: none; padding: 14px 36px; border-radius: 10px; font-weight: 700; font-size: 16px;">Start 7-Day Free Trial</a>
-              </td></tr>
-            </table>
+          <td style="padding: 14px 24px; background: #FBF9F6; text-align: center; border-top: 1px solid #F0EDE8;">
+            <p style="font-size: 10px; color: #A0AEC0; margin: 0 0 3px;">This assessment is for informational purposes only and does not replace professional medical consultation.</p>
+            <p style="font-size: 10px; color: #CBD5E0; margin: 0;">© ${new Date().getFullYear()} Kinedu</p>
           </td>
         </tr>
 
-        <!-- App Download Section -->
-        <tr>
-          <td style="padding: 0 24px 24px;">
-            <table width="100%" cellpadding="0" cellspacing="0" style="background: #f8fafc; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden;">
-              <tr><td style="padding: 24px; text-align: center;">
-                <img src="${BASE_IMG_URL}/logo-kinedu-blue.png" alt="Kinedu" style="height: 32px; margin-bottom: 12px;" />
-                <h3 style="font-size: 18px; font-weight: 700; color: #333; margin: 0 0 4px;">Download the Kinedu app</h3>
-                <p style="font-size: 14px; color: #888; margin: 0 0 16px;">Available on iPhone and Android</p>
-                <table cellpadding="0" cellspacing="0" style="margin: 0 auto;">
-                  <tr>
-                    <td style="padding-right: 8px;">
-                      <a href="https://apps.apple.com/app/kinedu-baby-development/id740356884">
-                        <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store" style="height: 40px;" />
-                      </a>
-                    </td>
-                    <td style="padding-left: 8px;">
-                      <a href="https://play.google.com/store/apps/details?id=com.kinedu">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Get it on Google Play" style="height: 40px;" />
-                      </a>
-                    </td>
-                  </tr>
-                </table>
-              </td></tr>
-            </table>
-          </td>
-        </tr>
-
-        <!-- Footer -->
-        <tr>
-          <td style="padding: 16px 24px; background-color: #fafafa; text-align: center; border-top: 1px solid #f0f0f0;">
-            <p style="color: #999; font-size: 12px; margin: 0;">© ${new Date().getFullYear()} Kinedu. All rights reserved.</p>
-          </td>
-        </tr>
       </table>
     </td></tr>
   </table>
