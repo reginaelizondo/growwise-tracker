@@ -89,10 +89,6 @@ const BabyForm = () => {
 
   const handleNextStep = () => {
     if (step === 1) {
-      if (parentEmail && !isValidEmail(parentEmail)) {
-        toast.error("Please enter a valid email address");
-        return;
-      }
       setStep(2);
     } else if (step === 2) {
       if (!birthDate) {
@@ -100,6 +96,12 @@ const BabyForm = () => {
         return;
       }
       setStep(3);
+    } else if (step === 3) {
+      if (parentEmail && !isValidEmail(parentEmail)) {
+        toast.error("Please enter a valid email address");
+        return;
+      }
+      setStep(4);
     }
   };
 
@@ -175,7 +177,7 @@ const BabyForm = () => {
 
   const correctedAge = calculateCorrectedAge();
   const isPremature = parseInt(gestationalWeeks) < 37;
-  const progressValue = step === 1 ? 10 : step === 2 ? 16 : 22;
+  const progressValue = step === 1 ? 10 : step === 2 ? 16 : step === 3 ? 20 : 24;
   const daysInMonth = getDaysInMonth(parseInt(birthMonth), parseInt(birthYear));
   const dayOptions = Array.from({ length: daysInMonth }, (_, i) => i + 1);
   const displayName = babyName || "your baby";
@@ -213,17 +215,8 @@ const BabyForm = () => {
               autoFocus
             />
 
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-primary text-center block">Your email (optional)</Label>
-              <Input
-                type="email"
-                placeholder="parent@email.com"
-                value={parentEmail}
-                onChange={(e) => setParentEmail(e.target.value)}
-                className="h-14 text-lg bg-card border-border rounded-2xl text-center"
-              />
-              <p className="text-xs text-muted-foreground text-center">We'll send you the assessment results</p>
-            </div>
+
+
 
             <Button
               variant="success"
@@ -360,8 +353,46 @@ const BabyForm = () => {
           </div>
         )}
 
-        {/* Step 3: Area Selection */}
+        {/* Step 3: Email */}
         {step === 3 && !loading && (
+          <div className="animate-fade-in space-y-8">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold text-primary mb-2">What's your email?</h1>
+              <p className="text-sm text-muted-foreground">Optional — we'll send you {displayName}'s results</p>
+            </div>
+
+            <Input
+              type="email"
+              placeholder="parent@email.com"
+              value={parentEmail}
+              onChange={(e) => setParentEmail(e.target.value)}
+              className="h-14 text-lg bg-card border-border rounded-2xl text-center"
+              autoFocus
+            />
+
+            <div className="space-y-3">
+              <Button
+                variant="success"
+                className="w-full h-14 text-lg font-bold rounded-full shadow-lg hover:shadow-xl transition-all group"
+                onClick={handleNextStep}
+              >
+                {parentEmail ? "Continue" : "Skip"}
+                <ArrowRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
+              </Button>
+              <button
+                type="button"
+                className="w-full text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors flex items-center justify-center gap-1"
+                onClick={() => setStep(2)}
+              >
+                <ArrowLeft className="w-3 h-3" />
+                Back
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 4: Area Selection */}
+        {step === 4 && !loading && (
           <div className="animate-fade-in space-y-8">
             <div className="text-center">
               <h1 className="text-2xl font-bold text-primary mb-2">
@@ -431,7 +462,7 @@ const BabyForm = () => {
               <button
                 type="button"
                 className="w-full text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors flex items-center justify-center gap-1"
-                onClick={() => setStep(2)}
+                onClick={() => setStep(3)}
               >
                 <ArrowLeft className="w-3 h-3" />
                 Back
