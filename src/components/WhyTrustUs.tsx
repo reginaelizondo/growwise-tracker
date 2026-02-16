@@ -21,7 +21,7 @@ const credentials = [
 const WhyTrustUs = () => {
   return (
     <div className="text-center">
-      <h2 className="text-xl font-bold text-foreground mb-1">
+      <h2 className="text-xl font-bold text-primary mb-1">
         Science-backed.
       </h2>
       <p className="text-sm text-muted-foreground mb-6">

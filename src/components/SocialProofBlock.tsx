@@ -15,7 +15,7 @@ const SocialProofBlock = () => {
   return (
     <div className="bg-card border border-border rounded-2xl p-6 text-center w-full shadow-sm">
       {/* Header */}
-      <p className="text-lg font-bold text-foreground mb-1">
+      <p className="text-lg font-bold text-primary mb-1">
         Parents love the results.
       </p>
       <p className="text-sm text-muted-foreground mb-5">
