@@ -1,63 +1,34 @@
 
 
-## Email con Resultados del Assessment
+## Mejoras al Email del Reporte
 
-### Resumen
-Agregar captura de email en el Step 1 del baby form y crear un edge function que envie automaticamente un email con los resultados del assessment cuando el usuario lo complete. Usaremos **Resend** como servicio de email (gratis hasta 3,000 emails/mes).
+### Cambios en `supabase/functions/send-report-email/index.ts`
 
-### Flujo
+**1. Logo oficial de Kinedu**
+- Copiar el logo subido (`logo_kinedu.png`) a `public/images/logo_kinedu.png`
+- Usar la URL publica `https://growwise-tracker.lovable.app/images/logo_kinedu.png` en el header del email (fondo azul con logo blanco, similar al actual pero con el logo correcto)
 
-```text
-Step 1 (BabyForm)          Assessment           Completion
-+------------------+    +---------------+    +------------------+
-| Name (optional)  | -> | Milestones... | -> | Mark completed   |
-| Email (required) |    |               |    | Call edge fn     |
-+------------------+    +---------------+    | -> Send email    |
-                                              | -> Redirect      |
-                                              +------------------+
-```
+**2. CTA: "Start 7-Day Free Trial"**
+- Cambiar el texto del boton de "Get Started Free" a "Start 7-Day Free Trial"
 
-### Cambios necesarios
-
-**1. Agregar campo de email en BabyForm (Step 1)**
-- Agregar un input de email debajo del nombre del bebe
-- El nombre sigue siendo opcional, pero el email sera requerido
-- Validacion basica de formato de email
-- Guardar el email en la columna `email` de la tabla `babies` (ya existe)
-
-**2. Crear edge function `send-report-email`**
-- Recibe: `assessment_id`, `baby_id`
-- Consulta las respuestas del assessment y calcula resultados por area/skill
-- Genera un email HTML bonito con:
-  - Nombre del bebe y edad
-  - Resumen por area (percentil, milestones completados)
-  - Un CTA para descargar la app de Kinedu
-- Envia el email usando Resend API
-
-**3. Triggear el email al completar el assessment**
-- En `AssessmentNew.tsx`, cuando se marca `completed_at`, llamar al edge function antes de redirigir
-- Tambien en `handleSkipArea` cuando es la ultima area
-
-### Requisitos
-
-- **API Key de Resend**: Necesitaras crear una cuenta gratuita en [resend.com](https://resend.com) y obtener tu API key. El plan gratis incluye 3,000 emails/mes.
-- **Dominio verificado (opcional)**: Sin dominio verificado, los emails se envian desde `onboarding@resend.dev`. Para usar tu propio dominio (ej. `noreply@kinedu.com`) necesitas verificarlo en Resend.
+**3. Agregar Overall Pace of Development**
+- Calcular el overall pace promediando los porcentajes de todas las areas, luego aplicando la misma formula `calculatePace()` que usa el reporte web
+- Agregar una nueva seccion en el email entre los "Assessment Results" y el CTA que muestre:
+  - Titulo "Development Progress"
+  - El valor del pace (ej. "1.2x") en grande con color azul
+  - Un mensaje contextual basado en el pace (igual que en el reporte):
+    - pace < 0.7: "Developing steadily -- targeted activities can accelerate growth"
+    - pace 0.7-0.9: "Progressing well -- daily play maintains momentum"  
+    - pace 0.9-1.2: "On track -- keep up the great work!"
+    - pace > 1.2: "Ahead of pace -- excellent progress!"
 
 ### Seccion tecnica
 
-**BabyForm.tsx**:
-- Nuevo state: `parentEmail`
-- Input type="email" con validacion zod o nativa
-- Se pasa al insert de `babies` en el campo `email`
+Se portara la funcion `calculatePace()` directamente dentro del edge function (es pura matematica, sin dependencias de React). El layout sera una seccion HTML centrada con el valor grande del pace y el mensaje debajo, similar a como se ve en `/report`.
 
-**Edge function `send-report-email/index.ts`**:
-- Lee assessment_responses + babies para obtener datos
-- Consulta la base externa para percentiles
-- Construye HTML del email con los resultados
-- Llama a Resend API (`POST https://api.resend.com/emails`)
-- Requiere secret `RESEND_API_KEY`
+Archivo a modificar:
+- `supabase/functions/send-report-email/index.ts` - actualizar logo, CTA, agregar seccion de pace
 
-**AssessmentNew.tsx**:
-- Antes de `window.location.href = '...'`, hacer `fetch` al edge function con el assessment_id
-- No bloquear la redireccion (fire-and-forget para no hacer esperar al usuario)
+Archivo a copiar:
+- `user-uploads://logo_kinedu.png` -> `public/images/logo_kinedu.png`
 
