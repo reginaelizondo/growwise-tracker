@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, ChevronLeft } from "lucide-react";
+import { Check, ChevronDown, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -119,9 +119,12 @@ export const SkillMilestoneList = ({
         )}
 
         {/* Instruction text */}
-        <p className="text-center text-sm text-muted-foreground mb-3 font-medium">
+        <p className="text-center text-sm text-muted-foreground mb-1 font-medium">
           Check all the milestones {babyName || 'baby'} can do
         </p>
+        <div className="flex justify-center mb-3">
+          <ChevronDown className="w-5 h-5" style={{ color: areaColor }} />
+        </div>
 
         {/* Milestones List */}
         <div className="space-y-3 mb-6">
