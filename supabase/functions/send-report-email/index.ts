@@ -366,9 +366,9 @@ function buildEmailHtml(babyName: string, ageMonths: number, areas: AreaResult[]
                 <td style="padding: 18px 18px;">
                   <div style="font-size: 14px; margin-bottom: 8px;">⭐⭐⭐⭐⭐</div>
                   <p style="font-size: 14px; color: #4A5568; margin: 0 0 8px; line-height: 1.5; font-style: italic;">
-                    "Within 2 minutes I had a full picture of my son's development. Turns out he was ahead in some areas I didn't expect. Every parent should do this."
+                    "This is an app every first-time mom should have. In addition to tracking my baby's developmental milestones, getting daily activity suggestions, and accessing helpful articles, the real gem of the app is the masterclasses. They truly guide and teach you throughout the journey of learning to be a mom. I get so much out of the live classes — I've taken courses on baby sleep, introducing solids, baby yoga, and more."
                   </p>
-                  <p style="font-size: 13px; font-weight: 700; color: #2D3748; margin: 0;">— Jessica R.</p>
+                  <p style="font-size: 13px; font-weight: 700; color: #2D3748; margin: 0;">— Victoria</p>
                 </td>
               </tr>
             </table>
