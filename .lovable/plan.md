@@ -1,70 +1,60 @@
 
 
-## Rediseno del Email HTML inspirado en el /report
+## Subir imagenes a storage publico para el email
 
-El email actual es funcional pero basico. Lo vamos a redisenar para que se vea similar al reporte web, adaptado a las limitaciones de HTML para email (sin CSS moderno, todo inline).
+### Problema actual
+El email usa emojis y texto en lugar de los logos reales porque las imagenes del proyecto (`src/assets/`) no son accesibles por URL publica. Los emails necesitan URLs publicas para mostrar imagenes.
 
-### Estructura del nuevo email
+### Solucion
+Crear un bucket publico en storage llamado `email-assets`, subir las imagenes necesarias, y actualizar el HTML del email para usar esas URLs.
 
-1. **Header** - Logo Kinedu + titulo "{babyName}'s Development Report" + edad (igual al actual pero mas limpio)
+### Imagenes a subir
 
-2. **Snapshot Card** (nuevo) - Tarjeta amarilla/ambar similar a la del reporte web:
-   - Titulo: "{babyName}'s Snapshot"
-   - Texto: "{babyName} is progressing well overall"
-   - Lista de las 2 skills con menor porcentaje (las mas debiles)
-   - Mensaje: "The next 60 days are key..."
+| Imagen | Archivo fuente | Destino en bucket |
+|--------|---------------|-------------------|
+| Logo Kinedu | `src/assets/logo-kinedu-blue.png` | `email-assets/logo-kinedu-blue.png` |
+| Physical | `src/assets/Logo_Physical_HD.png` | `email-assets/Logo_Physical_HD.png` |
+| Cognitive | `src/assets/Logo_Cognitive_HD.png` | `email-assets/Logo_Cognitive_HD.png` |
+| Linguistic | `src/assets/Logo_Linguistic_HD.png` | `email-assets/Logo_Linguistic_HD.png` |
+| Emotional | `src/assets/Logo_Emotional_HD.png` | `email-assets/Logo_Emotional_HD.png` |
+| App Store badge | URL externa de Apple | Se usa directo de Apple CDN |
+| Google Play badge | URL externa de Wikipedia/Google | Se usa directo de Google CDN |
 
-3. **Development Progress** (mejorado) - Card centrada con el overall pace:
-   - Titulo: "Development Progress"
-   - Valor grande: "0.8x" con color segun pace
-   - Mensaje contextual debajo
+### Pasos
 
-4. **Area Cards** (nuevo) - Una card por area (Physical, Cognitive, Linguistic, Socio-Emotional):
-   - Nombre del area con su color y pace (ej: "Cognitive - 0.9x")
-   - Borde superior de color del area (como el reporte web)
-   - Key Skills listados con su porcentaje de avance
-   - Skills categorizados en iconos (mastered/on-track/needs-practice)
+1. **Crear bucket publico** `email-assets` via migracion SQL
 
-5. **CTA** - "Start 7-Day Free Trial" con link a Kinedu
+2. **Politica RLS** para lectura publica (SELECT para anon)
 
-6. **Footer** - Copyright
+3. **Subir las 5 imagenes** al bucket (logo + 4 areas) -- esto requiere que el usuario las suba manualmente desde Cloud View, o podemos referenciar las imagenes desde el dominio del proyecto publicado (`https://growwise-tracker.lovable.app/assets/...`)
 
-### Datos adicionales necesarios
+**Alternativa mas rapida**: Como el proyecto ya esta publicado en `https://growwise-tracker.lovable.app`, podemos usar las URLs publicas del build de Vite directamente. Las imagenes en `src/assets/` se incluyen en el build y son accesibles via el dominio publicado. Solo necesitamos encontrar los hashes correctos del build.
 
-Para mostrar las skills por area en el email, necesitamos enriquecer la logica del edge function:
-- Agrupar responses por `skill_id` ademas de por `area_id`
-- Consultar la tabla externa `skills_locales` para obtener nombres de skills (via el external Supabase)
-- Calcular pace por area (no solo overall)
+**Alternativa recomendada**: Usar las imagenes desde `public/images/` que ya son accesibles sin hash. Actualmente solo hay `logo-kinedu-blue.png` ahi. Podemos copiar las demas a `public/images/`.
 
-Como no podemos conectar al Supabase externo desde el edge function de manera sencilla, usaremos los datos que ya tenemos: agrupar por `skill_id` y usar un mapeo basico de skill names basado en la data disponible en `assessment_responses`.
+4. **Actualizar el edge function** `send-report-email/index.ts`:
+   - Reemplazar emojis de areas por tags `<img>` con las URLs publicas
+   - Reemplazar el logo del header por `<img>` con URL publica
+   - Usar las badges oficiales de App Store y Google Play (SVG de Apple y Google CDN)
 
 ### Seccion tecnica
 
-**Archivo a modificar:** `supabase/functions/send-report-email/index.ts`
+**Archivos a modificar:**
+- `supabase/functions/send-report-email/index.ts` -- actualizar URLs de imagenes en el HTML
 
-**Cambios principales:**
+**Archivos a crear:**
+- Copiar imagenes a `public/images/`:
+  - `public/images/Logo_Physical_HD.png`
+  - `public/images/Logo_Cognitive_HD.png`
+  - `public/images/Logo_Linguistic_HD.png`
+  - `public/images/Logo_Emotional_HD.png`
 
-1. Agregar interface `SkillResult` con `skill_id`, `skill_name`, `area_id`, `mastered`, `total`, `percentage`
+**URLs que se usaran en el email:**
+- Logo: `https://growwise-tracker.lovable.app/images/logo-kinedu-blue.png`
+- Physical: `https://growwise-tracker.lovable.app/images/Logo_Physical_HD.png`
+- Cognitive: `https://growwise-tracker.lovable.app/images/Logo_Cognitive_HD.png`
+- Linguistic: `https://growwise-tracker.lovable.app/images/Logo_Linguistic_HD.png`
+- Emotional: `https://growwise-tracker.lovable.app/images/Logo_Emotional_HD.png`
+- App Store: `https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg`
+- Google Play: `https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg`
 
-2. Agrupar responses por `skill_id` y `area_id` para calcular scores por skill
-
-3. Consultar `skills_locales` del Supabase externo (usando el URL y key del env de kinedu) para obtener nombres de skills -- **alternativa**: como no tenemos acceso al DB externo desde el edge function, usaremos los `skill_id` y buscaremos en una tabla interna o simplemente mostraremos los datos por area sin desglose de skills individuales
-
-4. Calcular pace **por area** usando `calculatePace()` en cada area
-
-5. Reescribir `buildEmailHtml()` con el nuevo layout:
-   - Snapshot card con fondo ambar/amarillo
-   - Overall pace card con fondo gradiente azul claro
-   - Area cards con borde superior de color, titulo "Area - Pace", y listado de skills
-   - CTA mejorado
-
-6. Los colores de las areas se actualizan para coincidir con el reporte web:
-   - Physical: `#00A3E0` (azul claro)
-   - Cognitive: `#00C853` (verde)
-   - Linguistic: `#FF8A00` (naranja)
-   - Socio-Emotional: `#F06292` (rosa)
-
-**Limitaciones del email HTML:**
-- No podemos usar CSS Grid/Flexbox avanzado (usamos tablas)
-- No podemos usar gradientes en todos los clientes (fallback a color solido)
-- La barra de gauge del pace se simulara con bloques de color en tabla
