@@ -109,36 +109,36 @@ export const AreaSummary = ({
   );
 
   return (
-    <div className="min-h-screen bg-gradient-warm py-6 px-4">
+    <div className="min-h-screen bg-gradient-warm py-4 px-4">
       <div className="container max-w-2xl mx-auto">
         {/* Baby Info */}
         {babyName && (
-          <p className="text-center text-xs text-muted-foreground font-medium mb-2">
+          <p className="text-center text-xs text-muted-foreground font-medium mb-1">
             {babyName} • {babyAgeMonths} {babyAgeMonths === 1 ? 'month' : 'months'}
           </p>
         )}
 
         {/* Header Card */}
         <div 
-          className="rounded-2xl p-5 mb-6"
+          className="rounded-2xl p-3 mb-4"
           style={{ backgroundColor: `${areaColor}10` }}
         >
-          <div className="flex flex-col items-center gap-3">
+          <div className="flex items-center justify-center gap-3">
             <div 
-              className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-sm"
+              className="w-11 h-11 rounded-xl flex items-center justify-center shadow-sm"
               style={{ backgroundColor: `${areaColor}15` }}
             >
               <img 
                 src={areaIcon} 
                 alt={areaName} 
-                className="w-10 h-10 object-contain"
+                className="w-7 h-7 object-contain"
               />
             </div>
-            <div className="text-center">
-              <h1 className="text-2xl font-extrabold tracking-tight" style={{ color: areaColor }}>
+            <div>
+              <h1 className="text-xl font-extrabold tracking-tight" style={{ color: areaColor }}>
                 {areaName}
               </h1>
-              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-widest mt-0.5">
+              <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest">
                 Summary
               </p>
             </div>
