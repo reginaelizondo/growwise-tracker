@@ -111,41 +111,29 @@ export const AreaSummary = ({
   return (
     <div className="min-h-screen bg-gradient-warm py-4 px-4">
       <div className="container max-w-2xl mx-auto">
-        {/* Baby Info */}
-        {babyName && (
-          <p className="text-center text-xs text-muted-foreground font-medium mb-1">
-            {babyName} • {babyAgeMonths} {babyAgeMonths === 1 ? 'month' : 'months'}
+        {/* Header Card - matching skill assessment style */}
+        <div 
+          className="rounded-2xl p-4 mb-4"
+          style={{ backgroundColor: `${areaColor}12` }}
+        >
+          {/* Baby info */}
+          {babyName && (
+            <p className="text-center text-xs text-muted-foreground font-medium mb-1">
+              {babyName} • {babyAgeMonths} {babyAgeMonths === 1 ? 'month' : 'months'}
+            </p>
+          )}
+          <p className="text-center text-xs font-bold mb-3" style={{ color: areaColor }}>
+            {areaName} Area
           </p>
-        )}
 
-        {/* Header Card - matching skill card style */}
-        <Card className="p-4 mb-4 border-0 shadow-soft overflow-hidden relative">
-          {/* Decorative accent bar like skill cards */}
-          <div 
-            className="absolute top-0 left-0 w-1 h-full"
-            style={{ backgroundColor: areaColor }}
-          />
-          <div className="flex items-center justify-center gap-3">
-            <div 
-              className="w-12 h-12 rounded-xl flex items-center justify-center"
-              style={{ backgroundColor: `${areaColor}15` }}
-            >
-              <img 
-                src={areaIcon} 
-                alt={areaName} 
-                className="w-8 h-8 object-contain"
-              />
-            </div>
-            <div>
-              <h1 className="text-xl font-extrabold tracking-tight" style={{ color: areaColor }}>
-                {areaName}
-              </h1>
-              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-widest">
-                Summary
-              </p>
-            </div>
+          {/* Icon + Title centered */}
+          <div className="flex flex-col items-center gap-1.5">
+            <img src={areaIcon} alt={areaName} className="w-8 h-8 object-contain" />
+            <h1 className="text-lg font-bold text-center" style={{ color: areaColor }}>
+              Summary
+            </h1>
           </div>
-        </Card>
+        </div>
 
         {/* Pace of Development subtitle with info */}
         <div className="flex items-center justify-center gap-2 mb-4">
