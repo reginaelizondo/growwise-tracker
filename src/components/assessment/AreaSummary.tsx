@@ -180,60 +180,59 @@ export const AreaSummary = ({
         </div>
 
         {/* Skills List */}
-        <div className="mb-6">
+        <div className="mb-6 space-y-0">
           {skills.map((skill, index) => {
             const pace = skill.percentile !== null ? calculatePace(skill.percentile) : 1.0;
+            const barPercent = Math.max(4, Math.min(100, (pace / 2) * 100));
             
             return (
               <div 
                 key={skill.skill_id} 
-                className="py-3"
-                style={{ borderBottom: index < skills.length - 1 ? '1px solid hsl(var(--border) / 0.4)' : 'none' }}
+                className="py-4"
+                style={{ borderBottom: index < skills.length - 1 ? '1px solid hsl(var(--border) / 0.3)' : 'none' }}
               >
-                {/* Skill name */}
-                <h3 className="text-sm font-bold text-foreground">
-                  {skill.skill_name}
-                </h3>
+                {/* Row 1: Skill name left, pace value right */}
+                <div className="flex items-baseline justify-between mb-1.5">
+                  <h3 className="text-[15px] font-bold text-foreground">
+                    {skill.skill_name}
+                  </h3>
+                  <span className="text-lg font-extrabold ml-2 flex-shrink-0" style={{ color: areaColor }}>
+                    {pace.toFixed(1)}×
+                  </span>
+                </div>
 
-                {/* Row: dots left, gauge + pace right */}
-                <div className="flex items-center gap-3 mt-1">
-                  {/* Left: mastery dots */}
-                  <div className="flex items-center gap-1 flex-shrink-0">
+                {/* Row 2: Dots + count left, progress bar right */}
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
                     <div className="flex gap-[3px]">
                       {Array.from({ length: Math.min(skill.totalCount, 14) }).map((_, i) => (
                         <div
                           key={i}
-                          className="w-[6px] h-[6px] rounded-full"
+                          className="w-[5px] h-[5px] rounded-full transition-colors"
                           style={{
-                            backgroundColor: i < skill.masteredCount ? areaColor : 'hsl(var(--muted-foreground) / 0.25)',
+                            backgroundColor: i < skill.masteredCount ? areaColor : 'hsl(var(--muted-foreground) / 0.2)',
                           }}
                         />
                       ))}
                     </div>
-                    <span className="text-[11px] text-muted-foreground ml-1">
+                    <span className="text-[10px] text-muted-foreground font-medium">
                       {skill.masteredCount}/{skill.totalCount}
                     </span>
                   </div>
 
-                  {/* Right: PaceGauge (compact, no value) + pace number */}
-                  <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                    <div className="flex-1">
-                      <PaceGauge
-                        percentile={skill.percentile ?? 50}
-                        color={areaColor}
-                        compact={true}
-                        hideGauge={false}
-                        hideValue={true}
-                      />
-                    </div>
-                    <span className="text-base font-bold flex-shrink-0" style={{ color: areaColor }}>
-                      {pace.toFixed(1)}×
-                    </span>
+                  <div className="flex-1 h-[5px] rounded-full bg-muted/60 overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-700 ease-out"
+                      style={{
+                        width: `${barPercent}%`,
+                        backgroundColor: areaColor,
+                      }}
+                    />
                   </div>
                 </div>
 
-                {/* Percentile text */}
-                <p className="text-[11px] text-muted-foreground mt-1">
+                {/* Row 3: Percentile text */}
+                <p className="text-[11px] text-muted-foreground/80 mt-1.5 leading-tight">
                   {getPercentileText(skill.percentile)}
                 </p>
               </div>
