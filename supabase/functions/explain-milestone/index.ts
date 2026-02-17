@@ -24,7 +24,7 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: "You are a child development expert. Give a very brief, warm, parent-friendly explanation of a developmental milestone. 2-3 sentences max. Include a quick practical example of what it looks like. Respond in the same language as the milestone text (Spanish or English)."
+            content: "You are a child development expert. Give a very brief, warm, parent-friendly explanation of a developmental milestone. 2-3 sentences max. Include a quick practical example of what it looks like. Always respond in English."
           },
           {
             role: "user",
