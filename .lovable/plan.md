@@ -1,59 +1,39 @@
 
-# Reemplazar progress bar por gauge de Pace en el email
+# Mejorar el Area Summary - Diseño mas limpio
 
-## Cambio visual
+## Problemas actuales
+- El valor del pace (ej. "1.0x") aparece duplicado: una vez en el header del skill y otra vez dentro del PaceGauge compact
+- Demasiado espacio vertical por skill
+- Se siente repetitivo y poco claro
 
-**Antes (actual):**
+## Nuevo diseno por skill
+
+Cada skill tendra este layout simplificado:
+
 ```text
-Physical           1.0x
-[========------]        <- progress bar de milestones
-30 of 64 milestones (47%)
+Object Exploration                    1.0x
+||||||||||||||||||||||||||||||||||||||||||||
+0x            1x            2x
+On track with 50% of babies their age
+─────────────────────────────────────────
 ```
 
-**Despues:**
-```text
-Physical           1.0x
-|||||||||||||||||||||    <- gauge de barras verticales (como PaceGauge)
-0x      1x        2x
-Right on schedule
-```
+## Cambios tecnicos
 
-## Logica de labels
+### Archivo: `src/components/assessment/AreaSummary.tsx`
 
-Se agrega una funcion `getPaceLabel(percentile)` que retorna:
-- percentile >= 90 → "Early Bloomer" (emoji: estrella)
-- percentile >= 10 → "Right on schedule" (emoji: check)
-- percentile < 10 → "Taking their time" (emoji: semilla)
+1. **Eliminar el pace duplicado del header**: Quitar el `<span>` con `pace.toFixed(1)x` del lado derecho del nombre del skill, ya que el PaceGauge compact ya lo muestra.
 
-## Detalles tecnicos
+2. **Pasar `areaName` al PaceGauge compact**: Para que muestre "Object Exploration - 1.0x" en una sola linea dentro del gauge (el PaceGauge compact ya soporta esto con la prop `areaName`).
 
-### Archivo: `supabase/functions/send-report-email/index.ts`
+3. **Alternativa mas limpia**: En vez de usar la prop `areaName` del PaceGauge (que pone todo en una linea), mantener el nombre del skill arriba en su propio rengleon y usar el PaceGauge compact SIN el nombre. Pero eliminar el pace value del header row para que solo aparezca una vez dentro del gauge.
 
-**1. Agregar funcion `getPaceLabel()`** (~linea 72):
-```typescript
-function getPaceLabel(percentile: number): { label: string; emoji: string } {
-  if (percentile >= 90) return { label: 'Early Bloomer', emoji: '🌟' }
-  if (percentile >= 10) return { label: 'Right on schedule', emoji: '✅' }
-  return { label: 'Taking their time', emoji: '🌱' }
-}
-```
+**Cambio concreto en AreaSummary.tsx (lineas 193-214):**
 
-**2. Modificar `areaCard()` (lineas 130-144):**
+- Linea 194-201: Cambiar el header para mostrar SOLO el nombre del skill (sin el pace value a la derecha)
+- Linea 204-209: El PaceGauge compact ya muestra el pace value centrado, eso se queda
+- Resultado: el pace aparece una sola vez
 
-Reemplazar la progress bar (lineas 138-139) y el texto de milestones (linea 141) por:
+### Archivo: `src/components/PaceGauge.tsx`
 
-- Un gauge HTML de ~30 barras verticales usando `<td>` dentro de una tabla
-- Cada barra es gris por defecto, y las barras cercanas a la posicion del pace se colorean con el color del area (con gradiente de opacidad)
-- Debajo del gauge: labels "0x", "1x", "2x"
-- Debajo: el label contextual ("Right on schedule", etc.)
-- Se elimina la linea de "X of Y milestones (Z%)"
-
-La posicion del indicador se calcula igual que en el componente web:
-```
-gaugePosition = (pace / 2.0) * 100  // pace 0-2 mapeado a 0-100%
-```
-
-El gauge se construye con una tabla de celdas de 3px de ancho y alto variable (mas alto cerca del pace actual), replicando el efecto visual del componente `PaceGauge`.
-
-**3. Acceso al percentile del area:**
-Se necesita que `a.percentile` este disponible en el objeto del area. Verificare si ya viene calculado o si hay que derivarlo del pace.
+No se necesitan cambios - el modo compact ya funciona bien mostrando el valor y el gauge.
