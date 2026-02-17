@@ -1,36 +1,59 @@
 
-# Agregar Pace promedio al email (area cards)
-
-## Que cambia
-En las 4 tarjetas de area del email (Physical, Cognitive, Language, Social), se reemplaza el porcentaje grande (47%) por el Pace promedio del area (ej. 1.2x), y se mueve el porcentaje a un texto secundario.
+# Reemplazar progress bar por gauge de Pace en el email
 
 ## Cambio visual
 
-**Antes:**
+**Antes (actual):**
 ```text
-Physical    47%
-[===-----]
-30 of 64 milestones
+Physical           1.0x
+[========------]        <- progress bar de milestones
+30 of 64 milestones (47%)
 ```
 
 **Despues:**
 ```text
-Physical   1.2x
-[===-----]
-30 of 64 milestones (47%)
+Physical           1.0x
+|||||||||||||||||||||    <- gauge de barras verticales (como PaceGauge)
+0x      1x        2x
+Right on schedule
 ```
 
-El valor del Pace usa la misma logica `calculatePace()` que ya existe en la edge function (linea 54). El color del Pace cambia segun el valor (verde si >= 1.0, azul si < 1.0) usando `getPaceColor()` que tambien ya existe.
+## Logica de labels
+
+Se agrega una funcion `getPaceLabel(percentile)` que retorna:
+- percentile >= 90 → "Early Bloomer" (emoji: estrella)
+- percentile >= 10 → "Right on schedule" (emoji: check)
+- percentile < 10 → "Taking their time" (emoji: semilla)
 
 ## Detalles tecnicos
 
 ### Archivo: `supabase/functions/send-report-email/index.ts`
 
-Modificar la funcion `areaCard()` (lineas 123-144):
+**1. Agregar funcion `getPaceLabel()`** (~linea 72):
+```typescript
+function getPaceLabel(percentile: number): { label: string; emoji: string } {
+  if (percentile >= 90) return { label: 'Early Bloomer', emoji: '🌟' }
+  if (percentile >= 10) return { label: 'Right on schedule', emoji: '✅' }
+  return { label: 'Taking their time', emoji: '🌱' }
+}
+```
 
-1. Calcular el pace del area usando `a.pace` (ya viene en AreaResult)
-2. Cambiar el numero grande de `${a.percentage}%` a `${a.pace}x`
-3. Colorear el pace con `getPaceColor(a.pace)`
-4. En la linea de milestones, agregar el porcentaje: `30 of 64 milestones (47%)`
+**2. Modificar `areaCard()` (lineas 130-144):**
 
-Solo se modifica esta funcion. Todo lo demas del email queda igual.
+Reemplazar la progress bar (lineas 138-139) y el texto de milestones (linea 141) por:
+
+- Un gauge HTML de ~30 barras verticales usando `<td>` dentro de una tabla
+- Cada barra es gris por defecto, y las barras cercanas a la posicion del pace se colorean con el color del area (con gradiente de opacidad)
+- Debajo del gauge: labels "0x", "1x", "2x"
+- Debajo: el label contextual ("Right on schedule", etc.)
+- Se elimina la linea de "X of Y milestones (Z%)"
+
+La posicion del indicador se calcula igual que en el componente web:
+```
+gaugePosition = (pace / 2.0) * 100  // pace 0-2 mapeado a 0-100%
+```
+
+El gauge se construye con una tabla de celdas de 3px de ancho y alto variable (mas alto cerca del pace actual), replicando el efecto visual del componente `PaceGauge`.
+
+**3. Acceso al percentile del area:**
+Se necesita que `a.percentile` este disponible en el objeto del area. Verificare si ya viene calculado o si hay que derivarlo del pace.
