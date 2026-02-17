@@ -87,20 +87,36 @@ const BabyForm = () => {
 
   const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
+  const trackStep = (stepName: string, extraData?: Record<string, any>) => {
+    try {
+      supabase.from('page_events').insert({
+        event_type: stepName,
+        event_data: { source: 'baby_form', ...extraData },
+        user_agent: navigator.userAgent,
+        session_id: getSessionId()
+      }).then(() => {});
+    } catch (err) {
+      console.error('Tracking error:', err);
+    }
+  };
+
   const handleNextStep = () => {
     if (step === 1) {
+      trackStep('form_name_completed', { name: babyName });
       setStep(2);
     } else if (step === 2) {
       if (!birthDate) {
         toast.error("Please select the birth date");
         return;
       }
+      trackStep('form_birthday_completed');
       setStep(3);
     } else if (step === 3) {
       if (parentEmail && !isValidEmail(parentEmail)) {
         toast.error("Please enter a valid email address");
         return;
       }
+      trackStep('form_email_completed', { has_email: !!parentEmail });
       setStep(4);
     }
   };

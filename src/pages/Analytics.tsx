@@ -26,6 +26,12 @@ interface FunnelStep {
 interface FullFunnelData {
   steps: FunnelStep[];
   landing_clicks: number;
+  form_name_completed: number;
+  form_birthday_completed: number;
+  form_email_completed: number;
+  emails_at_profile: number;
+  emails_post_assessment: number;
+  babies_with_email: number;
   profile_clicks: number;
   assessments_created: number;
   engaged: number;
@@ -77,15 +83,6 @@ interface IndividualAssessmentData {
   cta_clicked: boolean;
 }
 
-interface SkillData {
-  skill_id: number;
-  skill_name: string;
-  area_id: number;
-  total_responses: number;
-  yes_rate: number;
-  no_rate: number;
-}
-
 interface AgeDistributionData {
   total: number;
   average: number;
@@ -103,7 +100,6 @@ export default function Analytics() {
   const [dailyStats, setDailyStats] = useState<DailyStatData[]>([]);
   const [dropOffByArea, setDropOffByArea] = useState<DropOffByAreaData[]>([]);
   const [individualAssessments, setIndividualAssessments] = useState<IndividualAssessmentData[]>([]);
-  const [skillData, setSkillData] = useState<SkillData[]>([]);
   const [ageDistribution, setAgeDistribution] = useState<AgeDistributionData | null>(null);
   const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState<Date | undefined>();
@@ -132,12 +128,11 @@ export default function Analytics() {
       if (startDate) filters.startDate = format(startDate, 'yyyy-MM-dd');
       if (endDate) filters.endDate = format(endDate, 'yyyy-MM-dd');
 
-      const [funnelResult, dailyResult, dropOffResult, individualResult, skillResult, ageResult] = await Promise.all([
+      const [funnelResult, dailyResult, dropOffResult, individualResult, ageResult] = await Promise.all([
         supabase.functions.invoke('analytics-query', { body: { reportType: 'full_funnel', filters } }),
         supabase.functions.invoke('analytics-query', { body: { reportType: 'daily_stats', filters } }),
         supabase.functions.invoke('analytics-query', { body: { reportType: 'drop_off_by_area', filters } }),
         supabase.functions.invoke('analytics-query', { body: { reportType: 'individual_assessments', filters } }),
-        supabase.functions.invoke('analytics-query', { body: { reportType: 'skill_performance', filters } }),
         supabase.functions.invoke('analytics-query', { body: { reportType: 'age_distribution', filters } }),
       ]);
 
@@ -145,7 +140,7 @@ export default function Analytics() {
       if (dailyResult.data) setDailyStats(dailyResult.data);
       if (dropOffResult.data) setDropOffByArea(dropOffResult.data);
       if (individualResult.data) setIndividualAssessments(individualResult.data);
-      if (skillResult.data) setSkillData(skillResult.data);
+      if (individualResult.data) setIndividualAssessments(individualResult.data);
       if (ageResult.data) setAgeDistribution(ageResult.data);
     } catch (error) {
       console.error('Error loading analytics:', error);
@@ -658,50 +653,36 @@ export default function Analytics() {
         )}
 
         {/* ============================================================ */}
-        {/* 7. SKILL PERFORMANCE (collapsible) */}
+        {/* 7. EMAIL METRICS */}
         {/* ============================================================ */}
-        {skillData.length > 0 && (
-          <Collapsible defaultOpen={false}>
-            <Card>
-              <CardHeader className="pb-3">
-                <CollapsibleTrigger className="flex items-center justify-between w-full group">
-                  <CardTitle className="flex items-center gap-2">
-                    <Target className="w-5 h-5" />
-                    Performance por Skill
-                  </CardTitle>
-                  <ChevronDown className="w-5 h-5 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
-                </CollapsibleTrigger>
-              </CardHeader>
-              <CollapsibleContent>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {skillData.slice(0, 12).map((s) => (
-                      <div key={s.skill_id} className="p-4 bg-secondary/50 rounded-lg">
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: getAreaColor(s.area_id) }} />
-                          <p className="font-medium text-sm">{s.skill_name}</p>
-                        </div>
-                        <div className="space-y-1">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Sí:</span>
-                            <span className="font-medium text-primary">{s.yes_rate.toFixed(1)}%</span>
-                          </div>
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">No:</span>
-                            <span className="font-medium">{s.no_rate.toFixed(1)}%</span>
-                          </div>
-                          <div className="flex justify-between text-xs">
-                            <span className="text-muted-foreground">Total:</span>
-                            <span>{s.total_responses} respuestas</span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </CollapsibleContent>
-            </Card>
-          </Collapsible>
+        {fullFunnel && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Target className="w-5 h-5" />
+                Métricas de Email
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="rounded-lg border p-4 text-center space-y-1">
+                  <p className="text-3xl font-bold text-primary">{fullFunnel.emails_at_profile || 0}</p>
+                  <p className="text-sm font-medium">Emails en perfil</p>
+                  <p className="text-xs text-muted-foreground">Dejaron email al crear perfil</p>
+                </div>
+                <div className="rounded-lg border p-4 text-center space-y-1">
+                  <p className="text-3xl font-bold text-primary">{fullFunnel.emails_post_assessment || 0}</p>
+                  <p className="text-sm font-medium">Emails post-assessment</p>
+                  <p className="text-xs text-muted-foreground">Dejaron email al ver reporte</p>
+                </div>
+                <div className="rounded-lg border p-4 text-center space-y-1">
+                  <p className="text-3xl font-bold text-primary">{fullFunnel.babies_with_email || 0}</p>
+                  <p className="text-sm font-medium">Total con email</p>
+                  <p className="text-xs text-muted-foreground">Bebés con email registrado</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         )}
       </div>
 

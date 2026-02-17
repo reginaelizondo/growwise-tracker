@@ -106,12 +106,16 @@ Deno.serve(async (req) => {
 // ============================================================
 async function getFullFunnel(supabase: any, filters: ReportFilters) {
   // 1. Page events
-  let peQuery = supabase.from('page_events').select('event_type, session_id');
+  let peQuery = supabase.from('page_events').select('event_type, session_id, event_data');
   if (filters.startDate) peQuery = peQuery.gte('created_at', filters.startDate);
   if (filters.endDate) peQuery = peQuery.lte('created_at', filters.endDate);
   const { data: pageEvents } = await peQuery;
 
   const landingClicks = (pageEvents || []).filter((e: any) => e.event_type === 'landing_start_clicked').length;
+  const formNameCompleted = (pageEvents || []).filter((e: any) => e.event_type === 'form_name_completed').length;
+  const formBirthdayCompleted = (pageEvents || []).filter((e: any) => e.event_type === 'form_birthday_completed').length;
+  const formEmailCompleted = (pageEvents || []).filter((e: any) => e.event_type === 'form_email_completed').length;
+  const emailsProvidedAtProfile = (pageEvents || []).filter((e: any) => e.event_type === 'form_email_completed' && e.event_data?.has_email === true).length;
   const profileClicks = (pageEvents || []).filter((e: any) => e.event_type === 'profile_continue_clicked').length;
 
   // 2. Assessments
@@ -157,7 +161,7 @@ async function getFullFunnel(supabase: any, filters: ReportFilters) {
 
   // 4. Report views and CTA clicks from assessment_events
   let evQuery = supabase.from('assessment_events').select('event_type, assessment_id')
-    .in('event_type', ['report_view', 'cta_clicked']);
+    .in('event_type', ['report_view', 'cta_clicked', 'email_captured_post_assessment']);
   if (assessmentIds.length > 0) {
     evQuery = evQuery.in('assessment_id', assessmentIds.slice(0, 500));
   }
@@ -165,10 +169,21 @@ async function getFullFunnel(supabase: any, filters: ReportFilters) {
 
   const reportViewAssessments = new Set((events || []).filter((e: any) => e.event_type === 'report_view').map((e: any) => e.assessment_id));
   const ctaClickAssessments = new Set((events || []).filter((e: any) => e.event_type === 'cta_clicked').map((e: any) => e.assessment_id));
+  const emailCapturedPost = new Set((events || []).filter((e: any) => e.event_type === 'email_captured_post_assessment').map((e: any) => e.assessment_id));
+
+  // Count babies with email (profile-level)
+  let babiesWithEmail = 0;
+  try {
+    const { count } = await supabase.from('babies').select('id', { count: 'exact', head: true }).not('email', 'is', null).neq('email', '');
+    babiesWithEmail = count || 0;
+  } catch { /* ignore */ }
 
   const steps = [
-    { label: 'Landing Clicks', count: landingClicks },
-    { label: 'Profile Clicks', count: profileClicks },
+    { label: 'Landing Click', count: landingClicks },
+    { label: '① Nombre', count: formNameCompleted },
+    { label: '② Cumpleaños', count: formBirthdayCompleted },
+    { label: '③ Email', count: formEmailCompleted },
+    { label: '④ Áreas → Continuar', count: profileClicks },
     { label: 'Assessment Creado', count: totalCreated },
     { label: '1+ Respuesta', count: engaged },
     { label: '50%+ Completado', count: halfway },
@@ -186,9 +201,14 @@ async function getFullFunnel(supabase: any, filters: ReportFilters) {
 
   return {
     steps: stepsWithDropOff,
-    // Also return flat numbers for KPI cards
     landing_clicks: landingClicks,
     profile_clicks: profileClicks,
+    form_name_completed: formNameCompleted,
+    form_birthday_completed: formBirthdayCompleted,
+    form_email_completed: formEmailCompleted,
+    emails_at_profile: emailsProvidedAtProfile,
+    emails_post_assessment: emailCapturedPost.size,
+    babies_with_email: babiesWithEmail,
     assessments_created: totalCreated,
     engaged,
     halfway,
