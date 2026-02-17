@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Check, ChevronLeft } from "lucide-react";
+import { MilestoneHelpButton } from "./MilestoneHelpButton";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -143,9 +144,16 @@ export const SkillMilestoneList = ({
               >
                 <div className="flex items-center gap-3">
                   <div className="flex-1">
-                    <p className="text-xs text-foreground leading-relaxed font-medium">
-                      {milestone.description || milestone.question}
-                    </p>
+                    <div className="flex items-start gap-1">
+                      <p className="text-xs text-foreground leading-relaxed font-medium flex-1">
+                        {milestone.description || milestone.question}
+                      </p>
+                      <MilestoneHelpButton
+                        milestoneDescription={milestone.description || milestone.question}
+                        babyAgeMonths={babyAgeMonths}
+                        areaColor={areaColor}
+                      />
+                    </div>
                     <p className="text-[10px] text-muted-foreground mt-1">
                       Usually seen between {Math.max(0, milestone.age - 1)}–{milestone.age + 1} months
                     </p>
