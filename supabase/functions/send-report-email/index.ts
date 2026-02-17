@@ -423,6 +423,7 @@ Deno.serve(async (req) => {
     const { assessment_id, baby_id } = await req.json()
 
     if (!assessment_id || !baby_id) {
+      console.log('SKIP: Missing assessment_id or baby_id', { assessment_id, baby_id })
       return new Response(JSON.stringify({ error: 'Missing assessment_id or baby_id' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -433,6 +434,7 @@ Deno.serve(async (req) => {
     const resendKey = Deno.env.get('RESEND_API_KEY')
 
     if (!resendKey) {
+      console.log('SKIP: RESEND_API_KEY not configured')
       return new Response(JSON.stringify({ error: 'RESEND_API_KEY not configured' }), {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -450,6 +452,7 @@ Deno.serve(async (req) => {
 
     const baby = babyResult.data
     if (babyResult.error || !baby) {
+      console.log('SKIP: Baby not found', { baby_id, error: babyResult.error?.message })
       return new Response(JSON.stringify({ error: 'Baby not found' }), {
         status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -457,6 +460,7 @@ Deno.serve(async (req) => {
 
     // If no email, skip sending — this is valid for Path B (email captured later)
     if (!baby.email) {
+      console.log('SKIP: No email on file for baby', baby_id)
       return new Response(JSON.stringify({ skipped: true, reason: 'No email on file yet' }), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -464,6 +468,7 @@ Deno.serve(async (req) => {
 
     const assessment = assessmentResult.data
     if (!assessment) {
+      console.log('SKIP: Assessment not found', { assessment_id, error: assessmentResult.error?.message })
       return new Response(JSON.stringify({ error: 'Assessment not found' }), {
         status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -479,6 +484,7 @@ Deno.serve(async (req) => {
 
     const responses = responsesResult.data
     if (!responses?.length) {
+      console.log('SKIP: No responses found for assessment', assessment_id, '- likely race condition, responses not yet written')
       return new Response(JSON.stringify({ error: 'No responses found' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })

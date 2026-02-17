@@ -120,15 +120,31 @@ const Report = () => {
           event_data: { source: 'report_page' }
         });
 
-        // If has email, fire email in background (Path A)
+        // If has email, fire email in background (Path A) with delay + retry
         if (assessmentData.babies?.email) {
           const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
           const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-          fetch(`${supabaseUrl}/functions/v1/send-report-email`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'apikey': supabaseKey, 'Authorization': `Bearer ${supabaseKey}` },
-            body: JSON.stringify({ assessment_id: id, baby_id: assessmentData.babies?.id }),
-          }).catch(err => console.error('Email send error:', err));
+          const sendEmail = async (retryCount = 0) => {
+            try {
+              const res = await fetch(`${supabaseUrl}/functions/v1/send-report-email`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'apikey': supabaseKey, 'Authorization': `Bearer ${supabaseKey}` },
+                body: JSON.stringify({ assessment_id: id, baby_id: assessmentData.babies?.id }),
+              });
+              const data = await res.json();
+              if (!res.ok && retryCount < 1) {
+                console.warn('Email send failed, retrying in 5s...', data);
+                setTimeout(() => sendEmail(retryCount + 1), 5000);
+              }
+            } catch (err) {
+              console.error('Email send error:', err);
+              if (retryCount < 1) {
+                setTimeout(() => sendEmail(retryCount + 1), 5000);
+              }
+            }
+          };
+          // Delay 3s to avoid race condition with response writes
+          setTimeout(() => sendEmail(), 3000);
         }
 
         // Fetch responses
@@ -257,14 +273,29 @@ const Report = () => {
     try {
       await supabase.from('babies').update({ email: userEmail.trim() }).eq('id', baby.id);
 
-      // Fire email
+      // Fire email with delay + retry (Path B)
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-      fetch(`${supabaseUrl}/functions/v1/send-report-email`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'apikey': supabaseKey, 'Authorization': `Bearer ${supabaseKey}` },
-        body: JSON.stringify({ assessment_id: id, baby_id: baby.id }),
-      }).catch(err => console.error('Email send error:', err));
+      const sendEmail = async (retryCount = 0) => {
+        try {
+          const res = await fetch(`${supabaseUrl}/functions/v1/send-report-email`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'apikey': supabaseKey, 'Authorization': `Bearer ${supabaseKey}` },
+            body: JSON.stringify({ assessment_id: id, baby_id: baby.id }),
+          });
+          const data = await res.json();
+          if (!res.ok && retryCount < 1) {
+            console.warn('Email send failed (Path B), retrying in 5s...', data);
+            setTimeout(() => sendEmail(retryCount + 1), 5000);
+          }
+        } catch (err) {
+          console.error('Email send error:', err);
+          if (retryCount < 1) {
+            setTimeout(() => sendEmail(retryCount + 1), 5000);
+          }
+        }
+      };
+      setTimeout(() => sendEmail(), 3000);
 
       // Track event
       supabase.from('assessment_events').insert({
