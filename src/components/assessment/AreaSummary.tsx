@@ -218,51 +218,51 @@ export const AreaSummary = ({
           </div>
         </div>
 
-        {/* Pace of Development subtitle with info */}
-        <div className="flex items-center justify-center gap-2 mb-4">
-          <span className="text-sm font-semibold text-foreground/70">
-            Pace of Development
-          </span>
-          {isMobile ? (
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <button className="inline-flex items-center justify-center p-1 rounded-full hover:bg-muted/50 active:bg-muted transition-colors">
-                  <Info className="w-4 h-4 text-muted-foreground" />
-                </button>
-              </DialogTrigger>
-              <DialogContent className="max-w-sm">
-                <div className="space-y-3">
-                  {infoContent}
-                </div>
-              </DialogContent>
-            </Dialog>
-          ) : (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button className="inline-flex items-center justify-center">
-                    <Info className="w-4 h-4 text-muted-foreground/60 hover:text-muted-foreground transition-colors" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-sm p-4 space-y-3" side="bottom">
-                  {infoContent}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-        </div>
-
-        {/* Personalized Feedback */}
+        {/* Pace of Development section */}
         {(() => {
           const validSkills = skills.filter(s => s.percentile !== null);
           const avgPercentile = validSkills.length > 0 ? validSkills.reduce((sum, s) => sum + (s.percentile ?? 0), 0) / validSkills.length : 50;
           const feedback = getAreaFeedback(avgPercentile, babyName || 'Your baby', areaColor);
           return (
-            <div className="flex items-center justify-center gap-2 mb-5">
-              <span style={{ color: feedback.color }}>{feedback.icon}</span>
-              <span className="text-base font-semibold" style={{ color: feedback.color }}>
-                {feedback.text}
-              </span>
+            <div className="mb-5 px-1">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                  Pace of Development
+                </span>
+                {isMobile ? (
+                  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                    <DialogTrigger asChild>
+                      <button className="inline-flex items-center justify-center p-0.5 rounded-full hover:bg-muted/50 active:bg-muted transition-colors">
+                        <Info className="w-3.5 h-3.5 text-muted-foreground/60" />
+                      </button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-sm">
+                      <div className="space-y-3">
+                        {infoContent}
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                ) : (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button className="inline-flex items-center justify-center">
+                          <Info className="w-3.5 h-3.5 text-muted-foreground/60 hover:text-muted-foreground transition-colors" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-sm p-4 space-y-3" side="bottom">
+                        {infoContent}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <span style={{ color: feedback.color }}>{feedback.icon}</span>
+                <span className="text-lg font-bold" style={{ color: feedback.color }}>
+                  {feedback.text}
+                </span>
+              </div>
             </div>
           );
         })()}
