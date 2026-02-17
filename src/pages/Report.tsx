@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { externalSupabase } from "@/integrations/supabase/external-client";
 import { MobileStickyCta } from "@/components/MobileStickyCta";
-import { calculatePace } from "@/components/PaceGauge";
+import { PaceGauge, calculatePace } from "@/components/PaceGauge";
 
 import logoPhysical from "@/assets/Logo_Physical_HD.png";
 import logoCognitive from "@/assets/Logo_Cognitive_HD.png";
@@ -417,15 +417,12 @@ const Report = () => {
                 <div className="text-3xl font-bold mb-1" style={{ color }}>
                   {area.pace.toFixed(1)}x
                 </div>
-                <div className="text-xs font-medium mb-2" style={{ color: getPaceColor(area.pace) }}>
-                  {getPaceLabel(area.pace)}
-                </div>
-                <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: `${color}20` }}>
-                  <div 
-                    className="h-full rounded-full transition-all duration-1000"
-                    style={{ width: `${area.avgScore}%`, background: color }}
-                  />
-                </div>
+                <PaceGauge
+                  pace={area.pace}
+                  color={color}
+                  compact={true}
+                  hideGauge={false}
+                />
                 <p className="text-xs text-muted-foreground mt-2">
                   {area.masteredCount}/{area.totalCount} milestones
                 </p>
