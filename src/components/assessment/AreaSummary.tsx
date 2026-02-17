@@ -183,8 +183,6 @@ export const AreaSummary = ({
         <div className="mb-6">
           {skills.map((skill, index) => {
             const pace = skill.percentile !== null ? calculatePace(skill.percentile) : 1.0;
-            const paceColor = pace >= 1.1 ? 'hsl(142, 76%, 36%)' : pace >= 0.9 ? areaColor : 'hsl(220, 15%, 55%)';
-            const barPercent = Math.min(100, (pace / 2) * 100);
             
             return (
               <div 
@@ -192,44 +190,43 @@ export const AreaSummary = ({
                 className="py-3"
                 style={{ borderBottom: index < skills.length - 1 ? '1px solid hsl(var(--border) / 0.4)' : 'none' }}
               >
-                {/* Row: skill info left, bar + pace right */}
-                <div className="flex items-center gap-3">
-                  {/* Left: name + dots */}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-bold text-foreground truncate">
-                      {skill.skill_name}
-                    </h3>
-                    <div className="flex items-center gap-1 mt-0.5">
-                      {/* Mastery dots */}
-                      <div className="flex gap-[3px]">
-                        {Array.from({ length: skill.totalCount }).map((_, i) => (
-                          <div
-                            key={i}
-                            className="w-[6px] h-[6px] rounded-full"
-                            style={{
-                              backgroundColor: i < skill.masteredCount ? areaColor : 'hsl(var(--muted-foreground) / 0.25)',
-                            }}
-                          />
-                        ))}
-                      </div>
-                      <span className="text-[11px] text-muted-foreground ml-1">
-                        {skill.masteredCount}/{skill.totalCount}
-                      </span>
+                {/* Skill name */}
+                <h3 className="text-sm font-bold text-foreground">
+                  {skill.skill_name}
+                </h3>
+
+                {/* Row: dots left, gauge + pace right */}
+                <div className="flex items-center gap-3 mt-1">
+                  {/* Left: mastery dots */}
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <div className="flex gap-[3px]">
+                      {Array.from({ length: Math.min(skill.totalCount, 14) }).map((_, i) => (
+                        <div
+                          key={i}
+                          className="w-[6px] h-[6px] rounded-full"
+                          style={{
+                            backgroundColor: i < skill.masteredCount ? areaColor : 'hsl(var(--muted-foreground) / 0.25)',
+                          }}
+                        />
+                      ))}
                     </div>
+                    <span className="text-[11px] text-muted-foreground ml-1">
+                      {skill.masteredCount}/{skill.totalCount}
+                    </span>
                   </div>
 
-                  {/* Right: progress bar + pace */}
-                  <div className="flex items-center gap-2 flex-shrink-0 w-[140px]">
-                    <div className="flex-1 h-[6px] rounded-full bg-muted overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all duration-500"
-                        style={{
-                          width: `${barPercent}%`,
-                          backgroundColor: areaColor,
-                        }}
+                  {/* Right: PaceGauge (compact, no value) + pace number */}
+                  <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                    <div className="flex-1">
+                      <PaceGauge
+                        percentile={skill.percentile ?? 50}
+                        color={areaColor}
+                        compact={true}
+                        hideGauge={false}
+                        hideValue={true}
                       />
                     </div>
-                    <span className="text-sm font-semibold w-[36px] text-right" style={{ color: paceColor }}>
+                    <span className="text-base font-bold flex-shrink-0" style={{ color: areaColor }}>
                       {pace.toFixed(1)}×
                     </span>
                   </div>
