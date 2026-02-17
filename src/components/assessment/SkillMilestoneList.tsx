@@ -183,24 +183,29 @@ export const SkillMilestoneList = ({
         </div>
 
 
-        {/* Next Skill Button */}
-        <Button
-          onClick={onNextSkill}
-          className="w-full py-6 text-lg font-semibold rounded-xl shadow-lg"
-          style={{ backgroundColor: areaColor }}
-        >
-          {isLastSkill ? `Go to ${areaName} feedback` : "Next Skill →"}
-        </Button>
+        {/* Spacer for fixed bottom */}
+        <div className="h-28" />
+      </div>
 
-        {/* Skip Area */}
-        {onSkipArea && (
-          <button
-            onClick={onSkipArea}
-            className="w-full mt-3 mb-2 text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors font-medium py-2"
+      {/* Fixed bottom buttons */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-background via-background to-transparent pt-4 pb-4 px-4">
+        <div className="container max-w-2xl mx-auto">
+          <Button
+            onClick={onNextSkill}
+            className="w-full py-6 text-lg font-semibold rounded-xl shadow-lg"
+            style={{ backgroundColor: areaColor }}
           >
-            Skip this area
-          </button>
-        )}
+            {isLastSkill ? `Go to ${areaName} feedback` : "Next Skill →"}
+          </Button>
+          {onSkipArea && (
+            <button
+              onClick={onSkipArea}
+              className="w-full mt-1 text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors font-medium py-2"
+            >
+              Skip this area
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
