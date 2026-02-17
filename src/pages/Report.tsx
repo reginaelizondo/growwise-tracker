@@ -518,88 +518,30 @@ const Report = () => {
             </div>
           </div>
         ) : (
-          /* Full skill details - Table with Pace & Rank */
-          <div className={`transition-all duration-600 ${emailUnlocked ? 'animate-[fadeIn_0.6s_ease-out]' : ''}`}>
-            {/* Group skills by area */}
-            {areaResults.map(area => {
-              const color = AREA_COLORS[area.area_id];
-              const icon = AREA_ICONS[area.area_id];
+          /* Full skill details (Path A, or Path B unlocked) */
+          <div className={`space-y-2 transition-all duration-600 ${emailUnlocked ? 'animate-[fadeIn_0.6s_ease-out]' : ''}`}>
+            {allSkillResults.map(skill => {
+              const color = AREA_COLORS[skill.area_id];
+              const statusLabel = skill.score >= 75 ? 'Great!' : skill.score >= 40 ? 'On track' : 'Needs support';
+              const statusColor = skill.score >= 75 ? 'hsl(145, 60%, 45%)' : skill.score >= 40 ? 'hsl(40, 90%, 50%)' : 'hsl(0, 70%, 55%)';
               return (
-                <div key={area.area_id} className="mb-5">
-                  {/* Area header */}
-                  <div className="flex items-center gap-2 mb-3">
-                    <img src={icon} alt={area.area_name} className="w-6 h-6" />
-                    <span className="font-bold text-sm text-foreground">{area.area_name}</span>
+                <div key={skill.skill_id} className="rounded-xl p-3 border bg-white" style={{ borderColor: '#E8E4DF' }}>
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-sm font-semibold text-foreground">{skill.skill_name}</span>
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ color: statusColor, background: `${statusColor}15` }}>
+                      {statusLabel}
+                    </span>
                   </div>
-                  
-                  {/* Column headers */}
-                  <div className="flex items-center px-3 mb-2">
-                    <span className="flex-1 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Skill</span>
-                    <span className="w-16 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider text-center">Pace</span>
-                    <span className="w-14 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider text-right">Rank</span>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: `${color}20` }}>
+                      <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${skill.score}%`, background: color }} />
+                    </div>
+                    <span className="text-sm font-bold text-foreground w-10 text-right">{skill.score}%</span>
                   </div>
-
-                  {/* Skill rows */}
-                  <div className="space-y-0 rounded-xl border bg-white overflow-hidden" style={{ borderColor: '#E8E4DF' }}>
-                    {area.skills.map((skill, idx) => {
-                      const rankColor = skill.score >= 75 ? 'hsl(145, 60%, 40%)' : skill.score >= 40 ? color : 'hsl(25, 90%, 55%)';
-                      return (
-                        <div 
-                          key={skill.skill_id} 
-                          className="flex items-center px-3 py-3"
-                          style={{ borderTop: idx > 0 ? '1px solid #F0EDE8' : 'none' }}
-                        >
-                          {/* Skill name + milestone dots */}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-foreground truncate">{skill.skill_name}</p>
-                            <div className="flex items-center gap-1 mt-1">
-                              <div className="flex gap-[3px]">
-                                {Array.from({ length: skill.total }).map((_, i) => (
-                                  <div 
-                                    key={i} 
-                                    className="w-[6px] h-[6px] rounded-full"
-                                    style={{ background: i < skill.mastered ? color : '#D4D0CB' }}
-                                  />
-                                ))}
-                              </div>
-                              <span className="text-[10px] text-muted-foreground ml-1">{skill.mastered}/{skill.total}</span>
-                            </div>
-                          </div>
-
-                          {/* Mini pace gauge */}
-                          <div className="w-16 flex justify-center">
-                            <PaceGauge
-                              pace={skill.pace}
-                              color={color}
-                              compact={true}
-                              hideGauge={true}
-                              hideValue={false}
-                            />
-                          </div>
-
-                          {/* Rank percentage */}
-                          <div className="w-14 text-right">
-                            <span className="text-lg font-bold" style={{ color: rankColor }}>
-                              {skill.score}%
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">{skill.mastered}/{skill.total} milestones</p>
                 </div>
               );
             })}
-            
-            {/* "On track" message */}
-            {allSkillResults.length > 0 && (() => {
-              const avgScore = Math.round(allSkillResults.reduce((s, sk) => s + sk.score, 0) / allSkillResults.length);
-              return (
-                <p className="text-sm text-muted-foreground text-center mt-3">
-                  On track with {avgScore}% of babies their age
-                </p>
-              );
-            })()}
           </div>
         )}
 
