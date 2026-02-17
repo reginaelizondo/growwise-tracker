@@ -519,26 +519,61 @@ const Report = () => {
           </div>
         ) : (
           /* Full skill details (Path A, or Path B unlocked) */
-          <div className={`space-y-2 transition-all duration-600 ${emailUnlocked ? 'animate-[fadeIn_0.6s_ease-out]' : ''}`}>
-            {allSkillResults.map(skill => {
+          <div className={`space-y-0 transition-all duration-600 ${emailUnlocked ? 'animate-[fadeIn_0.6s_ease-out]' : ''}`}>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Skills</p>
+            {allSkillResults.map((skill, idx) => {
               const color = AREA_COLORS[skill.area_id];
-              const statusLabel = skill.score >= 75 ? 'Great!' : skill.score >= 40 ? 'On track' : 'Needs support';
-              const statusColor = skill.score >= 75 ? 'hsl(145, 60%, 45%)' : skill.score >= 40 ? 'hsl(40, 90%, 50%)' : 'hsl(0, 70%, 55%)';
+              const percentile = skill.score;
+              const percentileColor = percentile >= 60 ? 'hsl(145, 60%, 40%)' : percentile >= 30 ? 'hsl(32, 90%, 50%)' : 'hsl(0, 60%, 55%)';
+              // Gauge fill: pace 0-2 mapped to 0-100%
+              const gaugeFill = Math.min(100, (skill.pace / 2) * 100);
               return (
-                <div key={skill.skill_id} className="rounded-xl p-3 border bg-white" style={{ borderColor: '#E8E4DF' }}>
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-sm font-semibold text-foreground">{skill.skill_name}</span>
-                    <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ color: statusColor, background: `${statusColor}15` }}>
-                      {statusLabel}
+                <div
+                  key={skill.skill_id}
+                  className={`py-3 ${idx < allSkillResults.length - 1 ? 'border-b' : ''}`}
+                  style={{ borderColor: '#E8E4DF' }}
+                >
+                  {/* Row 1: Skill name + gauge + pace + percentile */}
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">{skill.skill_name}</p>
+                      {/* Dots + fraction */}
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <div className="flex gap-0.5">
+                          {Array.from({ length: skill.total }).map((_, i) => (
+                            <div
+                              key={i}
+                              className="w-2 h-2 rounded-full"
+                              style={{ background: i < skill.mastered ? color : '#D4D4D4' }}
+                            />
+                          ))}
+                        </div>
+                        <span className="text-xs text-muted-foreground">{skill.mastered}/{skill.total}</span>
+                      </div>
+                    </div>
+                    {/* Gauge bar */}
+                    <div className="w-24 flex flex-col items-end gap-0.5">
+                      <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: '#E8E4DF' }}>
+                        <div
+                          className="h-full rounded-full transition-all duration-1000"
+                          style={{ width: `${gaugeFill}%`, background: color }}
+                        />
+                      </div>
+                      <span className="text-xs font-bold text-muted-foreground">{skill.pace.toFixed(1)}x</span>
+                    </div>
+                    {/* Percentile */}
+                    <span className="text-sm font-bold w-10 text-right" style={{ color: percentileColor }}>
+                      {percentile}%
                     </span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: `${color}20` }}>
-                      <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${skill.score}%`, background: color }} />
-                    </div>
-                    <span className="text-sm font-bold text-foreground w-10 text-right">{skill.score}%</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">{skill.mastered}/{skill.total} milestones</p>
+                  {/* Row 2: Contextual message */}
+                  <p className="text-xs text-muted-foreground mt-1.5">
+                    {skill.pace >= 1.2
+                      ? `Ahead of ${percentile}% of babies their age`
+                      : skill.pace >= 0.8
+                        ? `On track with ${percentile}% of babies their age`
+                        : `Developing — targeted activities can help`}
+                  </p>
                 </div>
               );
             })}
