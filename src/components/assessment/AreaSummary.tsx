@@ -20,7 +20,8 @@ const MiniPaceGauge = ({ pace, color }: { pace: number; color: string }) => {
   const strokeWidth = 5;
   const radius = (size - strokeWidth) / 2;
   const centerX = size / 2;
-  const centerY = size / 2;
+  const centerY = radius + strokeWidth / 2 + 1; // push center down so top of arc isn't clipped
+  const svgHeight = centerY + 2;
   
   const startAngle = Math.PI;
   const endAngle = 0;
@@ -41,7 +42,7 @@ const MiniPaceGauge = ({ pace, color }: { pace: number; color: string }) => {
   
   return (
     <div className="flex flex-col items-center">
-      <svg width={size} height={size / 2 + 4} viewBox={`0 0 ${size} ${size / 2 + 2}`}>
+      <svg width={size} height={svgHeight} viewBox={`0 0 ${size} ${svgHeight}`}>
         <path d={bgPath} fill="none" stroke="hsl(var(--border))" strokeWidth={strokeWidth} strokeLinecap="round" />
         <path d={valuePath} fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
       </svg>
