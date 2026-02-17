@@ -8,10 +8,10 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { AreaActivityRecommendation } from "@/components/AreaActivityRecommendation";
 
-const getAreaFeedback = (avgPercentile: number, babyName: string, areaColor: string) => {
-  if (avgPercentile >= 80) return { text: `${babyName} is ahead of pace!`, color: 'hsl(142, 70%, 42%)', icon: <Star className="w-4 h-4 fill-current" /> };
-  if (avgPercentile >= 40) return { text: `${babyName} is developing right on track`, color: areaColor, icon: <CheckCircle2 className="w-4 h-4" /> };
-  return { text: `${babyName} is building up — keep going!`, color: 'hsl(32, 95%, 52%)', icon: <TrendingUp className="w-4 h-4" /> };
+const getAreaFeedback = (avgPercentile: number, babyName: string) => {
+  if (avgPercentile >= 80) return { text: `${babyName} is ahead of pace!` };
+  if (avgPercentile >= 40) return { text: `${babyName} is developing right on track` };
+  return { text: `${babyName} is building up — keep going!` };
 };
 
 // Mini half-circle pace gauge for table view
@@ -222,7 +222,7 @@ export const AreaSummary = ({
         {(() => {
           const validSkills = skills.filter(s => s.percentile !== null);
           const avgPercentile = validSkills.length > 0 ? validSkills.reduce((sum, s) => sum + (s.percentile ?? 0), 0) / validSkills.length : 50;
-          const feedback = getAreaFeedback(avgPercentile, babyName || 'Your baby', areaColor);
+          const feedback = getAreaFeedback(avgPercentile, babyName || 'Your baby');
           return (
             <div className="bg-muted/40 rounded-xl p-5 mb-5 text-center">
               <div className="flex items-center justify-center gap-2 mb-2">
@@ -257,7 +257,7 @@ export const AreaSummary = ({
                   </TooltipProvider>
                 )}
               </div>
-              <p className="text-sm font-medium leading-tight" style={{ color: feedback.color }}>
+              <p className="text-sm font-medium leading-tight" style={{ color: areaColor }}>
                 {feedback.text}
               </p>
             </div>
