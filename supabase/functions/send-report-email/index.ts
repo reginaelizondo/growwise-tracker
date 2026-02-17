@@ -16,6 +16,7 @@ interface AreaResult {
   masteredCount: number
   percentage: number
   pace: number
+  percentile: number
   skills: SkillResult[]
 }
 
@@ -77,6 +78,44 @@ function getPaceColor(pace: number): string {
   return '#7C3AED'
 }
 
+function getPaceLabel(percentile: number): { label: string; emoji: string } {
+  if (percentile >= 90) return { label: 'Early Bloomer', emoji: '🌟' }
+  if (percentile >= 10) return { label: 'Right on schedule', emoji: '✅' }
+  return { label: 'Taking their time', emoji: '🌱' }
+}
+
+function buildGaugeHtml(pace: number, color: string): string {
+  const totalBars = 30
+  const currentPos = Math.max(0, Math.min(1, pace / 2.0))
+  let bars = ''
+  for (let i = 0; i < totalBars; i++) {
+    const pos = i / (totalBars - 1)
+    const dist = Math.abs(pos - currentPos)
+    let h = 12, opacity = 0.2, barColor = '#CBD5E0'
+    if (dist < 0.02) {
+      h = 24; opacity = 1; barColor = color
+    } else if (dist < 0.08) {
+      const intensity = 1 - (dist - 0.02) / 0.06
+      h = 12 + 12 * intensity; opacity = 0.3 + 0.7 * intensity; barColor = color
+    }
+    bars += `<td style="width:3px;height:${h}px;background:${barColor};opacity:${opacity.toFixed(2)};border-radius:1px 1px 0 0;"></td>`
+    if (i < totalBars - 1) bars += `<td style="width:1px;"></td>`
+  }
+  return `
+    <div style="margin-top: 8px;">
+      <table width="100%" cellpadding="0" cellspacing="0"><tr>
+        <td><table cellpadding="0" cellspacing="0" style="width:100%;"><tr style="vertical-align: bottom;">${bars}</tr></table></td>
+      </tr></table>
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:2px;">
+        <tr>
+          <td style="font-size:9px;color:#A0AEC0;font-weight:600;">0×</td>
+          <td style="font-size:9px;color:#A0AEC0;font-weight:600;text-align:center;">1×</td>
+          <td style="font-size:9px;color:#A0AEC0;font-weight:600;text-align:right;">2×</td>
+        </tr>
+      </table>
+    </div>`
+}
+
 function getSkillStatusIcon(percentage: number): string {
   if (percentage >= 75) return '✅'
   if (percentage >= 40) return '🔄'
@@ -135,10 +174,8 @@ function buildEmailHtml(babyName: string, ageMonths: number, areas: AreaResult[]
             <td><img src="${iconUrl}" alt="${name}" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 4px;" /> <span style="font-size: 14px; font-weight: 800; color: ${color};">${name}</span></td>
             <td style="text-align: right;"><span style="font-size: 16px; font-weight: 800; color: ${getPaceColor(a.pace)};">${a.pace.toFixed(1)}×</span></td>
           </tr></table>
-          <div style="margin-top: 8px; background: #E8E4DF; border-radius: 4px; height: 6px; overflow: hidden;">
-            <div style="width: ${Math.max(5, a.percentage)}%; height: 6px; background: ${color}; border-radius: 4px;"></div>
-          </div>
-          <div style="margin-top: 6px; font-size: 11px; color: #A0AEC0; font-weight: 600;">${a.masteredCount} of ${a.totalMilestones} milestones (${a.percentage}%)${isBest ? ' ⭐' : ''}</div>
+          ${buildGaugeHtml(a.pace, color)}
+          ${(() => { const pl = getPaceLabel(a.percentile); return `<div style="margin-top: 6px; font-size: 11px; color: #718096; font-weight: 700; text-align: center;">${pl.emoji} ${pl.label}</div>` })()}
         </td></tr>
       </table>`
   }
@@ -583,6 +620,7 @@ Deno.serve(async (req) => {
           totalMilestones: data.total,
           masteredCount: data.mastered,
           percentage,
+          percentile: percentage,
           pace: calculatePace(percentage),
           skills,
         }
