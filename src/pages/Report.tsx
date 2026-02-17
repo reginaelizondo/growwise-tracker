@@ -317,14 +317,14 @@ const Report = () => {
   };
 
   const getPaceLabel = (pace: number) => {
-    if (pace >= 1.2) return 'Ahead';
-    if (pace >= 0.9) return 'On track';
-    return 'Needs support';
+    if (pace >= 1.8) return 'Mastered';
+    if (pace >= 0.2) return 'On track';
+    return 'Keep practicing';
   };
 
   const getPaceColor = (pace: number) => {
-    if (pace >= 1.2) return 'hsl(145, 60%, 45%)';
-    if (pace >= 0.9) return 'hsl(40, 90%, 50%)';
+    if (pace >= 1.8) return 'hsl(145, 60%, 45%)';
+    if (pace >= 0.2) return 'hsl(40, 90%, 50%)';
     return 'hsl(0, 70%, 55%)';
   };
 
@@ -414,16 +414,26 @@ const Report = () => {
                   <img src={icon} alt={area.area_name} className="w-8 h-8" />
                   <span className="font-bold text-sm text-foreground">{area.area_name}</span>
                 </div>
-                <div className="text-3xl font-bold mb-1" style={{ color }}>
+                <div className="text-3xl font-bold mb-0.5" style={{ color }}>
                   {area.pace.toFixed(1)}x
+                </div>
+                <div className="text-xs font-semibold mb-2" style={{ color: getPaceColor(area.pace) }}>
+                  {getPaceLabel(area.pace)}
                 </div>
                 <PaceGauge
                   pace={area.pace}
                   color={color}
                   compact={true}
                   hideGauge={false}
+                  hideValue={true}
                 />
-                <p className="text-xs text-muted-foreground mt-2">
+                <div className="w-full h-1.5 rounded-full overflow-hidden mt-2" style={{ background: `${color}20` }}>
+                  <div 
+                    className="h-full rounded-full transition-all duration-1000"
+                    style={{ width: `${(area.masteredCount / Math.max(area.totalCount, 1)) * 100}%`, background: color }}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
                   {area.masteredCount}/{area.totalCount} milestones
                 </p>
               </div>

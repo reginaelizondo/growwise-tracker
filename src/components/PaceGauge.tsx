@@ -10,6 +10,7 @@ interface PaceGaugeProps {
   compact?: boolean;
   areaName?: string;
   hideGauge?: boolean;
+  hideValue?: boolean;
   showContextualMessage?: boolean;
 }
 /**
@@ -126,6 +127,7 @@ export const PaceGauge = ({
   compact = false,
   areaName,
   hideGauge = false,
+  hideValue = false,
   showContextualMessage = false
 }: PaceGaugeProps) => {
   const isMobile = useIsMobile();
@@ -235,6 +237,7 @@ export const PaceGauge = ({
       )}
 
       {/* Pace value with info icon when hideGauge is true */}
+      {!hideValue && (
       <div className="text-center mb-0">
         <div className="flex items-center justify-center gap-2">
           <div className={compact ? "text-xl font-semibold" : hideGauge ? "text-4xl font-bold" : "text-4xl font-bold"} style={{
@@ -273,6 +276,7 @@ export const PaceGauge = ({
           )}
         </div>
       </div>
+      )}
 
       {/* Contextual message - only show when showContextualMessage is true */}
       {showContextualMessage && (
