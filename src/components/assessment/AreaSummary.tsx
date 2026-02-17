@@ -8,6 +8,12 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { AreaActivityRecommendation } from "@/components/AreaActivityRecommendation";
 
+const getAreaFeedback = (avgPercentile: number, babyName: string, areaColor: string) => {
+  if (avgPercentile >= 80) return { text: `${babyName} is ahead of pace!`, color: 'hsl(142, 70%, 42%)', icon: <Star className="w-4 h-4 fill-current" /> };
+  if (avgPercentile >= 40) return { text: `${babyName} is developing right on track`, color: areaColor, icon: <CheckCircle2 className="w-4 h-4" /> };
+  return { text: `${babyName} is building up — keep going!`, color: 'hsl(32, 95%, 52%)', icon: <TrendingUp className="w-4 h-4" /> };
+};
+
 // Mini half-circle pace gauge for table view
 const MiniPaceGauge = ({ pace, color }: { pace: number; color: string }) => {
   const size = 56;
@@ -245,6 +251,21 @@ export const AreaSummary = ({
             </TooltipProvider>
           )}
         </div>
+
+        {/* Personalized Feedback */}
+        {(() => {
+          const validSkills = skills.filter(s => s.percentile !== null);
+          const avgPercentile = validSkills.length > 0 ? validSkills.reduce((sum, s) => sum + (s.percentile ?? 0), 0) / validSkills.length : 50;
+          const feedback = getAreaFeedback(avgPercentile, babyName || 'Your baby', areaColor);
+          return (
+            <div className="flex items-center justify-center gap-2 mb-5">
+              <span style={{ color: feedback.color }}>{feedback.icon}</span>
+              <span className="text-base font-semibold" style={{ color: feedback.color }}>
+                {feedback.text}
+              </span>
+            </div>
+          );
+        })()}
 
         {/* Skills Table */}
         <div className="mb-6">
