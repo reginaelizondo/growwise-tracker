@@ -1,71 +1,71 @@
 
-# Fix: Prevenir emails duplicados
 
-## Problema
-El email de reporte se envia multiples veces porque se dispara desde 4 lugares diferentes sin ninguna proteccion contra duplicados:
+# Fix: Hacer el envío de emails robusto y debuggable
 
-1. `AssessmentNew.tsx` - al completar assessment (2 code paths)
-2. `Report.tsx` - cada vez que se carga la pagina del reporte
-3. `Report.tsx` - al hacer unlock con email
-4. La edge function no tiene logica de deduplicacion
+## Problema encontrado
+El email para `ppadillasan@gmail.com` nunca se envio automaticamente. La edge function `send-report-email` fue invocada (boot registrado a las 18:02:28) pero retorno sin enviar el email. No hay logs porque los puntos de retorno temprano (no email, no assessment, no responses) no tienen `console.log`.
 
-## Solucion
+**Causa raiz probable**: Race condition. El `Report.tsx` llama a la funcion inmediatamente al cargar, pero las respuestas del assessment podrian no estar completamente guardadas en ese momento. La funcion encuentra 0 respuestas y retorna con error 400 sin loggear nada.
 
-### 1. Agregar columna `email_sent_at` a la tabla `assessments`
-Crear una migracion que agregue una columna para rastrear si ya se envio el email para ese assessment.
+## Solucion (3 partes)
 
-```sql
-ALTER TABLE assessments ADD COLUMN email_sent_at timestamptz DEFAULT NULL;
-```
+### 1. Agregar logging a TODOS los puntos de retorno en la edge function
+Cada `return` en `send-report-email` debe tener un `console.log` para que siempre quede registro de que paso. Puntos sin logging actualmente:
+- Linea 426: Missing assessment_id or baby_id
+- Linea 453: Baby not found
+- Linea 460: No email on file
+- Linea 467: Assessment not found
+- Linea 482: No responses found (probable culpable)
 
-### 2. Modificar la Edge Function `send-report-email`
-Agregar verificacion de deduplicacion al inicio de la funcion:
-- Antes de enviar, verificar si `email_sent_at` ya tiene valor para ese assessment
-- Si ya se envio, retornar `{ skipped: true, reason: 'already_sent' }` con status 200
-- Despues de enviar exitosamente, actualizar `email_sent_at = now()` en el assessment
+### 2. Agregar retry con delay en Report.tsx
+En lugar de llamar a la edge function inmediatamente al cargar el reporte (Path A), agregar un `setTimeout` de 3 segundos para dar tiempo a que todas las respuestas se guarden en la base de datos.
 
-### 3. Simplificar los disparadores en el frontend
-- **AssessmentNew.tsx**: Mantener solo UN disparo al completar (eliminar el duplicado)
-- **Report.tsx linea 127**: Mantener el disparo al cargar (Path A), pero ahora es seguro porque la edge function lo deduplica
-- **Report.tsx linea 263**: Mantener el disparo del unlock (Path B), tambien seguro con dedup
-
-## Detalles tecnicos
-
-### Migracion SQL
-```sql
-ALTER TABLE public.assessments 
-ADD COLUMN email_sent_at timestamptz DEFAULT NULL;
-```
-
-### Edge Function - cambios clave
-Al inicio del handler, despues de obtener el assessment:
 ```typescript
-// Check if email already sent for this assessment
-if (assessment.email_sent_at) {
-  return new Response(JSON.stringify({ 
-    skipped: true, 
-    reason: 'Email already sent',
-    sent_at: assessment.email_sent_at 
-  }), {
-    status: 200, 
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-  })
+// Path A: delay email to avoid race condition with response writes
+if (assessmentData.babies?.email) {
+  setTimeout(() => {
+    fetch(`${supabaseUrl}/functions/v1/send-report-email`, { ... })
+  }, 3000);
 }
 ```
 
-Despues de enviar exitosamente via Resend:
+### 3. Agregar retry automatico si la primera llamada falla
+Si la edge function retorna un error (status != 200 o `skipped: false` con error), reintentar una vez despues de 5 segundos.
+
+## Detalles tecnicos
+
+### Edge function: agregar `console.log` en cada retorno
+Antes de cada `return` en la funcion, agregar un log descriptivo:
 ```typescript
-// Mark email as sent
-await supabase
-  .from('assessments')
-  .update({ email_sent_at: new Date().toISOString() })
-  .eq('id', assessment_id)
+console.log('SKIP: No responses found for assessment', assessment_id)
+return new Response(JSON.stringify({ error: 'No responses found' }), { ... })
 ```
 
-### AssessmentNew.tsx
-Eliminar el disparo duplicado - actualmente hay 2 `fetch` identicos al completar assessment (lineas 520 y 576). Consolidar a solo uno.
+### Report.tsx: retry con backoff
+```typescript
+const sendEmail = async (retryCount = 0) => {
+  try {
+    const res = await fetch(url, options);
+    const data = await res.json();
+    if (!res.ok && retryCount < 1) {
+      setTimeout(() => sendEmail(retryCount + 1), 5000);
+    }
+  } catch (err) {
+    if (retryCount < 1) {
+      setTimeout(() => sendEmail(retryCount + 1), 5000);
+    }
+  }
+};
+setTimeout(() => sendEmail(), 3000);
+```
+
+### Archivos a modificar
+- `supabase/functions/send-report-email/index.ts` - agregar logs
+- `src/pages/Report.tsx` - delay + retry en Path A (linea ~124) y Path B (linea ~263)
 
 ## Resultado esperado
-- Cada assessment recibe maximo 1 email sin importar cuantas veces se cargue el reporte
-- El flujo sigue funcionando igual para Path A y Path B
-- Si se refresca la pagina, no se reenvia el email
+- Siempre habra logs de que paso con cada llamada a la edge function
+- El delay de 3s evita la race condition con las escrituras de respuestas
+- El retry automatico garantiza que si la primera llamada falla, se intenta de nuevo
+- El usuario `ppadillasan@gmail.com` ya recibio su email (enviado manualmente durante esta investigacion)
+
