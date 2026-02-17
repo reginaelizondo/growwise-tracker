@@ -144,6 +144,7 @@ export type Database = {
           baby_id: string
           completed_at: string | null
           created_at: string | null
+          email_sent_at: string | null
           id: string
           locale: string | null
           reference_age_months: number
@@ -153,6 +154,7 @@ export type Database = {
           baby_id: string
           completed_at?: string | null
           created_at?: string | null
+          email_sent_at?: string | null
           id?: string
           locale?: string | null
           reference_age_months: number
@@ -162,6 +164,7 @@ export type Database = {
           baby_id?: string
           completed_at?: string | null
           created_at?: string | null
+          email_sent_at?: string | null
           id?: string
           locale?: string | null
           reference_age_months?: number

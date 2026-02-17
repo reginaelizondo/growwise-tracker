@@ -469,6 +469,14 @@ Deno.serve(async (req) => {
       })
     }
 
+    // Deduplication: skip if email already sent for this assessment
+    if (assessment.email_sent_at) {
+      console.log('Email already sent for assessment', assessment_id, 'at', assessment.email_sent_at)
+      return new Response(JSON.stringify({ skipped: true, reason: 'Email already sent', sent_at: assessment.email_sent_at }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     const responses = responsesResult.data
     if (!responses?.length) {
       return new Response(JSON.stringify({ error: 'No responses found' }), {
@@ -604,6 +612,14 @@ Deno.serve(async (req) => {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
+
+    // Mark email as sent for deduplication
+    await supabase
+      .from('assessments')
+      .update({ email_sent_at: new Date().toISOString() })
+      .eq('id', assessment_id)
+
+    console.log('Email sent and marked for assessment', assessment_id)
 
     return new Response(JSON.stringify({ success: true, email_id: resendData.id }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

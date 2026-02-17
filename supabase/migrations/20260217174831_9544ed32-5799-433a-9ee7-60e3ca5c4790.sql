@@ -1,0 +1,1 @@
+ALTER TABLE public.assessments ADD COLUMN email_sent_at timestamptz DEFAULT NULL;
