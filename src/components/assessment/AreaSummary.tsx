@@ -233,14 +233,21 @@ export const AreaSummary = ({
           />
         </div>
 
-        {/* Continue Button */}
-        <Button
-          onClick={onContinue}
-          className="w-full py-6 text-lg font-semibold rounded-xl shadow-lg hover:scale-[1.02] transition-transform"
-          style={{ backgroundColor: areaColor }}
-        >
-          {isLastArea ? "See Full Report" : "Continue to Next Area →"}
-        </Button>
+        {/* Spacer for fixed bottom */}
+        <div className="h-24" />
+      </div>
+
+      {/* Fixed bottom button */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-background via-background to-transparent pt-4 pb-4 px-4">
+        <div className="container max-w-2xl mx-auto">
+          <Button
+            onClick={onContinue}
+            className="w-full py-6 text-lg font-semibold rounded-xl shadow-lg hover:scale-[1.02] transition-transform"
+            style={{ backgroundColor: areaColor }}
+          >
+            {isLastArea ? "See Full Report" : "Continue to Next Area →"}
+          </Button>
+        </div>
       </div>
     </div>
   );
