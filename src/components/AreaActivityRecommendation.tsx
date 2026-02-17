@@ -65,73 +65,69 @@ export function AreaActivityRecommendation({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       {/* Collapsible Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-center gap-2 py-3 transition-colors hover:opacity-80"
+        className="w-full flex items-center justify-center gap-1.5 py-2 transition-colors hover:opacity-80"
       >
         <span 
-          className="text-sm font-semibold"
+          className="text-xs font-semibold"
           style={{ color: areaColor }}
         >
-          Recommended Activities to Keep Building These Skills
+          Recommended Activity
         </span>
         {isExpanded ? (
-          <ChevronUp className="w-5 h-5" style={{ color: areaColor }} />
+          <ChevronUp className="w-4 h-4" style={{ color: areaColor }} />
         ) : (
-          <ChevronDown className="w-5 h-5" style={{ color: areaColor }} />
+          <ChevronDown className="w-4 h-4" style={{ color: areaColor }} />
         )}
       </button>
 
       {/* Expandable Content */}
       {isExpanded && (
         <Card 
-          className="border-l-4 bg-card shadow-sm overflow-hidden animate-fade-in" 
+          className="border-l-3 bg-card shadow-sm overflow-hidden animate-fade-in" 
           style={{ borderLeftColor: areaColor }}
         >
-          <div className="p-4 space-y-3">
-            {/* Activity Name */}
+          <div className="p-3 space-y-2">
             <h3 
-              className="text-base font-bold text-center"
+              className="text-sm font-bold text-center"
               style={{ color: areaColor }}
             >
               {activity.activity_name}
             </h3>
 
-            {/* Purpose Section */}
             <div 
-              className="border-l-4 bg-muted/30 p-3 rounded-r-lg"
+              className="border-l-3 bg-muted/30 p-2.5 rounded-r-lg"
               style={{ borderLeftColor: areaColor }}
             >
-              <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-0.5 font-medium">
+              <p className="text-[9px] uppercase tracking-wide text-muted-foreground mb-0.5 font-medium">
                 PURPOSE
               </p>
-              <p className="text-xs font-medium text-foreground">
+              <p className="text-[11px] font-medium text-foreground leading-snug">
                 {activity.purpose_text}
               </p>
             </div>
 
-            {/* Description */}
             <div 
-              className="text-xs prose prose-xs max-w-none text-foreground/90 leading-relaxed"
+              className="text-[11px] prose prose-xs max-w-none text-foreground/90 leading-relaxed"
               dangerouslySetInnerHTML={{ 
                 __html: sanitizeHtml(activity.description_html) 
               }}
             />
           </div>
 
-          {/* Footer with Kinedu logo and CTA */}
-          <div className="border-t border-border/50 p-4 bg-muted/20 space-y-3">
+          <div className="border-t border-border/50 p-3 bg-muted/20 space-y-2">
             <div className="flex justify-center">
               <img 
                 src={kineduLogo} 
                 alt="Kinedu" 
-                className="h-6 object-contain"
+                className="h-5 object-contain"
               />
             </div>
             <Button 
-              className="w-full py-4 text-sm font-semibold rounded-xl"
+              className="w-full py-3 text-xs font-semibold rounded-xl"
               style={{ 
                 backgroundColor: areaColor,
                 color: 'white'

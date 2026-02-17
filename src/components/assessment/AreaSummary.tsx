@@ -16,16 +16,15 @@ const getAreaFeedback = (avgPercentile: number, babyName: string) => {
 
 // Mini half-circle pace gauge for table view
 const MiniPaceGauge = ({ pace, color }: { pace: number; color: string }) => {
-  const size = 56;
+  const size = 48;
   const strokeWidth = 5;
   const radius = (size - strokeWidth) / 2;
   const centerX = size / 2;
-  const centerY = size / 2 + 4;
+  const centerY = size / 2;
   
-  // Half circle from 180° to 0° (left to right, top arc)
   const startAngle = Math.PI;
   const endAngle = 0;
-  const normalizedPace = Math.max(0, Math.min(2, pace)) / 2; // 0-1
+  const normalizedPace = Math.max(0, Math.min(2, pace)) / 2;
   const currentAngle = startAngle - (normalizedPace * Math.PI);
   
   const arcStartX = centerX + radius * Math.cos(startAngle);
@@ -42,11 +41,11 @@ const MiniPaceGauge = ({ pace, color }: { pace: number; color: string }) => {
   
   return (
     <div className="flex flex-col items-center">
-      <svg width={size} height={size / 2 + 10} viewBox={`0 0 ${size} ${size / 2 + 12}`}>
+      <svg width={size} height={size / 2 + 4} viewBox={`0 0 ${size} ${size / 2 + 2}`}>
         <path d={bgPath} fill="none" stroke="hsl(var(--border))" strokeWidth={strokeWidth} strokeLinecap="round" />
         <path d={valuePath} fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
       </svg>
-      <span className="text-[11px] font-bold -mt-2" style={{ color }}>{pace.toFixed(1)}×</span>
+      <span className="text-[10px] font-bold -mt-1" style={{ color }}>{pace.toFixed(1)}×</span>
     </div>
   );
 };
@@ -77,7 +76,7 @@ const MasteryDots = ({ mastered, total, color }: { mastered: number; total: numb
 
 const getRankColor = (percentile: number, areaColor: string): string => {
   if (percentile >= 60) return 'hsl(142, 70%, 42%)'; // green
-  if (percentile >= 30) return areaColor; // area color (yellow-ish range)
+  if (percentile >= 30) return 'hsl(45, 93%, 47%)'; // yellow
   return 'hsl(25, 95%, 53%)'; // orange
 };
 
@@ -297,7 +296,7 @@ export const AreaSummary = ({
 
                 {/* Rank */}
                 <div className="w-14 text-right">
-                  <span className="text-xl font-extrabold" style={{ color: rankColor }}>
+                  <span className="text-xl font-semibold" style={{ color: rankColor }}>
                     {Math.round(percentile)}%
                   </span>
                 </div>
