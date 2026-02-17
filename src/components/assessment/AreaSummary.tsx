@@ -257,7 +257,7 @@ export const AreaSummary = ({
                   </TooltipProvider>
                 )}
               </div>
-              <p className="text-xl font-bold leading-tight" style={{ color: feedback.color }}>
+              <p className="text-sm font-medium leading-tight" style={{ color: feedback.color }}>
                 {feedback.text}
               </p>
             </div>
