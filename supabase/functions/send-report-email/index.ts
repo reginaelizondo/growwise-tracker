@@ -133,12 +133,12 @@ function buildEmailHtml(babyName: string, ageMonths: number, areas: AreaResult[]
         <tr><td style="padding: 14px 14px 12px;">
           <table width="100%" cellpadding="0" cellspacing="0"><tr>
             <td><img src="${iconUrl}" alt="${name}" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 4px;" /> <span style="font-size: 14px; font-weight: 800; color: ${color};">${name}</span></td>
-            <td style="text-align: right;"><span style="font-size: 16px; font-weight: 800; color: ${color};">${a.percentage}%</span></td>
+            <td style="text-align: right;"><span style="font-size: 16px; font-weight: 800; color: ${getPaceColor(a.pace)};">${a.pace.toFixed(1)}×</span></td>
           </tr></table>
           <div style="margin-top: 8px; background: #E8E4DF; border-radius: 4px; height: 6px; overflow: hidden;">
             <div style="width: ${Math.max(5, a.percentage)}%; height: 6px; background: ${color}; border-radius: 4px;"></div>
           </div>
-          <div style="margin-top: 6px; font-size: 11px; color: #A0AEC0; font-weight: 600;">${a.masteredCount} of ${a.totalMilestones} milestones${isBest ? ' ⭐' : ''}</div>
+          <div style="margin-top: 6px; font-size: 11px; color: #A0AEC0; font-weight: 600;">${a.masteredCount} of ${a.totalMilestones} milestones (${a.percentage}%)${isBest ? ' ⭐' : ''}</div>
         </td></tr>
       </table>`
   }
