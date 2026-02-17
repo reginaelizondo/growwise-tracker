@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { Lock, Check, ArrowRight, Mail, Star, Target } from "lucide-react";
+import { Lock, Check, ArrowRight, Mail, Star, Target, PartyPopper } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { externalSupabase } from "@/integrations/supabase/external-client";
@@ -366,7 +366,9 @@ const Report = () => {
       <div className="max-w-lg mx-auto px-4 space-y-5">
         {/* 1. Celebration Header */}
         <div className="text-center pt-4 pb-2">
-          <div className="text-5xl mb-3">🎉</div>
+          <div className="mb-3 flex justify-center">
+            <PartyPopper className="w-12 h-12 text-primary" strokeWidth={1.5} />
+          </div>
           {hasEmail && !emailUnlocked ? (
             <>
               <h1 className="text-2xl font-bold text-foreground mb-2">
