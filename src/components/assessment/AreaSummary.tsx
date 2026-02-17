@@ -1,12 +1,79 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PaceGauge, calculatePace } from "@/components/PaceGauge";
+import { calculatePace } from "@/components/PaceGauge";
 import { CheckCircle2, TrendingUp, Award, Star, Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { AreaActivityRecommendation } from "@/components/AreaActivityRecommendation";
+
+// Mini half-circle pace gauge for table view
+const MiniPaceGauge = ({ pace, color }: { pace: number; color: string }) => {
+  const size = 56;
+  const strokeWidth = 5;
+  const radius = (size - strokeWidth) / 2;
+  const centerX = size / 2;
+  const centerY = size / 2 + 4;
+  
+  // Half circle from 180° to 0° (left to right, top arc)
+  const startAngle = Math.PI;
+  const endAngle = 0;
+  const normalizedPace = Math.max(0, Math.min(2, pace)) / 2; // 0-1
+  const currentAngle = startAngle - (normalizedPace * Math.PI);
+  
+  const arcStartX = centerX + radius * Math.cos(startAngle);
+  const arcStartY = centerY - radius * Math.sin(startAngle);
+  const arcEndX = centerX + radius * Math.cos(endAngle);
+  const arcEndY = centerY - radius * Math.sin(endAngle);
+  const currentX = centerX + radius * Math.cos(currentAngle);
+  const currentY = centerY - radius * Math.sin(currentAngle);
+  
+  const largeArc = normalizedPace > 0.5 ? 1 : 0;
+  
+  const bgPath = `M ${arcStartX} ${arcStartY} A ${radius} ${radius} 0 1 1 ${arcEndX} ${arcEndY}`;
+  const valuePath = `M ${arcStartX} ${arcStartY} A ${radius} ${radius} 0 ${largeArc} 1 ${currentX} ${currentY}`;
+  
+  return (
+    <div className="flex flex-col items-center">
+      <svg width={size} height={size / 2 + 10} viewBox={`0 0 ${size} ${size / 2 + 12}`}>
+        <path d={bgPath} fill="none" stroke="hsl(var(--border))" strokeWidth={strokeWidth} strokeLinecap="round" />
+        <path d={valuePath} fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
+      </svg>
+      <span className="text-[11px] font-bold -mt-2" style={{ color }}>{pace.toFixed(1)}×</span>
+    </div>
+  );
+};
+
+// Mastery dots indicator
+const MasteryDots = ({ mastered, total, color }: { mastered: number; total: number; color: string }) => {
+  const maxDots = Math.min(total, 14);
+  const filledDots = Math.min(mastered, maxDots);
+  
+  return (
+    <div className="flex items-center gap-0.5">
+      <div className="flex gap-[3px]">
+        {Array.from({ length: maxDots }).map((_, i) => (
+          <div
+            key={i}
+            className="w-[6px] h-[6px] rounded-full"
+            style={{ backgroundColor: i < filledDots ? color : 'hsl(var(--muted-foreground) / 0.25)' }}
+          />
+        ))}
+      </div>
+      {total > maxDots && (
+        <span className="text-[10px] text-muted-foreground ml-0.5">+{total - maxDots}</span>
+      )}
+      <span className="text-[10px] text-muted-foreground ml-1">{mastered}/{total}</span>
+    </div>
+  );
+};
+
+const getRankColor = (percentile: number, areaColor: string): string => {
+  if (percentile >= 80) return 'hsl(142, 70%, 42%)'; // green
+  if (percentile >= 40) return areaColor;
+  return 'hsl(32, 95%, 52%)'; // orange
+};
 
 interface SkillSummary {
   skill_id: number;
@@ -179,34 +246,43 @@ export const AreaSummary = ({
           )}
         </div>
 
-        {/* Skills List */}
+        {/* Skills Table */}
         <div className="mb-6">
+          {/* Table header */}
+          <div className="flex items-center px-1 pb-2 border-b border-border/40">
+            <span className="flex-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Skill</span>
+            <span className="w-16 text-center text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Pace</span>
+            <span className="w-14 text-right text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Rank</span>
+          </div>
+
           {skills.map((skill, index) => {
             const pace = skill.percentile !== null ? calculatePace(skill.percentile) : 1.0;
+            const percentile = skill.percentile ?? 50;
+            const rankColor = getRankColor(percentile, areaColor);
             
             return (
               <div 
                 key={skill.skill_id} 
-                className="py-3"
-                style={{ borderBottom: index < skills.length - 1 ? '1px solid hsl(var(--border) / 0.4)' : 'none' }}
+                className="flex items-center py-3 px-1"
+                style={{ borderBottom: index < skills.length - 1 ? '1px solid hsl(var(--border) / 0.3)' : 'none' }}
               >
-                {/* Skill name */}
-                <h3 className="text-sm font-bold mb-1" style={{ color: areaColor }}>
-                  {skill.skill_name}
-                </h3>
+                {/* Skill info */}
+                <div className="flex-1 min-w-0 pr-2">
+                  <h3 className="text-sm font-bold mb-1 truncate">{skill.skill_name}</h3>
+                  <MasteryDots mastered={skill.masteredCount} total={skill.totalCount} color={areaColor} />
+                </div>
 
-                {/* Compact gauge */}
-                <PaceGauge
-                  percentile={skill.percentile ?? 50}
-                  color={areaColor}
-                  compact={true}
-                  hideGauge={false}
-                />
+                {/* Mini gauge */}
+                <div className="w-16 flex justify-center">
+                  <MiniPaceGauge pace={pace} color={areaColor} />
+                </div>
 
-                {/* Percentile text */}
-                <p className="text-xs text-muted-foreground text-center mt-1">
-                  {getPercentileText(skill.percentile)}
-                </p>
+                {/* Rank */}
+                <div className="w-14 text-right">
+                  <span className="text-xl font-extrabold" style={{ color: rankColor }}>
+                    {Math.round(percentile)}%
+                  </span>
+                </div>
               </div>
             );
           })}
