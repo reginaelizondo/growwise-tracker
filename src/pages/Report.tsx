@@ -316,10 +316,11 @@ const Report = () => {
     }
   };
 
-  const getPaceLabel = (pace: number) => {
-    if (pace >= 1.8) return 'Mastered';
-    if (pace >= 0.2) return 'On track';
-    return 'Keep practicing';
+  const getPaceLabel = (pace: number, name: string) => {
+    if (pace >= 1.8) return `${name} has mastered this area!`;
+    if (pace >= 1.2) return `${name} is ahead of pace`;
+    if (pace >= 0.2) return `${name} is right on track`;
+    return `${name} is building up — keep practicing!`;
   };
 
   const getPaceColor = (pace: number) => {
@@ -414,11 +415,11 @@ const Report = () => {
                   <img src={icon} alt={area.area_name} className="w-8 h-8" />
                   <span className="font-bold text-sm text-foreground">{area.area_name}</span>
                 </div>
-                <div className="text-3xl font-bold mb-0.5" style={{ color }}>
+                <div className="text-3xl font-bold mb-0.5 text-center" style={{ color }}>
                   {area.pace.toFixed(1)}x
                 </div>
-                <div className="text-xs font-semibold mb-2" style={{ color: getPaceColor(area.pace) }}>
-                  {getPaceLabel(area.pace)}
+                <div className="text-xs font-semibold mb-2 text-center" style={{ color: getPaceColor(area.pace) }}>
+                  {getPaceLabel(area.pace, babyName)}
                 </div>
                 <PaceGauge
                   pace={area.pace}
