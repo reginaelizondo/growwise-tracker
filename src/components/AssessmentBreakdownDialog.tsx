@@ -95,7 +95,7 @@ export function AssessmentBreakdownDialog({
   const [kpi, setKpi] = useState<KPIData | null>(null);
   const [deviceInfo, setDeviceInfo] = useState<DeviceInfo | null>(null);
   const [timelineOpen, setTimelineOpen] = useState(false);
-  const [reportActions, setReportActions] = useState({ downloaded: false, ctaClicked: false, kineduDownloadClicked: false });
+  const [reportActions, setReportActions] = useState({ downloaded: false, ctaClicked: false, kineduDownloadClicked: false, activityClicked: false });
 
   const areaNames: Record<number, string> = {
     1: 'Physical', 2: 'Cognitive', 3: 'Linguistic', 4: 'Socio-Emotional'
@@ -306,8 +306,10 @@ export function AssessmentBreakdownDialog({
       const downloaded = allEvents.some(e => e.event_type === 'report_downloaded');
       const ctaClicked = allEvents.some(e => e.event_type === 'cta_clicked');
       const kineduDownloadClicked = allEvents.some(e => e.event_type === 'kinedu_download_clicked');
+      const domainCtaClicked = allEvents.some(e => e.event_type === 'domain_cta_clicked');
+      const activityClicked = kineduDownloadClicked || domainCtaClicked;
       const sawReport = allEvents.some(e => e.event_type === 'report_view');
-      setReportActions({ downloaded, ctaClicked, kineduDownloadClicked });
+      setReportActions({ downloaded, ctaClicked, kineduDownloadClicked, activityClicked });
 
       // Timing metrics
       const answerEvents = allEvents.filter(e => {
@@ -559,17 +561,13 @@ export function AssessmentBreakdownDialog({
 
                 {/* Report action details row */}
                 <div className="flex gap-2">
-                  <Badge variant={reportActions.downloaded ? 'default' : 'outline'} className="text-xs">
-                    <Download className="h-3 w-3 mr-1" />
-                    PDF {reportActions.downloaded ? '✓' : '✗'}
+                  <Badge variant={reportActions.activityClicked ? 'default' : 'outline'} className="text-xs">
+                    <ExternalLink className="h-3 w-3 mr-1" />
+                    Go to Activity {reportActions.activityClicked ? '✓' : '✗'}
                   </Badge>
                   <Badge variant={reportActions.ctaClicked ? 'default' : 'outline'} className="text-xs">
-                    <MousePointer className="h-3 w-3 mr-1" />
-                    Try 7 Days {reportActions.ctaClicked ? '✓' : '✗'}
-                  </Badge>
-                  <Badge variant={reportActions.kineduDownloadClicked ? 'default' : 'outline'} className="text-xs">
-                    <Download className="h-3 w-3 mr-1" />
-                    Kinedu {reportActions.kineduDownloadClicked ? '✓' : '✗'}
+                    <Zap className="h-3 w-3 mr-1" />
+                    Start Plan {reportActions.ctaClicked ? '✓' : '✗'}
                   </Badge>
                 </div>
               </div>
