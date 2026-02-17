@@ -76,9 +76,9 @@ const MasteryDots = ({ mastered, total, color }: { mastered: number; total: numb
 };
 
 const getRankColor = (percentile: number, areaColor: string): string => {
-  if (percentile >= 80) return 'hsl(142, 70%, 42%)'; // green
-  if (percentile >= 40) return areaColor;
-  return 'hsl(32, 95%, 52%)'; // orange
+  if (percentile >= 60) return 'hsl(142, 70%, 42%)'; // green
+  if (percentile >= 30) return areaColor; // area color (yellow-ish range)
+  return 'hsl(25, 95%, 53%)'; // orange
 };
 
 interface SkillSummary {
