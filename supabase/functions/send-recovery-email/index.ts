@@ -138,12 +138,6 @@ function buildEmailHtml(params: {
         <td align="right" style="font-size:11px;color:#1A3C7A;font-weight:700;">${progress}% complete</td>
       </tr></table>
     </td></tr>
-    <tr><td style="padding:2px 14px 10px;">
-      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#E5E7EB;border-radius:4px;"><tr>
-        <td style="width:${progress}%;height:6px;background-color:#34A853;border-radius:4px;"></td>
-        <td style="height:6px;"></td>
-      </tr></table>
-    </td></tr>
     <tr><td style="padding:0 6px 6px;">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         ${stepTrackerHtml}
