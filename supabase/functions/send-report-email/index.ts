@@ -165,17 +165,22 @@ function buildEmailHtml(babyName: string, ageMonths: number, areas: AreaResult[]
     const color = areaColors[areaId] || '#333'
     const iconUrl = areaIcons[areaId] || ''
     const name = areaDisplayNames[areaId] || a.area_name
-    const isBest = strongestArea && strongestArea.area_id === areaId
+    const pl = getPaceLabel(a.percentile)
     return `
       <table width="100%" cellpadding="0" cellspacing="0" style="background: #FBF9F6; border-radius: 16px; overflow: hidden; border: 1.5px solid #E8E4DF;">
         <tr><td style="height: 3px; background: ${color};"></td></tr>
         <tr><td style="padding: 14px 14px 12px;">
           <table width="100%" cellpadding="0" cellspacing="0"><tr>
-            <td><img src="${iconUrl}" alt="${name}" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 4px;" /> <span style="font-size: 14px; font-weight: 800; color: ${color};">${name}</span></td>
-            <td style="text-align: right;"><span style="font-size: 16px; font-weight: 800; color: ${getPaceColor(a.pace)};">${a.pace.toFixed(1)}×</span></td>
+            <td style="vertical-align: middle;">
+              <img src="${iconUrl}" alt="${name}" style="width: 20px; height: 20px; vertical-align: middle;" />
+              <span style="font-size: 14px; font-weight: 800; color: ${color}; vertical-align: middle; margin-left: 4px;">${name}</span>
+            </td>
+            <td style="text-align: right; vertical-align: middle;">
+              <span style="font-size: 18px; font-weight: 800; color: ${color};">${a.pace.toFixed(1)}×</span>
+            </td>
           </tr></table>
           ${buildGaugeHtml(a.pace, color)}
-          ${(() => { const pl = getPaceLabel(a.percentile); return `<div style="margin-top: 6px; font-size: 11px; color: #718096; font-weight: 700; text-align: center;">${pl.emoji} ${pl.label}</div>` })()}
+          <div style="margin-top: 6px; font-size: 11px; color: #718096; font-weight: 700; text-align: center;">${pl.emoji} ${pl.label}</div>
         </td></tr>
       </table>`
   }
