@@ -9,7 +9,7 @@ const AREA_NAMES: Record<number, string> = {
   2: "Cognitive",
   1: "Physical",
   3: "Linguistic",
-  4: "Socio-Emotional",
+  4: "Social",
 };
 
 const AREA_COLORS: Record<number, string> = {
@@ -37,21 +37,25 @@ function buildStepTracker(selectedAreas: number[], completedAreas: number[], cur
     if (isCompleted) {
       return `<td style="text-align:center;padding:0 6px;">
         <div style="font-size:13px;color:#22c55e;font-weight:700;">✓</div>
-        <img src="${iconUrl}" width="28" height="28" alt="${name}" style="width:28px;height:28px;border-radius:50%;display:block;margin:2px auto;" />
+        <div style="border:3px solid #22c55e;border-radius:50%;padding:1px;display:inline-block;">
+          <img src="${iconUrl}" width="40" height="40" alt="${name}" style="width:40px;height:40px;border-radius:50%;display:block;" />
+        </div>
         <div style="font-size:10px;color:${color};font-weight:600;margin-top:2px;">${name}</div>
       </td>`;
     } else if (isCurrent) {
       return `<td style="text-align:center;padding:0 6px;">
-        <div style="width:8px;height:8px;background-color:#2563eb;border-radius:50%;margin:4px auto 2px;"></div>
-        <div style="border:2px solid #2563eb;border-radius:50%;padding:1px;display:inline-block;">
-          <img src="${iconUrl}" width="28" height="28" alt="${name}" style="width:28px;height:28px;border-radius:50%;display:block;" />
+        <div style="height:13px;"></div>
+        <div style="border:3px solid ${color};border-radius:50%;padding:1px;display:inline-block;">
+          <img src="${iconUrl}" width="40" height="40" alt="${name}" style="width:40px;height:40px;border-radius:50%;display:block;" />
         </div>
         <div style="font-size:10px;color:${color};font-weight:700;margin-top:2px;">${name}</div>
       </td>`;
     } else {
       return `<td style="text-align:center;padding:0 6px;">
-        <div style="width:8px;height:8px;border-radius:50%;margin:4px auto 2px;"></div>
-        <img src="${iconUrl}" width="28" height="28" alt="${name}" style="width:28px;height:28px;border-radius:50%;display:block;margin:2px auto;opacity:0.35;" />
+        <div style="height:13px;"></div>
+        <div style="border:2px solid #e5e7eb;border-radius:50%;padding:1px;display:inline-block;">
+          <img src="${iconUrl}" width="40" height="40" alt="${name}" style="width:40px;height:40px;border-radius:50%;display:block;opacity:0.5;" />
+        </div>
         <div style="font-size:10px;color:#9ca3af;margin-top:2px;">${name}</div>
       </td>`;
     }
@@ -62,7 +66,7 @@ function buildStepTracker(selectedAreas: number[], completedAreas: number[], cur
   steps.forEach((step, i) => {
     withLines.push(step);
     if (i < steps.length - 1) {
-      withLines.push(`<td style="vertical-align:middle;padding:0;"><div style="width:16px;height:2px;background-color:#d1d5db;margin:0 auto;"></div></td>`);
+      withLines.push(`<td style="vertical-align:middle;padding:0;"><div style="width:24px;height:2px;background-color:#d1d5db;margin:0 auto;"></div></td>`);
     }
   });
 
@@ -182,12 +186,15 @@ function buildEmailHtml(params: {
 <tr><td style="padding:0 20px 8px;">
   <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F8F9FA;border-radius:12px;">
     <tr><td style="padding:10px 12px 4px;">
-      <p style="margin:0;font-size:11px;color:#6b7280;font-weight:600;">${progress}% complete</p>
-    </td></tr>
-    <tr><td style="padding:2px 12px 6px;">
       <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-        <td style="width:${progress}%;height:4px;background-color:#34A853;border-radius:4px;"></td>
-        <td style="width:${100 - progress}%;height:4px;background-color:#e5e7eb;border-radius:0 4px 4px 0;"></td>
+        <td style="text-align:left;"><p style="margin:0;font-size:13px;color:#374151;font-weight:700;text-transform:uppercase;">Your Progress</p></td>
+        <td style="text-align:right;"><p style="margin:0;font-size:13px;color:#34A853;font-weight:700;font-style:italic;">${progress}% complete</p></td>
+      </tr></table>
+    </td></tr>
+    <tr><td style="padding:4px 12px 6px;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+        <td style="width:${progress}%;height:6px;background-color:#34A853;border-radius:6px;"></td>
+        <td style="width:${100 - progress}%;height:6px;background-color:#e5e7eb;border-radius:0 6px 6px 0;"></td>
       </tr></table>
     </td></tr>
     <tr><td style="padding:0 8px 6px;">
