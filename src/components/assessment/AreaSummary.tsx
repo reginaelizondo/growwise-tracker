@@ -41,7 +41,7 @@ const MiniPaceGauge = ({ pace, color }: { pace: number; color: string }) => {
     <div className="flex flex-col items-center">
       <svg width={size} height={size / 2 + 6} viewBox={`0 0 ${size} ${size / 2 + 6}`}>
         <path d={bgPath} fill="none" stroke="hsl(var(--border))" strokeWidth={strokeWidth} strokeLinecap="butt" />
-        <path d={valuePath} fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
+        <path d={valuePath} fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="butt" />
       </svg>
       <span className="text-[11px] font-bold -mt-1" style={{ color }}>{pace.toFixed(1)}×</span>
     </div>
