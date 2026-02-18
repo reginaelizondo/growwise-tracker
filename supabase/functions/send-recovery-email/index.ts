@@ -81,11 +81,18 @@ function buildCtaButton(babyName: string, resumeLink: string): string {
 }
 
 function buildAppSection(babyName: string): string {
-  const appPreviewUrl = "https://ogyvfohbhwxwwxlwyjth.supabase.co/storage/v1/object/public/email-assets/kinedu-app-preview.png";
-  const appStoreUrl = "https://ogyvfohbhwxwwxlwyjth.supabase.co/storage/v1/object/public/email-assets/app-store-badge-final.png";
-  const googlePlayUrl = "https://ogyvfohbhwxwwxlwyjth.supabase.co/storage/v1/object/public/email-assets/google-play-badge.png";
+  const storageBase = "https://ogyvfohbhwxwwxlwyjth.supabase.co/storage/v1/object/public/email-assets";
+  const appPreviewUrl = `${storageBase}/kinedu-app-preview.png`;
+  const appStoreUrl = `${storageBase}/app-store-badge-final.png`;
+  const googlePlayUrl = `${storageBase}/google-play-badge.png`;
 
-  const checkCircle = `<td style="width:24px;vertical-align:top;padding-top:2px;"><div style="width:20px;height:20px;border-radius:50%;background-color:#34A853;text-align:center;line-height:20px;color:white;font-size:12px;font-weight:bold;">✓</div></td>`;
+  const benefit = (text: string) => `
+    <tr><td style="padding:6px 0;">
+      <table cellpadding="0" cellspacing="0" border="0"><tr>
+        <td style="width:24px;vertical-align:top;padding-top:2px;"><div style="width:22px;height:22px;border-radius:50%;background-color:#34A853;text-align:center;line-height:22px;color:white;font-size:13px;font-weight:bold;">✓</div></td>
+        <td style="padding-left:10px;font-size:14px;color:#374151;line-height:1.5;">${text}</td>
+      </tr></table>
+    </td></tr>`;
 
   return `
   <tr><td style="padding: 16px 24px 0;">
@@ -100,30 +107,38 @@ function buildAppSection(babyName: string): string {
         <p style="margin:0;font-size:14px;color:#4b5563;text-align:center;line-height:1.5;">With just 5 minutes of play a day, you can make a significant impact on ${babyName}'s development.</p>
       </td></tr>
       <tr><td align="center" style="padding:12px 20px 0;">
-        <table cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff;border-radius:20px;display:inline-block;">
+        <table cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff;border-radius:20px;">
           <tr><td style="padding:6px 14px;font-size:13px;color:#374151;font-weight:600;">⭐ 4.7 rating · 2,000+ reviews</td></tr>
         </table>
       </td></tr>
+
+      <!-- App Preview Image -->
       <tr><td align="center" style="padding:16px 20px 0;">
-        <img src="${appPreviewUrl}" alt="Kinedu App" width="200" style="width:200px;height:auto;" />
+        <img src="${appPreviewUrl}" alt="Kinedu App Preview" width="220" style="width:220px;max-width:100%;height:auto;display:block;" />
       </td></tr>
+
+      <!-- Benefits -->
       <tr><td style="padding:16px 20px 0;">
         <table width="100%" cellpadding="0" cellspacing="0" border="0">
-          <tr>${checkCircle}<td style="padding-left:10px;font-size:14px;color:#374151;line-height:1.5;padding-bottom:10px;">Ensure ${babyName}'s healthy development with personalized daily activities</td></tr>
-          <tr>${checkCircle}<td style="padding-left:10px;font-size:14px;color:#374151;line-height:1.5;padding-bottom:10px;">Unlock ${babyName}'s full potential — 1,800+ expert-designed activities from Harvard & Stanford</td></tr>
-          <tr>${checkCircle}<td style="padding-left:10px;font-size:14px;color:#374151;line-height:1.5;padding-bottom:10px;">Create a deeper bond with ${babyName} through guided playtime every day</td></tr>
+          ${benefit(`Ensure ${babyName}'s healthy development with personalized daily activities`)}
+          ${benefit(`Unlock ${babyName}'s full potential — 1,800+ expert-designed activities from Harvard & Stanford`)}
+          ${benefit(`Create a deeper bond with ${babyName} through guided playtime every day`)}
         </table>
       </td></tr>
+
+      <!-- CTA -->
       <tr><td align="center" style="padding:20px 20px 8px;">
         <a href="https://kinedu.com" style="display:inline-block;background-color:#1B2B4B;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:14px 32px;border-radius:50px;">Start Free Trial — 7 Days Free</a>
       </td></tr>
       <tr><td align="center" style="padding:4px 20px 16px;">
         <p style="margin:0;font-size:12px;color:#9ca3af;">No commitment · Cancel anytime</p>
       </td></tr>
-      <tr><td align="center" style="padding:0 20px 20px;">
+
+      <!-- Store Badges -->
+      <tr><td align="center" style="padding:0 20px 24px;">
         <table cellpadding="0" cellspacing="0" border="0"><tr>
-          <td style="padding-right:8px;"><a href="https://apps.apple.com/app/kinedu"><img src="${appStoreUrl}" alt="App Store" width="135" style="width:135px;height:auto;" /></a></td>
-          <td><a href="https://play.google.com/store/apps/details?id=com.kinedu"><img src="${googlePlayUrl}" alt="Google Play" width="150" style="width:150px;height:auto;" /></a></td>
+          <td style="padding-right:8px;"><a href="https://apps.apple.com/app/kinedu"><img src="${appStoreUrl}" alt="Download on the App Store" width="135" style="width:135px;height:auto;display:block;" /></a></td>
+          <td><a href="https://play.google.com/store/apps/details?id=com.kinedu"><img src="${googlePlayUrl}" alt="Get it on Google Play" width="150" style="width:150px;height:auto;display:block;" /></a></td>
         </tr></table>
       </td></tr>
     </table>
