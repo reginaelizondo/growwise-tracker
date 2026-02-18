@@ -86,52 +86,52 @@ export function AreaActivityRecommendation({
 
       {/* Expandable Content */}
       {isExpanded && (
-        <Card 
-          className="border-l-4 bg-card shadow-sm overflow-hidden animate-fade-in" 
-          style={{ borderLeftColor: areaColor }}
-        >
-          <div className="p-4 space-y-3">
+        <Card className="bg-card border border-border/30 rounded-2xl shadow-none overflow-hidden animate-fade-in">
+          <div className="p-5 space-y-4">
             {/* Activity Name */}
             <h3 
-              className="text-base font-bold text-center"
+              className="text-lg font-bold text-center"
               style={{ color: areaColor }}
             >
               {activity.activity_name}
             </h3>
 
+            {/* Divider */}
+            <div style={{ height: '1px', backgroundColor: '#ECEEF2' }} />
+
             {/* Purpose Section */}
             <div 
-              className="border-l-4 bg-muted/30 p-3 rounded-r-lg"
+              className="border-l-[3px] bg-muted/20 px-3 py-2.5 rounded-r-lg"
               style={{ borderLeftColor: areaColor }}
             >
-              <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-0.5 font-medium">
-                PURPOSE
+              <p className="text-[9px] uppercase tracking-widest text-muted-foreground mb-1 font-semibold">
+                Purpose
               </p>
-              <p className="text-xs font-medium text-foreground">
+              <p className="text-sm font-medium text-foreground leading-snug">
                 {activity.purpose_text}
               </p>
             </div>
 
             {/* Description */}
             <div 
-              className="text-xs prose prose-xs max-w-none text-foreground/90 leading-relaxed"
+              className="text-sm prose prose-sm max-w-none text-foreground/80 leading-relaxed"
               dangerouslySetInnerHTML={{ 
                 __html: sanitizeHtml(activity.description_html) 
               }}
             />
           </div>
 
-          {/* Footer with Kinedu logo and CTA */}
-          <div className="border-t border-border/50 p-4 bg-muted/20 space-y-3">
+          {/* Footer */}
+          <div className="border-t border-border/30 px-5 py-4 space-y-3">
             <div className="flex justify-center">
               <img 
                 src={kineduLogo} 
                 alt="Kinedu" 
-                className="h-6 object-contain"
+                className="h-7 object-contain"
               />
             </div>
             <Button 
-              className="w-full py-4 text-sm font-semibold rounded-xl"
+              className="w-full py-5 text-sm font-semibold rounded-xl shadow-sm"
               style={{ 
                 backgroundColor: areaColor,
                 color: 'white'
