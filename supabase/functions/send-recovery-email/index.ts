@@ -57,7 +57,16 @@ function buildStepTracker(selectedAreas: number[], completedAreas: number[], cur
     }
   });
 
-  return `<tr>${steps.join("")}</tr>`;
+  // Add connector lines between steps
+  const withLines: string[] = [];
+  steps.forEach((step, i) => {
+    withLines.push(step);
+    if (i < steps.length - 1) {
+      withLines.push(`<td style="vertical-align:middle;padding:0;"><div style="width:16px;height:2px;background-color:#d1d5db;margin:0 auto;"></div></td>`);
+    }
+  });
+
+  return `<tr>${withLines.join("")}</tr>`;
 }
 
 function buildCtaButton(babyName: string, resumeLink: string): string {
@@ -74,6 +83,7 @@ function buildAppSection(babyName: string): string {
   const storageBase = "https://ogyvfohbhwxwwxlwyjth.supabase.co/storage/v1/object/public/email-assets";
   const appStoreUrl = `${storageBase}/app-store-badge-final.png`;
   const googlePlayUrl = `${storageBase}/google-play-badge.png`;
+  const appPreviewUrl = `${storageBase}/kinedu-app-preview.png`;
 
   return `
   <tr><td style="padding:4px 20px 0;">
@@ -88,6 +98,9 @@ function buildAppSection(babyName: string): string {
       </td></tr>
       <tr><td style="padding:6px 16px 0;">
         <p style="margin:0;font-size:18px;font-weight:800;color:#1B2B4B;text-align:center;line-height:1.3;">Know exactly what to do with ${babyName} every day</p>
+      </td></tr>
+      <tr><td align="center" style="padding:8px 16px 0;">
+        <img src="${appPreviewUrl}" alt="Kinedu App" width="220" style="width:220px;height:auto;display:block;border-radius:8px;" />
       </td></tr>
       <tr><td style="padding:10px 16px 0;">
         <table width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -170,6 +183,12 @@ function buildEmailHtml(params: {
   <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F8F9FA;border-radius:12px;">
     <tr><td style="padding:10px 12px 4px;">
       <p style="margin:0;font-size:11px;color:#6b7280;font-weight:600;">${progress}% complete</p>
+    </td></tr>
+    <tr><td style="padding:2px 12px 6px;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+        <td style="width:${progress}%;height:4px;background-color:#34A853;border-radius:4px;"></td>
+        <td style="width:${100 - progress}%;height:4px;background-color:#e5e7eb;border-radius:0 4px 4px 0;"></td>
+      </tr></table>
     </td></tr>
     <tr><td style="padding:0 8px 6px;">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
