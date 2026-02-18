@@ -114,7 +114,8 @@ export function AreaActivityRecommendation({
 
             {/* Description */}
             <div 
-              className="text-sm prose prose-sm max-w-none text-foreground/80 leading-relaxed"
+              className="text-sm max-w-none text-foreground/80 leading-relaxed"
+              style={{ fontFamily: 'inherit' }}
               dangerouslySetInnerHTML={{ 
                 __html: sanitizeHtml(activity.description_html) 
               }}

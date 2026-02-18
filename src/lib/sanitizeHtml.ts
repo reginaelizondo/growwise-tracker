@@ -14,12 +14,16 @@ export function sanitizeHtml(html: string): string {
   for (let i = allElements.length - 1; i >= 0; i--) {
     const el = allElements[i];
     if (!allowedTags.includes(el.tagName.toLowerCase())) {
-      // Keep the text content but remove the tag
       const parent = el.parentNode;
       while (el.firstChild) {
         parent?.insertBefore(el.firstChild, el);
       }
       parent?.removeChild(el);
+    } else {
+      // Strip all attributes (style, class, font, etc.) from allowed tags
+      while (el.attributes.length > 0) {
+        el.removeAttribute(el.attributes[0].name);
+      }
     }
   }
   
