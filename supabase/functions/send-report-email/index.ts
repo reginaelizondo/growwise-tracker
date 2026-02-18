@@ -346,9 +346,10 @@ function buildEmailHtml(babyName: string, ageMonths: number, areas: AreaResult[]
               <tr>
                 <td style="padding: 22px 20px; text-align: center;">
                   <p style="font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: #1A3A6B; margin: 0 0 6px; font-weight: 900;">✨ Your Personalized Plan</p>
-                  <p style="font-size: 14px; color: #4A6FA5; margin: 0 0 18px; line-height: 1.4;">
+                  <p style="font-size: 14px; color: #4A6FA5; margin: 0 0 14px; line-height: 1.4;">
                     Kinedu created a daily play plan<br/>targeting ${babyName}'s focus areas.
                   </p>
+                  <img src="${STORAGE_URL}/kinedu-app-preview.png" alt="Kinedu App" width="230" style="width:230px;height:auto;display:block;margin:0 auto 16px;border-radius:8px;" />
                   <table width="100%" cellpadding="0" cellspacing="0" style="text-align: left; margin-bottom: 20px;">
                     <tr><td style="padding: 5px 0;"><table cellpadding="0" cellspacing="0"><tr>
                       <td style="width: 28px; vertical-align: middle;"><span style="font-size: 16px;">🎯</span></td>
