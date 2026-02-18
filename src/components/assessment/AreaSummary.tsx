@@ -196,9 +196,9 @@ export const AreaSummary = ({
                     <h3 className="text-sm font-bold text-foreground leading-tight">
                       {skill.skill_name}
                     </h3>
-                    <p className="text-[11px] mt-0.5">
-                      <span className="font-semibold" style={{ color: areaColor }}>
-                        {skill.percentile !== null ? `P${Math.round(skill.percentile)}` : '—'}
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      Percentile <span className="font-semibold" style={{ color: areaColor }}>
+                        {skill.percentile !== null ? `${Math.round(skill.percentile)}th` : '—'}
                       </span>
                     </p>
                   </div>
