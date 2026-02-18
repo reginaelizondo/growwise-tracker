@@ -28,16 +28,29 @@ export const useAbandonedSessionSave = ({ assessmentId, areas, responses, viewSt
 
     if (!currentAreas.length) return null;
 
-    const totalSkills = currentAreas.reduce((sum, a) => sum + a.skills.length, 0);
     const areaIndex = overrides?.areaIndex ?? 
       ((currentViewState.type === 'skill' || currentViewState.type === 'areaSummary')
         ? (currentViewState.areaIndex ?? 0) : 0);
     const skillIndex = overrides?.skillIndex ?? 
       (currentViewState.type === 'skill' ? (currentViewState.skillIndex ?? 0) : 0);
     
-    const completedSkills = currentAreas.slice(0, areaIndex).reduce((sum, a) => sum + a.skills.length, 0) + skillIndex;
-    const progress = Math.round(22 + (completedSkills / totalSkills) * 78);
-    const completedAreas = currentAreas.slice(0, areaIndex).map(a => a.area_id);
+    // Calculate progress from actual responses vs total milestones
+    const totalMilestones = currentAreas.reduce((sum, a) => sum + a.skills.reduce((s, sk) => s + sk.milestones.length, 0), 0);
+    const answeredCount = Object.keys(currentResponses).length;
+    const progress = totalMilestones > 0 
+      ? Math.round(22 + (answeredCount / totalMilestones) * 78) 
+      : 22;
+
+    // Determine completed areas based on whether all milestones in an area are answered
+    const completedAreas: number[] = [];
+    for (let i = 0; i < currentAreas.length; i++) {
+      const area = currentAreas[i];
+      const areaMilestoneIds = area.skills.flatMap(s => s.milestones.map(m => m.milestone_id));
+      const allAnswered = areaMilestoneIds.every(id => currentResponses[id] !== undefined);
+      if (allAnswered && areaMilestoneIds.length > 0) {
+        completedAreas.push(area.area_id);
+      }
+    }
     const currentArea = currentAreas[areaIndex];
 
     return {

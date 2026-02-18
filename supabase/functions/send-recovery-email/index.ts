@@ -295,10 +295,32 @@ Deno.serve(async (req) => {
     }
 
     const babyName = session.baby_name || "Baby";
-    const progress = Math.round(session.progress_percentage || 0);
     const selectedAreas: number[] = session.selected_areas || [2, 1, 3, 4];
-    const completedAreas: number[] = session.completed_areas || [];
-    const currentAreaId = session.current_area_id;
+
+    // Recalculate progress from actual assessment_responses data
+    let completedAreas: number[] = [];
+    let currentAreaId = session.current_area_id;
+    let progress = Math.round(session.progress_percentage || 0);
+
+    if (session.assessment_id) {
+      const { data: areaResponses } = await supabase
+        .from("assessment_responses")
+        .select("area_id")
+        .eq("assessment_id", session.assessment_id);
+
+      if (areaResponses && areaResponses.length > 0) {
+        const areasWithResponses = new Set(areaResponses.map((r: any) => r.area_id));
+        completedAreas = selectedAreas.filter(a => areasWithResponses.has(a));
+        
+        // Find the first area without responses as the current area
+        const firstIncomplete = selectedAreas.find(a => !areasWithResponses.has(a));
+        currentAreaId = firstIncomplete ?? selectedAreas[selectedAreas.length - 1];
+
+        // Progress: 22% base (baby form) + up to 78% based on areas completed
+        const areaProgress = completedAreas.length / selectedAreas.length;
+        progress = Math.round(22 + areaProgress * 78);
+      }
+    }
     const resumeLink = `https://growwise-tracker.lovable.app/resume?session=${session_id}`;
 
     const stepTrackerHtml = buildStepTracker(selectedAreas, completedAreas, currentAreaId);
