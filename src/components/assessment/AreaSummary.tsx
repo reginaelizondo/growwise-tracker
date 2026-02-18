@@ -145,39 +145,60 @@ export const AreaSummary = ({
           </div>
         </div>
 
-        {/* Pace of Development subtitle with info */}
-        <div className="flex items-center justify-center gap-2 mb-4">
-          <span className="text-sm font-semibold text-foreground/70">
-            Pace of Development
-          </span>
-          {isMobile ? (
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <button className="inline-flex items-center justify-center p-1 rounded-full hover:bg-muted/50 active:bg-muted transition-colors">
-                  <Info className="w-4 h-4 text-muted-foreground" />
-                </button>
-              </DialogTrigger>
-              <DialogContent className="max-w-sm">
-                <div className="space-y-3">
-                  {infoContent}
-                </div>
-              </DialogContent>
-            </Dialog>
-          ) : (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button className="inline-flex items-center justify-center">
-                    <Info className="w-4 h-4 text-muted-foreground/60 hover:text-muted-foreground transition-colors" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-sm p-4 space-y-3" side="bottom">
-                  {infoContent}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-        </div>
+        {/* Pace of Development card */}
+        {(() => {
+          const avgPercentile = skills.reduce((sum, s) => sum + (s.percentile ?? 50), 0) / skills.length;
+          const avgPace = calculatePace(avgPercentile);
+          
+          const getFeedback = (pace: number, name?: string): string => {
+            const n = name || 'your baby';
+            if (pace <= 0.7) return `${n} is developing at their own pace`;
+            if (pace <= 0.9) return `${n} is progressing steadily`;
+            if (pace <= 1.1) return `${n} is developing right on track`;
+            if (pace <= 1.3) return `${n} is developing ahead of the curve`;
+            return `${n} is developing at an advanced pace`;
+          };
+
+          return (
+            <div className="rounded-2xl bg-card border border-border/30 p-4 mb-5">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-muted-foreground">
+                  Pace of Development
+                </span>
+                {isMobile ? (
+                  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                    <DialogTrigger asChild>
+                      <button className="inline-flex items-center justify-center p-1 rounded-full hover:bg-muted/50 active:bg-muted transition-colors">
+                        <Info className="w-3.5 h-3.5 text-muted-foreground/60" />
+                      </button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-sm">
+                      <div className="space-y-3">
+                        {infoContent}
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                ) : (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button className="inline-flex items-center justify-center">
+                          <Info className="w-3.5 h-3.5 text-muted-foreground/60 hover:text-muted-foreground transition-colors" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-sm p-4 space-y-3" side="bottom">
+                        {infoContent}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+              </div>
+              <p className="text-center text-sm font-medium" style={{ color: areaColor }}>
+                {getFeedback(avgPace, babyName?.toLowerCase())}
+              </p>
+            </div>
+          );
+        })()}
 
         {/* Skills List - flat list, no card */}
         <div className="mb-6">
