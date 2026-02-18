@@ -16,36 +16,37 @@ const getAreaFeedback = (avgPercentile: number, babyName: string) => {
 
 // Mini half-circle pace gauge for table view
 const MiniPaceGauge = ({ pace, color }: { pace: number; color: string }) => {
-  const strokeWidth = 4;
-  const radius = 16;
-  const padding = strokeWidth + 1;
-  const svgWidth = radius * 2 + padding * 2;
-  const svgHeight = radius + padding + strokeWidth;
-  const centerX = svgWidth / 2;
-  const centerY = radius + padding;
+  const size = 56;
+  const strokeWidth = 5;
+  const radius = (size - strokeWidth) / 2;
+  const centerX = size / 2;
+  const centerY = size / 2 + 4;
   
+  // Half circle from 180° to 0° (left to right, top arc)
+  const startAngle = Math.PI;
+  const endAngle = 0;
   const normalizedPace = Math.max(0, Math.min(2, pace)) / 2; // 0-1
+  const currentAngle = startAngle - (normalizedPace * Math.PI);
   
-  // Background: full semicircle from left to right
-  const bgPath = `M ${centerX - radius} ${centerY} A ${radius} ${radius} 0 1 1 ${centerX + radius} ${centerY}`;
+  const arcStartX = centerX + radius * Math.cos(startAngle);
+  const arcStartY = centerY - radius * Math.sin(startAngle);
+  const arcEndX = centerX + radius * Math.cos(endAngle);
+  const arcEndY = centerY - radius * Math.sin(endAngle);
+  const currentX = centerX + radius * Math.cos(currentAngle);
+  const currentY = centerY - radius * Math.sin(currentAngle);
   
-  // Value arc: use a slightly smaller radius so it sits inside the bg track
-  const valRadius = radius;
-  const currentAngle = Math.PI - (normalizedPace * Math.PI);
-  const valEndX = centerX + valRadius * Math.cos(currentAngle);
-  const valEndY = centerY - valRadius * Math.sin(currentAngle);
   const largeArc = normalizedPace > 0.5 ? 1 : 0;
-  const valuePath = `M ${centerX - valRadius} ${centerY} A ${valRadius} ${valRadius} 0 ${largeArc} 1 ${valEndX} ${valEndY}`;
+  
+  const bgPath = `M ${arcStartX} ${arcStartY} A ${radius} ${radius} 0 1 1 ${arcEndX} ${arcEndY}`;
+  const valuePath = `M ${arcStartX} ${arcStartY} A ${radius} ${radius} 0 ${largeArc} 1 ${currentX} ${currentY}`;
   
   return (
     <div className="flex flex-col items-center">
-      <svg width={svgWidth} height={svgHeight} viewBox={`0 0 ${svgWidth} ${svgHeight}`} overflow="visible">
+      <svg width={size} height={size / 2 + 10} viewBox={`0 0 ${size} ${size / 2 + 12}`}>
         <path d={bgPath} fill="none" stroke="hsl(var(--border))" strokeWidth={strokeWidth} strokeLinecap="round" />
-        {normalizedPace > 0.01 && (
-          <path d={valuePath} fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="butt" />
-        )}
+        <path d={valuePath} fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
       </svg>
-      <span className="text-[10px] font-bold -mt-0.5" style={{ color }}>{pace.toFixed(1)}×</span>
+      <span className="text-[11px] font-bold -mt-2" style={{ color }}>{pace.toFixed(1)}×</span>
     </div>
   );
 };
@@ -76,7 +77,7 @@ const MasteryDots = ({ mastered, total, color }: { mastered: number; total: numb
 
 const getRankColor = (percentile: number, areaColor: string): string => {
   if (percentile >= 60) return 'hsl(142, 70%, 42%)'; // green
-  if (percentile >= 30) return 'hsl(45, 93%, 47%)'; // yellow
+  if (percentile >= 30) return areaColor; // area color (yellow-ish range)
   return 'hsl(25, 95%, 53%)'; // orange
 };
 
@@ -135,43 +136,49 @@ export const AreaSummary = ({
   const progressPercent = totalMilestones > 0 ? (totalMastered / totalMilestones) * 100 : 0;
 
   const infoContent = (
-    <div className="space-y-4">
+    <>
       <div>
-        <h4 className="text-base font-bold mb-1">Pace of Development</h4>
-        <p className="text-sm text-muted-foreground leading-relaxed">
+        <h4 className="text-sm font-bold mb-1.5">Pace of Development</h4>
+        <p className="text-xs text-muted-foreground leading-relaxed">
           This value reflects your baby's natural development rhythm compared to others their age.
         </p>
       </div>
       
-      <div className="space-y-3 pt-3 border-t border-border/30">
-        <div className="flex items-center gap-3">
-          <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center">
-            <span className="text-sm font-bold text-emerald-600">1.0×</span>
+      <div className="space-y-2.5 pt-1.5 border-t border-border/50">
+        <div className="flex items-start gap-2.5">
+          <div className="flex-shrink-0 w-10 h-10 rounded-full bg-success/10 flex items-center justify-center">
+            <span className="text-sm font-bold text-success">1.0×</span>
           </div>
-          <p className="text-sm text-foreground">
-            Represents an <span className="font-semibold">average pace</span>
-          </p>
+          <div className="flex-1 pt-1">
+            <p className="text-xs text-foreground">
+              Represents an <span className="font-semibold">average pace</span>
+            </p>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-muted flex items-center justify-center">
-            <span className="text-sm font-bold text-muted-foreground">&lt;1.0×</span>
+        <div className="flex items-start gap-2.5">
+          <div className="flex-shrink-0 w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+            <span className="text-xs font-bold text-muted-foreground">&lt;1.0×</span>
           </div>
-          <p className="text-sm text-foreground">
-            Developing at their <span className="font-semibold">own rhythm</span> — completely normal
-          </p>
+          <div className="flex-1 pt-1">
+            <p className="text-xs text-foreground">
+              Developing at their <span className="font-semibold">own rhythm</span> — completely normal
+            </p>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center">
-            <span className="text-sm font-bold text-amber-600">&gt;1.0×</span>
+        <div className="flex items-start gap-2.5">
+          <div className="flex-shrink-0 w-10 h-10 rounded-full bg-warning/10 flex items-center justify-center">
+            <span className="text-xs font-bold text-warning">&gt;1.0×</span>
           </div>
-          <p className="text-sm text-foreground">
-            Reaching milestones <span className="font-semibold">earlier than average</span>
-          </p>
+          <div className="flex-1 pt-1">
+            <p className="text-xs text-foreground">
+              Reaching milestones <span className="font-semibold">earlier than average</span>
+            </p>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 
   return (
@@ -290,7 +297,7 @@ export const AreaSummary = ({
 
                 {/* Rank */}
                 <div className="w-14 text-right">
-                  <span className="text-xl font-semibold" style={{ color: rankColor }}>
+                  <span className="text-xl font-extrabold" style={{ color: rankColor }}>
                     {Math.round(percentile)}%
                   </span>
                 </div>
