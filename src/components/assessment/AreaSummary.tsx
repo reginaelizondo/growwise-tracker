@@ -160,42 +160,38 @@ export const AreaSummary = ({
           };
 
           return (
-            <div className="rounded-2xl bg-card border border-border/30 p-4 mb-5">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-muted-foreground">
-                  Pace of Development
-                </span>
-                {isMobile ? (
-                  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogTrigger asChild>
-                      <button className="inline-flex items-center justify-center p-1 rounded-full hover:bg-muted/50 active:bg-muted transition-colors">
-                        <Info className="w-3.5 h-3.5 text-muted-foreground/60" />
+            <div className="rounded-xl bg-card border border-border/20 px-3 py-2.5 mb-3 flex items-center gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground whitespace-nowrap">
+                Pace of Development
+              </span>
+              {isMobile ? (
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                  <DialogTrigger asChild>
+                    <button className="inline-flex items-center justify-center p-0.5 rounded-full hover:bg-muted/50 active:bg-muted transition-colors">
+                      <Info className="w-3 h-3 text-muted-foreground/50" />
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-sm">
+                    <div className="space-y-3">{infoContent}</div>
+                  </DialogContent>
+                </Dialog>
+              ) : (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button className="inline-flex items-center justify-center">
+                        <Info className="w-3 h-3 text-muted-foreground/50 hover:text-muted-foreground transition-colors" />
                       </button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-sm">
-                      <div className="space-y-3">
-                        {infoContent}
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                ) : (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button className="inline-flex items-center justify-center">
-                          <Info className="w-3.5 h-3.5 text-muted-foreground/60 hover:text-muted-foreground transition-colors" />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-sm p-4 space-y-3" side="bottom">
-                        {infoContent}
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
-              </div>
-              <p className="text-center text-sm font-medium" style={{ color: areaColor }}>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-sm p-4 space-y-3" side="bottom">
+                      {infoContent}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+              <span className="text-[11px] font-semibold ml-auto" style={{ color: areaColor }}>
                 {getFeedback(avgPace, babyName?.toLowerCase())}
-              </p>
+              </span>
             </div>
           );
         })()}
@@ -208,12 +204,12 @@ export const AreaSummary = ({
             return (
               <div 
                 key={skill.skill_id} 
-                className="flex items-center gap-2 px-2 py-2"
-                style={{ height: '60px' }}
+                className="flex items-center gap-2.5 px-1"
+                style={{ paddingTop: '6px', paddingBottom: '6px' }}
               >
-                {/* Left: Skill name + percentile */}
-                <div className="flex-shrink-0" style={{ width: '42%' }}>
-                  <h3 className="text-[12px] font-bold text-foreground leading-tight truncate">
+                {/* Left: Skill name + percentile — allow wrap */}
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-[12px] font-bold text-foreground leading-tight">
                     {skill.skill_name}
                   </h3>
                   <p className="text-[10px] text-muted-foreground mt-0.5">
@@ -223,8 +219,8 @@ export const AreaSummary = ({
                   </p>
                 </div>
 
-                {/* Center: Compact gauge */}
-                <div className="flex-1 min-w-0" style={{ maxWidth: '130px' }}>
+                {/* Center: Compact gauge — fixed 140px */}
+                <div className="flex-shrink-0" style={{ width: '140px' }}>
                   <PaceGauge
                     percentile={skill.percentile ?? 50}
                     color={areaColor}
@@ -236,7 +232,7 @@ export const AreaSummary = ({
 
                 {/* Right: Pace badge */}
                 <div 
-                  className="flex-shrink-0 w-[48px] text-center py-1 rounded-lg text-xs font-bold tabular-nums"
+                  className="flex-shrink-0 w-[46px] text-center py-1 rounded-lg text-xs font-bold tabular-nums"
                   style={{ 
                     color: areaColor,
                     backgroundColor: `${areaColor}12`

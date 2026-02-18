@@ -298,25 +298,24 @@ export const PaceGauge = ({
         </div>
 
         {/* Vertical lines gauge */}
-      <div className={compact ? "relative h-6 flex items-end justify-between gap-[1.5px]" : "relative h-16 flex items-end justify-between gap-[2px]"}>
+      <div className={compact ? "relative h-[22px] flex items-end justify-between gap-[1.5px]" : "relative h-16 flex items-end justify-between gap-[2px]"}>
           {Array.from({
           length: compact ? 30 : 60
         }).map((_, i) => {
           const totalBars = compact ? 30 : 60;
-          const position = i / (totalBars - 1); // 0 to 1
+          const position = i / (totalBars - 1);
           
-          const paceAtPosition = MIN_PACE_DISPLAY + (position * DISPLAY_RANGE);
           const currentPacePosition = (pace - MIN_PACE_DISPLAY) / DISPLAY_RANGE;
           const visualDistance = Math.abs(position - currentPacePosition);
-          const isCurrentPosition = visualDistance < 0.02;
+          const isCurrentPosition = visualDistance < 0.025;
           
-          const gradientRange = compact ? 0.07 : 0.05;
-          const isInGradient = visualDistance > 0.02 && visualDistance <= gradientRange;
+          const gradientRange = compact ? 0.08 : 0.05;
+          const isInGradient = visualDistance > 0.025 && visualDistance <= gradientRange;
           
           const baseHeight = compact ? 10 : 40;
-          const maxHeight = compact ? 24 : 60;
+          const maxHeight = compact ? 22 : 60;
           let lineHeight = baseHeight;
-          let lineOpacity = compact ? 0.5 : 0.2;
+          let lineOpacity = compact ? 0.45 : 0.2;
           let lineColor = compact ? "#E8E9ED" : "hsl(220, 15%, 50%)";
           
           if (isCurrentPosition) {
@@ -324,17 +323,17 @@ export const PaceGauge = ({
             lineOpacity = 1;
             lineColor = color;
           } else if (isInGradient) {
-            const intensity = 1 - (visualDistance - 0.02) / (gradientRange - 0.02);
+            const intensity = 1 - (visualDistance - 0.025) / (gradientRange - 0.025);
             lineHeight = baseHeight + ((maxHeight - baseHeight) * intensity);
             lineOpacity = compact ? 0.5 + (0.5 * intensity) : 0.3 + (0.7 * intensity);
             lineColor = color;
           }
           
-          return <div key={i} className="flex-1 rounded-t-sm transition-all duration-300" style={{
+          return <div key={i} className="flex-1 rounded-t-sm" style={{
             height: `${lineHeight}px`,
             backgroundColor: lineColor,
             opacity: lineOpacity,
-            minWidth: compact ? '2px' : undefined,
+            minWidth: compact ? '3px' : undefined,
             boxShadow: isCurrentPosition ? `0 0 ${compact ? '6' : '12'}px ${color}40` : 'none'
           }} />;
         })}
@@ -349,10 +348,10 @@ export const PaceGauge = ({
           </div>
         )}
 
-        {/* Scale labels */}
-        <div className={compact ? "flex justify-between text-[9px] text-muted-foreground/50 mt-0.5 leading-none" : "flex justify-between text-[10px] text-muted-foreground/70 mt-1"}>
+        {/* Scale labels — compact: only 0× and 2× */}
+        <div className={compact ? "flex justify-between text-[8px] text-muted-foreground/40 mt-0 leading-none" : "flex justify-between text-[10px] text-muted-foreground/70 mt-1"}>
           <span>0×</span>
-          <span>1×</span>
+          {!compact && <span>1×</span>}
           <span>2×</span>
         </div>
       </div>
