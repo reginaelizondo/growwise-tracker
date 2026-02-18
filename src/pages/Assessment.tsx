@@ -1764,7 +1764,7 @@ const Assessment = () => {
       if (updateError) throw updateError;
       
       // Navigate to report
-      toast.success("Assessment completed! Redirecting to report...");
+      // toast removed to avoid blocking report view
       setTimeout(() => {
         navigate(`/report/${id}`);
       }, 500);
@@ -1816,7 +1816,7 @@ const Assessment = () => {
         timestamp: new Date().toISOString()
       }));
 
-      toast.success("Assessment completed!");
+      // toast removed to avoid blocking report view
       navigate(`/report/${id}`);
     } catch (error: any) {
       console.error("Error completing assessment:", error);
@@ -2066,7 +2066,7 @@ const Assessment = () => {
           timestamp: new Date().toISOString()
         }));
 
-        toast.success("Assessment completed!");
+        // toast removed to avoid blocking report view
         navigate(`/report/${id}`);
       } catch (error) {
         console.error("Error completing assessment:", error);
