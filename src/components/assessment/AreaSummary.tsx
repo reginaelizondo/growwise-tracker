@@ -180,33 +180,48 @@ export const AreaSummary = ({
         </div>
 
         {/* Skills List */}
-        <div className="mb-6">
+        <div className="mb-6 bg-card rounded-2xl shadow-sm border border-border/40 overflow-hidden">
           {skills.map((skill, index) => {
             const pace = skill.percentile !== null ? calculatePace(skill.percentile) : 1.0;
             
             return (
               <div 
                 key={skill.skill_id} 
-                className="py-3"
-                style={{ borderBottom: index < skills.length - 1 ? '1px solid hsl(var(--border) / 0.4)' : 'none' }}
+                className="flex items-center gap-3 px-4 py-4"
+                style={{ borderBottom: index < skills.length - 1 ? '1px solid hsl(var(--border) / 0.3)' : 'none' }}
               >
-                {/* Skill name */}
-                <h3 className="text-sm font-bold mb-1" style={{ color: areaColor }}>
-                  {skill.skill_name}
-                </h3>
+                {/* Left: Skill name + percentile */}
+                <div className="flex-shrink-0 w-[38%]">
+                  <h3 className="text-sm font-bold text-foreground leading-tight">
+                    {skill.skill_name}
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Percentile <span className="font-semibold" style={{ color: areaColor }}>{skill.percentile !== null ? `${Math.round(skill.percentile)}th` : '—'}</span>
+                  </p>
+                </div>
 
-                {/* Compact gauge */}
-                <PaceGauge
-                  percentile={skill.percentile ?? 50}
-                  color={areaColor}
-                  compact={true}
-                  hideGauge={false}
-                />
+                {/* Center: Compact gauge */}
+                <div className="flex-1 min-w-0">
+                  <PaceGauge
+                    percentile={skill.percentile ?? 50}
+                    color={areaColor}
+                    compact={true}
+                    hideGauge={false}
+                    hideValue={true}
+                  />
+                </div>
 
-                {/* Percentile text */}
-                <p className="text-xs text-muted-foreground text-center mt-1">
-                  {getPercentileText(skill.percentile)}
-                </p>
+                {/* Right: Pace value */}
+                <div 
+                  className="flex-shrink-0 px-3 py-1.5 rounded-lg text-lg font-bold"
+                  style={{ 
+                    color: areaColor,
+                    backgroundColor: `${areaColor}10`,
+                    border: `1px solid ${areaColor}25`
+                  }}
+                >
+                  {pace.toFixed(1)}×
+                </div>
               </div>
             );
           })}
