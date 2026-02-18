@@ -209,7 +209,7 @@ export const AreaSummary = ({
                   <div className="mx-2" style={{ height: '1px', backgroundColor: '#ECEEF2' }} />
                 )}
                 <div 
-                  className="flex items-start gap-2.5 px-1 rounded-lg"
+                  className="flex items-start gap-3 px-1 rounded-lg"
                   style={{ 
                     paddingTop: '12px', 
                     paddingBottom: '12px'
@@ -227,8 +227,14 @@ export const AreaSummary = ({
                     </p>
                   </div>
 
-                  {/* Center: Compact gauge — fixed 140px */}
-                  <div className="flex-shrink-0" style={{ width: '140px' }}>
+                  {/* Right: Pace number centered above gauge */}
+                  <div className="flex-1 min-w-0">
+                    <p 
+                      className="text-center text-xs font-bold tabular-nums"
+                      style={{ color: areaColor, marginBottom: '4px' }}
+                    >
+                      {pace.toFixed(1)}×
+                    </p>
                     <PaceGauge
                       percentile={skill.percentile ?? 50}
                       color={areaColor}
@@ -236,17 +242,6 @@ export const AreaSummary = ({
                       hideGauge={false}
                       hideValue={true}
                     />
-                  </div>
-
-                  {/* Right: Pace badge */}
-                  <div 
-                    className="flex-shrink-0 w-[46px] text-center py-1 rounded-lg text-xs font-bold tabular-nums mt-0.5"
-                    style={{ 
-                      color: areaColor,
-                      backgroundColor: `${areaColor}12`
-                    }}
-                  >
-                    {pace.toFixed(1)}×
                   </div>
                 </div>
               </div>
