@@ -212,8 +212,7 @@ export const AreaSummary = ({
                   className="flex items-center gap-2.5 px-1 rounded-lg"
                   style={{ 
                     paddingTop: '12px', 
-                    paddingBottom: '12px',
-                    backgroundColor: pace < 0.5 ? 'rgba(245, 158, 11, 0.04)' : 'transparent'
+                    paddingBottom: '12px'
                   }}
                 >
                   {/* Left: Skill name + percentile — fixed width */}
