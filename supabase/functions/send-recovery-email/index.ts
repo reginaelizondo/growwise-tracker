@@ -82,6 +82,8 @@ function buildAppSection(babyName: string): string {
   const appStoreUrl = `${storageBase}/app-store-badge-final.png`;
   const googlePlayUrl = `${storageBase}/google-play-badge.png`;
 
+  const appPreviewUrl = `${storageBase}/kinedu-app-preview.png`;
+
   return `
   <tr><td style="padding:8px 20px 0;">
     <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F0F7FF;border:1px solid #E0E8F5;border-radius:12px;">
@@ -90,6 +92,9 @@ function buildAppSection(babyName: string): string {
       </td></tr>
       <tr><td style="padding:8px 16px 0;">
         <p style="margin:0;font-size:18px;font-weight:800;color:#1B2B4B;text-align:center;line-height:1.3;">Know exactly what to do with ${babyName} every day</p>
+      </td></tr>
+      <tr><td align="center" style="padding:8px 16px 0;">
+        <img src="${appPreviewUrl}" alt="Kinedu App" width="220" style="width:220px;height:auto;display:block;border-radius:8px;" />
       </td></tr>
       <tr><td style="padding:6px 16px 0;">
         <p style="margin:0;font-size:12px;color:#4b5563;text-align:center;">5 min/day · 1,800+ expert activities · Results in 2-4 weeks</p>
