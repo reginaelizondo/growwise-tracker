@@ -209,14 +209,14 @@ export const AreaSummary = ({
                   <div className="mx-2" style={{ height: '1px', backgroundColor: '#ECEEF2' }} />
                 )}
                 <div 
-                  className="flex items-center gap-2.5 px-1 rounded-lg"
+                  className="flex items-start gap-2.5 px-1 rounded-lg"
                   style={{ 
                     paddingTop: '12px', 
                     paddingBottom: '12px'
                   }}
                 >
                   {/* Left: Skill name + percentile — fixed width */}
-                  <div className="flex-shrink-0" style={{ width: '130px' }}>
+                  <div className="flex-shrink-0 pt-0.5" style={{ width: '130px' }}>
                     <h3 className="text-[12px] font-bold text-foreground leading-tight">
                       {skill.skill_name}
                     </h3>
@@ -240,7 +240,7 @@ export const AreaSummary = ({
 
                   {/* Right: Pace badge */}
                   <div 
-                    className="flex-shrink-0 w-[46px] text-center py-1 rounded-lg text-xs font-bold tabular-nums"
+                    className="flex-shrink-0 w-[46px] text-center py-1 rounded-lg text-xs font-bold tabular-nums mt-0.5"
                     style={{ 
                       color: areaColor,
                       backgroundColor: `${areaColor}12`
