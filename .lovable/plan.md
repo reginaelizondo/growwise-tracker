@@ -1,80 +1,45 @@
 
 
-# Recovery Email - Major Redesign (Compact & Conversion-Focused)
+## Mejoras a la sección "Your Progress" del email
 
-## Goal
-Complete rewrite of the email HTML template to be ~60% shorter, denser, and more conversion-oriented. Then reset flags and re-send test email to reginaelizondo@kinedu.com.
+Basandome en el screenshot de referencia, estos son los cambios necesarios en `supabase/functions/send-recovery-email/index.ts`:
 
----
+### Cambios en la tarjeta de progreso (lineas 182-201)
 
-## New Email Structure (top to bottom)
+1. **Titulo "YOUR PROGRESS" a la izquierda + "XX% complete" a la derecha en verde** - Actualmente solo muestra "22% complete" en gris pequeño. Cambiar a un layout de dos columnas:
+   - Izquierda: "YOUR PROGRESS" en mayusculas, bold, gris oscuro, font-size 13px
+   - Derecha: "22% complete" en verde (#34A853), bold, italica, font-size 13px
 
-### 1. Logo + Headline + Subtext + CTA (tight block)
-- Kinedu logo, reduced top padding (24px instead of 32px)
-- Headline: 22px bold navy, single line where possible, tighter line-height
-- Subtext: single paragraph, 14px gray, "2 more minutes" in bold
-- Full-width GREEN CTA button: `border-radius: 12px` (not 50px pill), `#34A853`, 16px font
-- "Takes 2 min - 100% free" small text directly below
+2. **Progress bar mas gruesa y verde solido** - Actualmente es de 4px. Cambiar a 6px de alto con bordes redondeados completos y color verde mas visible.
 
-### 2. Progress Section (inline step tracker)
-- Replace the big card with rows/circles with a compact horizontal step tracker
-- Light gray card (`#F8F9FA`), 12px padding
-- "22% complete" small label above
-- Single row of 4 segments using area icons + colored indicators:
-  - Completed = green check + name with area color
-  - Current = blue dot + "You're here" indicator
-  - Pending = gray circle + gray name
-- Everything on 1-2 lines max, no big numbered circles
+3. **Iconos del step tracker mas grandes** - Aumentar de 28px a 40px para que coincidan con el screenshot donde los iconos son circulares y mas prominentes.
 
-### 3. Value Props (inline, merged)
-- Single line: "Full report - Focus areas - Daily activities" with emojis, 12px, gray
-- No separate "What you'll unlock" heading, no 3 separate rows
+4. **Ring verde para el area activa (Cognitive)** - En el screenshot, Cognitive tiene un ring verde grueso (no azul). Cambiar el borde de `#2563eb` (azul) a `#6DC185` (verde Cognitive) con 3px de grosor. Remover el blue dot de arriba.
 
-### 4. Kinedu App Section (compact)
-- Keep blue background card (`#F0F7FF`)
-- "THE #1 APP RECOMMENDED BY PEDIATRICIANS" label
-- "Know exactly what to do with Baby every day" - 18px bold
-- One-liner: "5 min/day - 1,800+ expert activities - Results in 2-4 weeks"
-- Rating pill: "4.7 - 2,000+ reviews"
-- NAVY CTA: `border-radius: 12px`, full width
-- "No commitment - Cancel anytime" small text
-- App Store + Google Play badges on same line, smaller (110px + 120px)
-- **Remove phone mockup image entirely**
+5. **Areas inactivas con ring gris claro** - Las areas pendientes (Physical, Linguistic, Social) muestran un circulo gris claro alrededor del icono, no solo opacidad reducida. Agregar un borde gris (#e5e7eb) de 2px.
 
-### 5. Footer (minimal)
-- "Trusted by 10M+ families" one line
-- Legal disclaimer + copyright, compact
+6. **Label "Social" en vez de "Socio-Emotional"** - Acortar el nombre del area 4 para que quepa mejor.
 
-### 6. Remove
-- Bottom duplicate CTA (keep only the top one)
-- Separate "What you'll unlock" section
-- Phone mockup image
-- Clipboard emoji from subject
-- All 50px border-radius (use 12px everywhere)
+7. **Lineas conectoras mas largas** - Aumentar el ancho de las lineas de 16px a 24px para que se vean como en el screenshot.
 
----
+### Detalle tecnico
 
-## Design Rules Applied
-- Button border-radius: 12px
-- Button padding: 16px vertical, full width
-- Section spacing: 16px max
-- Card padding: 12-16px
-- Font sizes: headline 22px, body 14px, small 11px
+Archivo: `supabase/functions/send-recovery-email/index.ts`
 
----
+**Seccion del header de progreso** (reemplazar lineas 184-186):
+- Cambiar de un solo `<p>` a una tabla de 2 columnas con "YOUR PROGRESS" (izq) y "XX% complete" (der, verde)
 
-## Technical Steps
+**Progress bar** (lineas 187-191):
+- Aumentar height de 4px a 6px
+- Border-radius completo en ambos lados
 
-1. **Rewrite** `supabase/functions/send-recovery-email/index.ts`:
-   - Replace `buildAreaChecklist()` with `buildStepTracker()` (horizontal inline layout)
-   - Replace `buildCtaButton()` with flat full-width 12px radius button
-   - Replace `buildAppSection()` with compact version (no image, tighter spacing)
-   - Rewrite `buildEmailHtml()` with reduced padding and merged sections
-   - Remove clipboard emoji from subject line
-   - Update subtext to be single paragraph format
+**Step tracker icons** (lineas 30-57):
+- Iconos de 28px a 40px
+- Current area: ring verde (#6DC185) de 3px, sin blue dot
+- Areas inactivas: ring gris (#e5e7eb) de 2px, opacity 0.5
+- Renombrar "Socio-Emotional" a "Social"
 
-2. **Deploy** the edge function
+**Lineas conectoras** (linea 65):
+- Width de 16px a 24px
 
-3. **Reset** `email_sent` / `email_sent_at` flags for session `ce1381af-8295-4cfe-adc3-955b72265c98`
-
-4. **Send** test email by invoking the function with the session ID
+Despues de los cambios, se resetea el flag de email y se envia un test.
