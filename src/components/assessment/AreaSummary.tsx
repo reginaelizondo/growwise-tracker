@@ -209,7 +209,7 @@ export const AreaSummary = ({
                   <div className="mx-2" style={{ height: '1px', backgroundColor: '#ECEEF2' }} />
                 )}
                 <div 
-                  className="flex items-start gap-3 px-1 rounded-lg"
+                  className="flex items-center gap-3 px-1 rounded-lg"
                   style={{ 
                     paddingTop: '12px', 
                     paddingBottom: '12px'
