@@ -349,25 +349,7 @@ function buildEmailHtml(babyName: string, ageMonths: number, areas: AreaResult[]
                   <p style="font-size: 14px; color: #4A6FA5; margin: 0 0 14px; line-height: 1.4;">
                     Kinedu created a daily play plan<br/>targeting ${babyName}'s focus areas.
                   </p>
-                  <img src="${STORAGE_URL}/kinedu-app-preview.png" alt="Kinedu App" width="230" style="width:230px;height:auto;display:block;margin:0 auto 16px;border-radius:8px;" />
-                  <table width="100%" cellpadding="0" cellspacing="0" style="text-align: left; margin-bottom: 20px;">
-                    <tr><td style="padding: 5px 0;"><table cellpadding="0" cellspacing="0"><tr>
-                      <td style="width: 28px; vertical-align: middle;"><span style="font-size: 16px;">🎯</span></td>
-                      <td><span style="font-size: 13px; color: #2D3748; font-weight: 700;">Daily activities for ${babyName}'s specific needs</span></td>
-                    </tr></table></td></tr>
-                    <tr><td style="padding: 5px 0;"><table cellpadding="0" cellspacing="0"><tr>
-                      <td style="width: 28px; vertical-align: middle;"><span style="font-size: 16px;">⏱️</span></td>
-                      <td><span style="font-size: 13px; color: #2D3748; font-weight: 700;">Just 5-10 minutes a day</span></td>
-                    </tr></table></td></tr>
-                    <tr><td style="padding: 5px 0;"><table cellpadding="0" cellspacing="0"><tr>
-                      <td style="width: 28px; vertical-align: middle;"><span style="font-size: 16px;">🧸</span></td>
-                      <td><span style="font-size: 13px; color: #2D3748; font-weight: 700;">1,800+ expert-designed activities</span></td>
-                    </tr></table></td></tr>
-                    <tr><td style="padding: 5px 0;"><table cellpadding="0" cellspacing="0"><tr>
-                      <td style="width: 28px; vertical-align: middle;"><span style="font-size: 16px;">📈</span></td>
-                      <td><span style="font-size: 13px; color: #2D3748; font-weight: 700;">Parents see results in 2-4 weeks</span></td>
-                    </tr></table></td></tr>
-                  </table>
+                  <img src="${STORAGE_URL}/kinedu-app-preview.png" alt="Kinedu App" width="280" style="width:280px;max-width:100%;height:auto;display:block;margin:0 auto 18px;border-radius:8px;" />
                   <a href="${CTA_URL}" style="display: block; background: linear-gradient(135deg, #22C55E, #16A34A); color: #ffffff; text-decoration: none; padding: 15px 24px; border-radius: 14px; font-weight: 800; font-size: 16px; text-align: center; box-shadow: 0 4px 12px rgba(34,197,94,0.3);">
                     Start 7-Day Free Trial
                   </a>
