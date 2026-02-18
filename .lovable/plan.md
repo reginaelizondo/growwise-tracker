@@ -1,157 +1,80 @@
 
 
-# Abandoned Assessment Recovery -- Email + Resume Link System
+# Recovery Email - Major Redesign (Compact & Conversion-Focused)
 
-## Overview
-
-Build a system that saves assessment progress for users who leave mid-assessment, generates a unique resume link, and sends a recovery email after 30 minutes of inactivity. Users clicking the resume link skip onboarding and land exactly where they left off.
-
----
-
-## Part 1: New Database Table
-
-Create an `abandoned_sessions` table to track in-progress assessments:
-
-| Column | Type | Notes |
-|--------|------|-------|
-| id | uuid (PK) | Auto-generated |
-| session_id | text | Unique, from existing analytics session |
-| baby_id | uuid | FK to babies |
-| assessment_id | uuid | FK to assessments |
-| baby_name | text | Cached from onboarding |
-| baby_birthday | date | Cached from onboarding |
-| email | text | From onboarding step 3 |
-| selected_areas | jsonb | Array of area IDs e.g. [2,1,3,4] |
-| completed_areas | jsonb | Array of completed area IDs |
-| current_area_id | smallint | Area where user left |
-| current_skill_index | smallint | Skill index within area |
-| milestone_answers | jsonb | Object of milestone_id -> answer |
-| progress_percentage | numeric | 0-100 |
-| abandoned_at | timestamptz | Last interaction timestamp |
-| created_at | timestamptz | Session start |
-| email_sent | boolean | Default false |
-| email_sent_at | timestamptz | When first email was sent |
-| second_email_sent | boolean | Default false |
-| completed | boolean | Default false |
-
-RLS: Public insert + update (unclaimed babies pattern), public select by session_id match.
+## Goal
+Complete rewrite of the email HTML template to be ~60% shorter, denser, and more conversion-oriented. Then reset flags and re-send test email to reginaelizondo@kinedu.com.
 
 ---
 
-## Part 2: Auto-Save Progress
+## New Email Structure (top to bottom)
 
-### 2a. Save on skill completion / area transition
+### 1. Logo + Headline + Subtext + CTA (tight block)
+- Kinedu logo, reduced top padding (24px instead of 32px)
+- Headline: 22px bold navy, single line where possible, tighter line-height
+- Subtext: single paragraph, 14px gray, "2 more minutes" in bold
+- Full-width GREEN CTA button: `border-radius: 12px` (not 50px pill), `#34A853`, 16px font
+- "Takes 2 min - 100% free" small text directly below
 
-In `AssessmentNew.tsx`, after every `handleNextSkill` and `handleContinueFromSummary` call, upsert to `abandoned_sessions` with current state:
+### 2. Progress Section (inline step tracker)
+- Replace the big card with rows/circles with a compact horizontal step tracker
+- Light gray card (`#F8F9FA`), 12px padding
+- "22% complete" small label above
+- Single row of 4 segments using area icons + colored indicators:
+  - Completed = green check + name with area color
+  - Current = blue dot + "You're here" indicator
+  - Pending = gray circle + gray name
+- Everything on 1-2 lines max, no big numbered circles
 
-- Serialize `responses` as `milestone_answers`
-- Track `completed_areas` by checking which areas have all skills answered
-- Update `current_area_id`, `current_skill_index`, `progress_percentage`, `abandoned_at`
+### 3. Value Props (inline, merged)
+- Single line: "Full report - Focus areas - Daily activities" with emojis, 12px, gray
+- No separate "What you'll unlock" heading, no 3 separate rows
 
-### 2b. Save on page unload / visibility change
+### 4. Kinedu App Section (compact)
+- Keep blue background card (`#F0F7FF`)
+- "THE #1 APP RECOMMENDED BY PEDIATRICIANS" label
+- "Know exactly what to do with Baby every day" - 18px bold
+- One-liner: "5 min/day - 1,800+ expert activities - Results in 2-4 weeks"
+- Rating pill: "4.7 - 2,000+ reviews"
+- NAVY CTA: `border-radius: 12px`, full width
+- "No commitment - Cancel anytime" small text
+- App Store + Google Play badges on same line, smaller (110px + 120px)
+- **Remove phone mockup image entirely**
 
-Add `beforeunload` and `visibilitychange` event listeners in `AssessmentNew.tsx` that trigger a save using `navigator.sendBeacon` (reliable even when tab closes) to a small edge function or direct Supabase upsert.
+### 5. Footer (minimal)
+- "Trusted by 10M+ families" one line
+- Legal disclaimer + copyright, compact
 
-### 2c. Create session on assessment start
-
-In `BabyForm.tsx` `handleSubmit`, after creating baby + assessment, also create the `abandoned_sessions` row with initial data (name, birthday, email, selected areas, progress 24%).
-
----
-
-## Part 3: Resume Route (`/resume`)
-
-### 3a. New route in App.tsx
-
-Add `/resume` route pointing to a new `ResumeAssessment.tsx` page.
-
-### 3b. ResumeAssessment.tsx logic
-
-1. Read `session` query param
-2. Fetch `abandoned_sessions` row by `session_id`
-3. If not found or `completed === true`, show "session expired" message
-4. If found:
-   - Load assessment + baby data from existing `assessments` and `babies` tables
-   - Restore `selected_areas` to localStorage
-   - Navigate to `/assessment/{assessment_id}` with a query param like `?resume=true`
-5. In `AssessmentNew.tsx`, detect `resume` param:
-   - Load `abandoned_sessions` row
-   - Set `viewState` to `{ type: 'skill', areaIndex: X, skillIndex: Y }` matching saved position
-   - Pre-populate `responses` from `milestone_answers` (merged with DB responses)
-
----
-
-## Part 4: Recovery Email Edge Function
-
-### 4a. New edge function: `send-recovery-email`
-
-- Accepts `session_id` as parameter
-- Fetches session data from `abandoned_sessions`
-- Validates `email` exists, `completed === false`, `email_sent === false`
-- Builds HTML email using the provided template with dynamic variables:
-  - `baby_name` (4 occurrences)
-  - `progress_percentage` (number + CSS width)
-  - Area checklist (completed = green checkmark + strikethrough, current = bold + "You stopped here" amber label, pending = gray number)
-  - Resume CTA link: `https://growwise-tracker.lovable.app/resume?session={session_id}`
-- Uses Kinedu logo from storage bucket and area icons
-- Sends via Resend (RESEND_API_KEY already configured)
-- Subject: `{baby_name}'s development report is {progress_percentage}% done`
-- Sets `email_sent = true` and `email_sent_at = now()` after successful send
-
-### 4b. Second email (24h later)
-
-- Same function, accepts `is_second_email` flag
-- Changes subject to: "Last chance -- {baby_name}'s assessment expires soon"
-- Changes headline to urgency messaging
-- Sets `second_email_sent = true`
+### 6. Remove
+- Bottom duplicate CTA (keep only the top one)
+- Separate "What you'll unlock" section
+- Phone mockup image
+- Clipboard emoji from subject
+- All 50px border-radius (use 12px everywhere)
 
 ---
 
-## Part 5: Cron Job for Abandoned Detection
-
-### 5a. New edge function: `check-abandoned-assessments`
-
-- Queries `abandoned_sessions` where:
-  - `email IS NOT NULL`
-  - `completed = false`
-  - `email_sent = false`
-  - `abandoned_at < now() - interval '30 minutes'`
-- For each result, calls `send-recovery-email`
-- Second pass: checks where `email_sent = true`, `second_email_sent = false`, `email_sent_at < now() - interval '24 hours'`
-
-### 5b. Schedule via pg_cron
-
-Run every 5 minutes:
-```text
-cron.schedule('check-abandoned-assessments', '*/5 * * * *', ...)
-```
+## Design Rules Applied
+- Button border-radius: 12px
+- Button padding: 16px vertical, full width
+- Section spacing: 16px max
+- Card padding: 12-16px
+- Font sizes: headline 22px, body 14px, small 11px
 
 ---
 
-## Part 6: Mark Session Complete
+## Technical Steps
 
-In `AssessmentNew.tsx`, when assessment completes (navigating to report), update `abandoned_sessions` with `completed = true` so no recovery email is sent.
+1. **Rewrite** `supabase/functions/send-recovery-email/index.ts`:
+   - Replace `buildAreaChecklist()` with `buildStepTracker()` (horizontal inline layout)
+   - Replace `buildCtaButton()` with flat full-width 12px radius button
+   - Replace `buildAppSection()` with compact version (no image, tighter spacing)
+   - Rewrite `buildEmailHtml()` with reduced padding and merged sections
+   - Remove clipboard emoji from subject line
+   - Update subtext to be single paragraph format
 
----
+2. **Deploy** the edge function
 
-## Technical Details
+3. **Reset** `email_sent` / `email_sent_at` flags for session `ce1381af-8295-4cfe-adc3-955b72265c98`
 
-### Files to create:
-- `src/pages/ResumeAssessment.tsx` -- resume route page
-- `supabase/functions/send-recovery-email/index.ts` -- recovery email sender
-- `supabase/functions/check-abandoned-assessments/index.ts` -- cron checker
-
-### Files to modify:
-- `src/App.tsx` -- add `/resume` route
-- `src/pages/BabyForm.tsx` -- create abandoned_session row on submit
-- `src/pages/AssessmentNew.tsx` -- auto-save logic, resume detection, mark complete
-- `supabase/config.toml` -- add new function configs
-
-### Database changes:
-- New `abandoned_sessions` table with RLS policies
-- Enable `pg_cron` and `pg_net` extensions
-- Create cron schedule
-
-### Dependencies:
-- No new npm packages needed
-- Uses existing Resend integration and storage bucket assets
-
+4. **Send** test email by invoking the function with the session ID
