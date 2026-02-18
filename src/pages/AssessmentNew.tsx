@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft, Loader2, Sparkles } from "lucide-react";
@@ -8,6 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { externalSupabase } from "@/integrations/supabase/external-client";
 import { SkillMilestoneList } from "@/components/assessment/SkillMilestoneList";
 import { AreaSummary } from "@/components/assessment/AreaSummary";
+import { useAbandonedSessionSave } from "@/hooks/useAbandonedSessionSave";
+import { getSessionId } from "@/hooks/useSessionId";
 
 import physicalIcon from "@/assets/Physical.png";
 import linguisticWithText from "@/assets/Linguistic-with-text.png";
@@ -53,6 +55,7 @@ type ViewState =
 const AssessmentNew = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   
   const [assessment, setAssessment] = useState<any>(null);
   const [baby, setBaby] = useState<any>(null);
@@ -62,6 +65,14 @@ const AssessmentNew = () => {
   const [saving, setSaving] = useState(false);
   const [viewState, setViewState] = useState<ViewState>({ type: 'loading' });
   const [skillScores, setSkillScores] = useState<Map<number, { percentile: number | null; masteredCount: number; totalCount: number }>>(new Map());
+
+  // Auto-save progress to abandoned_sessions
+  const { saveProgress } = useAbandonedSessionSave({
+    assessmentId: id,
+    areas,
+    responses,
+    viewState,
+  });
 
   // Area order: Cognitive, Physical, Linguistic, Socio-Emotional
   const areaOrder = [2, 1, 3, 4];
@@ -292,7 +303,46 @@ const AssessmentNew = () => {
           });
 
         setAreas(areasArray);
-        setViewState({ type: 'skill', areaIndex: 0, skillIndex: 0 });
+
+        // Resume detection: if ?resume=true, load saved position
+        const isResume = searchParams.get('resume') === 'true';
+        if (isResume) {
+          try {
+            const sessionId = getSessionId();
+            const { data: savedSession } = await (supabase.from('abandoned_sessions' as any) as any)
+              .select('current_area_id, current_skill_index, milestone_answers')
+              .eq('session_id', sessionId)
+              .eq('assessment_id', id)
+              .single();
+
+            if (savedSession) {
+              // Restore milestone answers
+              if (savedSession.milestone_answers && typeof savedSession.milestone_answers === 'object') {
+                const restored = { ...responsesMap };
+                Object.entries(savedSession.milestone_answers).forEach(([key, val]) => {
+                  restored[Number(key)] = val as string;
+                });
+                setResponses(restored);
+              }
+
+              // Find the area index matching saved current_area_id
+              const resumeAreaIndex = areasArray.findIndex(a => a.area_id === savedSession.current_area_id);
+              const resumeSkillIndex = savedSession.current_skill_index ?? 0;
+              if (resumeAreaIndex >= 0) {
+                setViewState({ type: 'skill', areaIndex: resumeAreaIndex, skillIndex: resumeSkillIndex });
+              } else {
+                setViewState({ type: 'skill', areaIndex: 0, skillIndex: 0 });
+              }
+            } else {
+              setViewState({ type: 'skill', areaIndex: 0, skillIndex: 0 });
+            }
+          } catch (err) {
+            console.error('Error loading resume data:', err);
+            setViewState({ type: 'skill', areaIndex: 0, skillIndex: 0 });
+          }
+        } else {
+          setViewState({ type: 'skill', areaIndex: 0, skillIndex: 0 });
+        }
         setLoading(false);
 
       } catch (error) {
@@ -449,6 +499,9 @@ const AssessmentNew = () => {
       // Move to next skill
       setViewState({ type: 'skill', areaIndex, skillIndex: skillIndex + 1 });
     }
+
+    // Auto-save progress
+    saveProgress();
   };
 
   // Handle skip entire area
@@ -515,6 +568,13 @@ const AssessmentNew = () => {
           }));
 
           toast.success("Assessment completed!");
+          // Mark abandoned session as completed
+          try {
+            await (supabase.from('abandoned_sessions' as any) as any)
+              .update({ completed: true })
+              .eq('session_id', getSessionId())
+              .eq('assessment_id', id);
+          } catch (_) {}
           navigate(`/report/${id}`);
         } catch (error) {
           console.error("Error completing assessment:", error);
@@ -562,6 +622,13 @@ const AssessmentNew = () => {
         }));
 
         toast.success("Assessment completed!");
+        // Mark abandoned session as completed
+        try {
+          await (supabase.from('abandoned_sessions' as any) as any)
+            .update({ completed: true })
+            .eq('session_id', getSessionId())
+            .eq('assessment_id', id);
+        } catch (_) {}
         navigate(`/report/${id}`);
       } catch (error) {
         console.error("Error completing assessment:", error);
@@ -570,6 +637,8 @@ const AssessmentNew = () => {
     } else {
       // Move to next area
       setViewState({ type: 'skill', areaIndex: areaIndex + 1, skillIndex: 0 });
+      // Save progress on area transition
+      saveProgress();
     }
     
     // Scroll to top

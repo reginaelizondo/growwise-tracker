@@ -182,6 +182,27 @@ const BabyForm = () => {
 
       // Store selected areas for the assessment
       localStorage.setItem(`assessment_areas_${assessment.id}`, JSON.stringify(selectedAreas));
+
+      // Create abandoned_sessions row for recovery
+      try {
+        await (supabase.from('abandoned_sessions' as any) as any).insert({
+          session_id: getSessionId(),
+          baby_id: baby.id,
+          assessment_id: assessment.id,
+          baby_name: babyName || 'Baby',
+          baby_birthday: birthDateStr,
+          email: parentEmail || null,
+          selected_areas: selectedAreas,
+          completed_areas: [],
+          current_area_id: selectedAreas[0] || 2,
+          current_skill_index: 0,
+          milestone_answers: {},
+          progress_percentage: 24,
+        });
+      } catch (err) {
+        console.error('Error creating abandoned session:', err);
+      }
+
       navigate(`/assessment/${assessment.id}`);
     } catch (error: any) {
       console.error("Error creating baby:", error);

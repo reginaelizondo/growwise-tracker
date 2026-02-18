@@ -17,6 +17,7 @@ import ProgressAssessmentStart from "./pages/ProgressAssessmentStart";
 import ProgressAssessment from "./pages/ProgressAssessment";
 import Report from "./pages/Report";
 import Analytics from "./pages/Analytics";
+import ResumeAssessment from "./pages/ResumeAssessment";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -48,6 +49,7 @@ const App = () => (
           <Route path="/progress-assessment/:id" element={<ProgressAssessment />} />
           <Route path="/unlock-report/:id" element={<UnlockReportRedirect />} />
           <Route path="/report/:id" element={<Report />} />
+          <Route path="/resume" element={<ResumeAssessment />} />
           <Route path="/analytics" element={<Analytics />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

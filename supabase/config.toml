@@ -29,3 +29,9 @@ verify_jwt = false
 
 [functions.explain-milestone]
 verify_jwt = false
+
+[functions.send-recovery-email]
+verify_jwt = false
+
+[functions.check-abandoned-assessments]
+verify_jwt = false
