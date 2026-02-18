@@ -102,8 +102,7 @@ function buildGaugeHtml(pace: number, color: string): string {
     if (i < totalBars - 1) bars += `<td style="width:1px;"></td>`
   }
   return `
-    <div style="margin-top: 8px;">
-      <table width="100%" cellpadding="0" cellspacing="0"><tr>
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:8px;"><tr>
         <td><table cellpadding="0" cellspacing="0" style="width:100%;"><tr style="vertical-align: bottom;">${bars}</tr></table></td>
       </tr></table>
       <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:2px;">
@@ -112,8 +111,7 @@ function buildGaugeHtml(pace: number, color: string): string {
           <td style="font-size:9px;color:#A0AEC0;font-weight:600;text-align:center;">1×</td>
           <td style="font-size:9px;color:#A0AEC0;font-weight:600;text-align:right;">2×</td>
         </tr>
-      </table>
-    </div>`
+      </table>`
 }
 
 function getSkillStatusIcon(percentage: number): string {
@@ -167,7 +165,7 @@ function buildEmailHtml(babyName: string, ageMonths: number, areas: AreaResult[]
     const name = areaDisplayNames[areaId] || a.area_name
     const pl = getPaceLabel(a.percentile)
     return `
-      <table width="100%" cellpadding="0" cellspacing="0" style="background: #FBF9F6; border-radius: 16px; overflow: hidden; border: 1.5px solid #E8E4DF;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background: #FBF9F6; border-radius: 16px; border: 1.5px solid #E8E4DF;">
         <tr><td style="height: 3px; background: ${color};"></td></tr>
         <tr><td style="padding: 14px 14px 12px;">
           <table width="100%" cellpadding="0" cellspacing="0"><tr>
@@ -180,7 +178,7 @@ function buildEmailHtml(babyName: string, ageMonths: number, areas: AreaResult[]
             </td>
           </tr></table>
           ${buildGaugeHtml(a.pace, color)}
-          <div style="margin-top: 6px; font-size: 11px; color: #718096; font-weight: 700; text-align: center;">${pl.emoji} ${pl.label}</div>
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:6px;"><tr><td style="font-size: 11px; color: #718096; font-weight: 700; text-align: center;">${pl.emoji} ${pl.label}</td></tr></table>
         </td></tr>
       </table>`
   }
@@ -287,7 +285,7 @@ function buildEmailHtml(babyName: string, ageMonths: number, areas: AreaResult[]
                     </tr>
                   </table>
                   <!-- CTA -->
-                  <a href="${CTA_URL}" style="display: block; background: linear-gradient(135deg, #22C55E, #16A34A); color: #ffffff; text-decoration: none; padding: 15px 24px; border-radius: 14px; font-weight: 800; font-size: 16px; text-align: center; box-shadow: 0 4px 12px rgba(34,197,94,0.3);">
+                  <a href="${CTA_URL}" style="display: block; background-color: #22C55E; color: #ffffff; text-decoration: none; padding: 15px 24px; border-radius: 14px; font-weight: 800; font-size: 16px; text-align: center;">
                     Start 7-Day Free Trial
                   </a>
                   <p style="font-size: 12px; color: #A0AEC0; margin: 8px 0 0; text-align: center;">No commitment required</p>
@@ -342,7 +340,7 @@ function buildEmailHtml(babyName: string, ageMonths: number, areas: AreaResult[]
         <!-- PERSONALIZED PLAN -->
         <tr>
           <td style="padding: 0 20px 6px;">
-            <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(180deg, #EEF6FF, #E0EFFF); border: 1.5px solid #BDD8F7; border-radius: 18px; overflow: hidden;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #EEF6FF; border: 1.5px solid #BDD8F7; border-radius: 18px;">
               <tr>
                 <td style="padding: 22px 20px; text-align: center;">
                   <p style="font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: #1A3A6B; margin: 0 0 6px; font-weight: 900;">✨ Your Personalized Plan</p>
@@ -367,7 +365,7 @@ function buildEmailHtml(babyName: string, ageMonths: number, areas: AreaResult[]
                       <td><span style="font-size: 13px; color: #2D3748; font-weight: 700;">Parents see results in 2-4 weeks</span></td>
                     </tr></table></td></tr>
                   </table>
-                  <a href="${CTA_URL}" style="display: block; background: linear-gradient(135deg, #22C55E, #16A34A); color: #ffffff; text-decoration: none; padding: 15px 24px; border-radius: 14px; font-weight: 800; font-size: 16px; text-align: center; box-shadow: 0 4px 12px rgba(34,197,94,0.3);">
+                  <a href="${CTA_URL}" style="display: block; background-color: #22C55E; color: #ffffff; text-decoration: none; padding: 15px 24px; border-radius: 14px; font-weight: 800; font-size: 16px; text-align: center;">
                     Start 7-Day Free Trial
                   </a>
                   <p style="font-size: 12px; color: #90A4B8; margin: 8px 0 0;">No commitment required</p>
@@ -398,7 +396,7 @@ function buildEmailHtml(babyName: string, ageMonths: number, areas: AreaResult[]
         </tr>
 
         <!-- Divider -->
-        <tr><td style="padding: 0 24px;"><div style="border-top: 1.5px solid #F0EDE8;"></div></td></tr>
+        <tr><td style="padding: 0 24px;"><table width="100%" cellpadding="0" cellspacing="0"><tr><td style="border-top: 1.5px solid #F0EDE8;"></td></tr></table></td></tr>
 
         <!-- TESTIMONIAL -->
         <tr>
@@ -674,9 +672,9 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error:', error)
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
