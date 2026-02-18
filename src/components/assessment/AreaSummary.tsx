@@ -209,11 +209,15 @@ export const AreaSummary = ({
                   <div className="mx-2" style={{ height: '1px', backgroundColor: '#ECEEF2' }} />
                 )}
                 <div 
-                  className="flex items-center gap-2.5 px-1"
-                  style={{ paddingTop: '12px', paddingBottom: '12px' }}
+                  className="flex items-center gap-2.5 px-1 rounded-lg"
+                  style={{ 
+                    paddingTop: '12px', 
+                    paddingBottom: '12px',
+                    backgroundColor: pace < 0.5 ? 'rgba(245, 158, 11, 0.04)' : 'transparent'
+                  }}
                 >
-                  {/* Left: Skill name + percentile — allow wrap */}
-                  <div className="flex-1 min-w-0">
+                  {/* Left: Skill name + percentile — fixed width */}
+                  <div className="flex-shrink-0" style={{ width: '130px' }}>
                     <h3 className="text-[12px] font-bold text-foreground leading-tight">
                       {skill.skill_name}
                     </h3>
