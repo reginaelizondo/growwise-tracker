@@ -289,7 +289,7 @@ export const PaceGauge = ({
 
       {/* Gauge visualization with vertical lines - Hide if hideGauge is true */}
       {!hideGauge && (
-        <div className={compact ? "relative px-2 -mt-1" : "relative px-2 -mt-4"}>
+        <div className={compact ? "relative px-2 -mt-2" : "relative px-2 -mt-4"}>
         {/* Labels */}
         <div className="flex justify-between text-xs text-muted-foreground mb-3">
           
