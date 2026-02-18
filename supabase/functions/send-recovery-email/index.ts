@@ -26,54 +26,51 @@ const AREA_ICON_URLS: Record<number, string> = {
   4: "https://ogyvfohbhwxwwxlwyjth.supabase.co/storage/v1/object/public/email-assets/Logo_Emotional_HD.png",
 };
 
-function buildAreaChecklist(selectedAreas: number[], completedAreas: number[], currentAreaId: number | null): string {
-  let html = "";
-  selectedAreas.forEach((areaId, idx) => {
+function buildStepTracker(selectedAreas: number[], completedAreas: number[], currentAreaId: number | null): string {
+  const steps = selectedAreas.map((areaId) => {
     const name = AREA_NAMES[areaId] || `Area ${areaId}`;
     const color = AREA_COLORS[areaId] || "#6b7280";
     const iconUrl = AREA_ICON_URLS[areaId] || "";
-    const stepNum = idx + 1;
     const isCompleted = completedAreas.includes(areaId);
     const isCurrent = areaId === currentAreaId && !isCompleted;
 
-    const iconPill = `<td style="width: 28px; text-align: right;"><img src="${iconUrl}" alt="${name}" width="24" height="24" style="width:24px;height:24px;border-radius:50%;"/></td>`;
-
     if (isCompleted) {
-      html += `
-        <tr><td style="padding: 8px 0;">
-          <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-            <td style="width: 32px; height: 32px; border-radius: 50%; background-color: #22c55e; text-align: center; vertical-align: middle; color: white; font-weight: bold; font-size: 14px;">✓</td>
-            <td style="padding-left: 12px; color: #9ca3af; text-decoration: line-through; font-size: 15px;">${name}</td>
-            ${iconPill}
-          </tr></table>
-        </td></tr>`;
+      return `<td style="text-align:center;padding:0 4px;">
+        <div style="font-size:13px;color:#22c55e;font-weight:700;">✓</div>
+        <img src="${iconUrl}" width="20" height="20" alt="${name}" style="width:20px;height:20px;border-radius:50%;display:block;margin:2px auto;" />
+        <div style="font-size:10px;color:${color};font-weight:600;margin-top:2px;">${name}</div>
+      </td>`;
     } else if (isCurrent) {
-      html += `
-        <tr><td style="padding: 8px 0;">
-          <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-            <td style="width: 32px; height: 32px; border-radius: 50%; background-color: #e5e7eb; text-align: center; vertical-align: middle; color: #6b7280; font-weight: bold; font-size: 14px;">${stepNum}</td>
-            <td style="padding-left: 12px; font-weight: 700; color: #111827; font-size: 15px;">${name} <span style="background-color: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; margin-left: 6px;">← You stopped here</span></td>
-            ${iconPill}
-          </tr></table>
-        </td></tr>`;
+      return `<td style="text-align:center;padding:0 4px;">
+        <div style="font-size:13px;color:#2563eb;font-weight:700;">📍</div>
+        <img src="${iconUrl}" width="20" height="20" alt="${name}" style="width:20px;height:20px;border-radius:50%;display:block;margin:2px auto;" />
+        <div style="font-size:10px;color:${color};font-weight:700;margin-top:2px;">${name}</div>
+      </td>`;
     } else {
-      html += `
-        <tr><td style="padding: 8px 0;">
-          <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-            <td style="width: 32px; height: 32px; border-radius: 50%; background-color: #e5e7eb; text-align: center; vertical-align: middle; color: #6b7280; font-weight: bold; font-size: 14px;">${stepNum}</td>
-            <td style="padding-left: 12px; color: #9ca3af; font-size: 15px;">${name}</td>
-            ${iconPill}
-          </tr></table>
-        </td></tr>`;
+      return `<td style="text-align:center;padding:0 4px;">
+        <div style="font-size:13px;color:#d1d5db;">○</div>
+        <img src="${iconUrl}" width="20" height="20" alt="${name}" style="width:20px;height:20px;border-radius:50%;display:block;margin:2px auto;opacity:0.4;" />
+        <div style="font-size:10px;color:#9ca3af;margin-top:2px;">${name}</div>
+      </td>`;
     }
   });
-  return html;
+
+  // Add arrows between steps
+  const withArrows: string[] = [];
+  steps.forEach((step, i) => {
+    withArrows.push(step);
+    if (i < steps.length - 1) {
+      withArrows.push(`<td style="color:#d1d5db;font-size:11px;padding:0 2px;vertical-align:middle;">→</td>`);
+    }
+  });
+
+  return `<tr>${withArrows.join("")}</tr>`;
 }
 
 function buildCtaButton(babyName: string, resumeLink: string): string {
   return `<table width="100%" cellpadding="0" cellspacing="0" border="0">
     <tr><td align="center">
-      <a href="${resumeLink}" style="display: inline-block; background-color: #34A853; color: #ffffff; text-decoration: none; font-size: 17px; font-weight: 700; padding: 16px 40px; border-radius: 50px; box-shadow: 0 4px 12px rgba(52,168,83,0.4);">
+      <a href="${resumeLink}" style="display:block;background-color:#34A853;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:16px 0;border-radius:12px;text-align:center;">
         Finish ${babyName}'s Report →
       </a>
     </td></tr>
@@ -82,63 +79,36 @@ function buildCtaButton(babyName: string, resumeLink: string): string {
 
 function buildAppSection(babyName: string): string {
   const storageBase = "https://ogyvfohbhwxwwxlwyjth.supabase.co/storage/v1/object/public/email-assets";
-  const appPreviewUrl = `${storageBase}/kinedu-app-preview.png`;
   const appStoreUrl = `${storageBase}/app-store-badge-final.png`;
   const googlePlayUrl = `${storageBase}/google-play-badge.png`;
 
-  const benefit = (text: string) => `
-    <tr><td style="padding:6px 0;">
-      <table cellpadding="0" cellspacing="0" border="0"><tr>
-        <td style="width:24px;vertical-align:top;padding-top:2px;"><div style="width:22px;height:22px;border-radius:50%;background-color:#34A853;text-align:center;line-height:22px;color:white;font-size:13px;font-weight:bold;">✓</div></td>
-        <td style="padding-left:10px;font-size:14px;color:#374151;line-height:1.5;">${text}</td>
-      </tr></table>
-    </td></tr>`;
-
   return `
-  <tr><td style="padding: 16px 24px 0;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F0F7FF;border:1px solid #E0E8F5;border-radius:16px;overflow:hidden;">
-      <tr><td style="padding:24px 20px 0;">
-        <p style="margin:0 0 4px;font-size:10px;color:#6b7280;font-weight:700;letter-spacing:1px;text-transform:uppercase;text-align:center;">THE #1 APP RECOMMENDED BY PEDIATRICIANS</p>
+  <tr><td style="padding:8px 20px 0;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F0F7FF;border:1px solid #E0E8F5;border-radius:12px;">
+      <tr><td style="padding:16px 16px 0;">
+        <p style="margin:0;font-size:9px;color:#6b7280;font-weight:700;letter-spacing:1px;text-transform:uppercase;text-align:center;">THE #1 APP RECOMMENDED BY PEDIATRICIANS</p>
       </td></tr>
-      <tr><td style="padding:12px 20px 0;">
-        <p style="margin:0;font-size:20px;font-weight:800;color:#1B2B4B;text-align:center;line-height:1.3;">Know exactly what to do with ${babyName} every day</p>
+      <tr><td style="padding:8px 16px 0;">
+        <p style="margin:0;font-size:18px;font-weight:800;color:#1B2B4B;text-align:center;line-height:1.3;">Know exactly what to do with ${babyName} every day</p>
       </td></tr>
-      <tr><td style="padding:8px 20px 0;">
-        <p style="margin:0;font-size:14px;color:#4b5563;text-align:center;line-height:1.5;">With just 5 minutes of play a day, you can make a significant impact on ${babyName}'s development.</p>
+      <tr><td style="padding:6px 16px 0;">
+        <p style="margin:0;font-size:12px;color:#4b5563;text-align:center;">5 min/day · 1,800+ expert activities · Results in 2-4 weeks</p>
       </td></tr>
-      <tr><td align="center" style="padding:12px 20px 0;">
-        <table cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff;border-radius:20px;">
-          <tr><td style="padding:6px 14px;font-size:13px;color:#374151;font-weight:600;">⭐ 4.7 rating · 2,000+ reviews</td></tr>
+      <tr><td align="center" style="padding:8px 16px 0;">
+        <table cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff;border-radius:16px;">
+          <tr><td style="padding:4px 12px;font-size:12px;color:#374151;font-weight:600;">⭐ 4.7 · 2,000+ reviews</td></tr>
         </table>
       </td></tr>
-
-      <!-- App Preview Image -->
-      <tr><td align="center" style="padding:16px 20px 0;">
-        <img src="${appPreviewUrl}" alt="Kinedu App Preview" width="220" style="width:220px;max-width:100%;height:auto;display:block;" />
+      <tr><td style="padding:12px 16px 0;">
+        <a href="https://kinedu.com" style="display:block;background-color:#1B2B4B;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:14px 0;border-radius:12px;text-align:center;">Start Free Trial — 7 Days Free</a>
       </td></tr>
-
-      <!-- Benefits -->
-      <tr><td style="padding:16px 20px 0;">
-        <table width="100%" cellpadding="0" cellspacing="0" border="0">
-          ${benefit(`Ensure ${babyName}'s healthy development with personalized daily activities`)}
-          ${benefit(`Unlock ${babyName}'s full potential — 1,800+ expert-designed activities from Harvard & Stanford`)}
-          ${benefit(`Create a deeper bond with ${babyName} through guided playtime every day`)}
-        </table>
+      <tr><td align="center" style="padding:4px 16px 0;">
+        <p style="margin:0;font-size:11px;color:#9ca3af;">No commitment · Cancel anytime</p>
       </td></tr>
-
-      <!-- CTA -->
-      <tr><td align="center" style="padding:20px 20px 8px;">
-        <a href="https://kinedu.com" style="display:inline-block;background-color:#1B2B4B;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:14px 32px;border-radius:50px;">Start Free Trial — 7 Days Free</a>
-      </td></tr>
-      <tr><td align="center" style="padding:4px 20px 16px;">
-        <p style="margin:0;font-size:12px;color:#9ca3af;">No commitment · Cancel anytime</p>
-      </td></tr>
-
-      <!-- Store Badges -->
-      <tr><td align="center" style="padding:0 20px 24px;">
+      <tr><td align="center" style="padding:10px 16px 16px;">
         <table cellpadding="0" cellspacing="0" border="0"><tr>
-          <td style="padding-right:8px;"><a href="https://apps.apple.com/app/kinedu"><img src="${appStoreUrl}" alt="Download on the App Store" width="135" style="width:135px;height:auto;display:block;" /></a></td>
-          <td><a href="https://play.google.com/store/apps/details?id=com.kinedu"><img src="${googlePlayUrl}" alt="Get it on Google Play" width="150" style="width:150px;height:auto;display:block;" /></a></td>
+          <td style="padding-right:6px;"><a href="https://apps.apple.com/app/kinedu"><img src="${appStoreUrl}" alt="App Store" width="110" style="width:110px;height:auto;display:block;" /></a></td>
+          <td><a href="https://play.google.com/store/apps/details?id=com.kinedu"><img src="${googlePlayUrl}" alt="Google Play" width="120" style="width:120px;height:auto;display:block;" /></a></td>
         </tr></table>
       </td></tr>
     </table>
@@ -151,11 +121,10 @@ function buildEmailHtml(params: {
   headline: string;
   subText: string;
   progress: number;
-  areaChecklistHtml: string;
+  stepTrackerHtml: string;
   resumeLink: string;
 }): string {
-  const { subject, babyName, headline, subText, progress, areaChecklistHtml, resumeLink } = params;
-  const ctaButton = buildCtaButton(babyName, resumeLink);
+  const { subject, babyName, headline, subText, progress, stepTrackerHtml, resumeLink } = params;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -169,96 +138,62 @@ function buildEmailHtml(params: {
   img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
 </style>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-<span style="display: none; max-height: 0; overflow: hidden;">${babyName}'s development report is waiting — finish in just 2 minutes</span>
+<body style="margin:0;padding:0;background-color:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+<span style="display:none;max-height:0;overflow:hidden;">${babyName}'s development report is waiting — finish in 2 minutes</span>
 
-<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f3f4f6;">
-<tr><td align="center" style="padding: 24px 16px;">
-<table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 480px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f3f4f6;">
+<tr><td align="center" style="padding:16px 12px;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:480px;background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
 
 <!-- Logo -->
-<tr><td align="center" style="padding: 32px 24px 16px;">
-  <img src="https://ogyvfohbhwxwwxlwyjth.supabase.co/storage/v1/object/public/email-assets/logo-kinedu-blue.png" alt="Kinedu" height="32" style="height: 32px;" />
+<tr><td align="center" style="padding:24px 20px 8px;">
+  <img src="https://ogyvfohbhwxwwxlwyjth.supabase.co/storage/v1/object/public/email-assets/logo-kinedu-blue.png" alt="Kinedu" height="28" style="height:28px;" />
 </td></tr>
 
 <!-- Headline -->
-<tr><td align="center" style="padding: 8px 24px 8px;">
-  <h1 style="margin: 0; font-size: 24px; font-weight: 800; color: #111827; line-height: 1.3;">${headline}</h1>
+<tr><td align="center" style="padding:4px 20px;">
+  <h1 style="margin:0;font-size:22px;font-weight:800;color:#111827;line-height:1.2;">${headline}</h1>
 </td></tr>
 
 <!-- Subtext -->
-<tr><td align="center" style="padding: 0 32px 16px;">
-  <p style="margin: 0; font-size: 15px; color: #6b7280; line-height: 1.6;">${subText}</p>
+<tr><td align="center" style="padding:4px 24px 12px;">
+  <p style="margin:0;font-size:14px;color:#6b7280;line-height:1.5;">${subText}</p>
 </td></tr>
 
-<!-- Early CTA -->
-<tr><td align="center" style="padding: 0 24px 24px;">
-  ${ctaButton}
+<!-- CTA -->
+<tr><td style="padding:0 20px;">
+  ${buildCtaButton(babyName, resumeLink)}
+</td></tr>
+<tr><td align="center" style="padding:4px 20px 12px;">
+  <p style="margin:0;font-size:11px;color:#9ca3af;">Takes 2 min · 100% free</p>
 </td></tr>
 
-<!-- Progress Section -->
-<tr><td style="padding: 0 24px 8px;">
-  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f9fafb; border-radius: 12px; padding: 20px;">
-  <tr><td style="padding: 16px 20px 8px;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0">
-    <tr>
-      <td style="font-size: 13px; color: #6b7280; font-weight: 600;">Your progress</td>
-      <td align="right" style="font-size: 13px; color: #2563eb; font-weight: 700;">${progress}% complete</td>
-    </tr>
-    </table>
-  </td></tr>
-  <tr><td style="padding: 0 20px 16px;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0">
-    <tr><td style="background-color: #e5e7eb; border-radius: 8px; height: 10px;">
-      <table cellpadding="0" cellspacing="0" border="0" style="width: ${progress}%; height: 10px;">
-      <tr><td style="background: linear-gradient(90deg, #3b82f6, #2563eb); border-radius: 8px; height: 10px;"></td></tr>
+<!-- Progress Step Tracker -->
+<tr><td style="padding:0 20px 8px;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F8F9FA;border-radius:12px;">
+    <tr><td style="padding:10px 12px 4px;">
+      <p style="margin:0;font-size:11px;color:#6b7280;font-weight:600;">${progress}% complete</p>
+    </td></tr>
+    <tr><td style="padding:0 8px 10px;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        ${stepTrackerHtml}
       </table>
     </td></tr>
-    </table>
-  </td></tr>
-  
-  <!-- Area Checklist -->
-  <tr><td style="padding: 0 20px 16px;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0">
-    ${areaChecklistHtml}
-    </table>
-  </td></tr>
   </table>
 </td></tr>
 
-<!-- What you'll unlock -->
-<tr><td style="padding: 16px 24px 0;">
-  <p style="margin: 0 0 12px; font-size: 16px; font-weight: 700; color: #111827; text-align: center;">What you'll unlock:</p>
-</td></tr>
-<tr><td style="padding: 0 24px;">
-  <table width="100%" cellpadding="0" cellspacing="0" border="0">
-  <tr><td style="padding: 8px 0; font-size: 14px; color: #374151;">📊 <strong>Full development report</strong> comparing ${babyName} to 10M+ babies</td></tr>
-  <tr><td style="padding: 8px 0; font-size: 14px; color: #374151;">🎯 <strong>Strengths & areas to focus on</strong> — know exactly where to help</td></tr>
-  <tr><td style="padding: 8px 0; font-size: 14px; color: #374151;">🧸 <strong>Personalized daily activities</strong> to support ${babyName}'s growth</td></tr>
-  </table>
+<!-- Value Props (inline) -->
+<tr><td align="center" style="padding:0 20px 12px;">
+  <p style="margin:0;font-size:12px;color:#6b7280;">📊 Full report · 🎯 Focus areas · 🧸 Daily activities</p>
 </td></tr>
 
-<!-- Bottom CTA -->
-<tr><td align="center" style="padding: 24px;">
-  ${ctaButton}
-</td></tr>
-
-<tr><td align="center" style="padding: 0 24px 24px;">
-  <p style="margin: 0; font-size: 12px; color: #9ca3af;">Takes less than 2 minutes · 100% free</p>
-</td></tr>
-
-<!-- Kinedu App Conversion Section -->
+<!-- Kinedu App Section -->
 ${buildAppSection(babyName)}
 
-<!-- Trust badges -->
-<tr><td style="padding: 16px 24px 16px; border-top: 1px solid #f3f4f6;">
-  <p style="margin: 16px 0 8px; font-size: 13px; color: #6b7280; text-align: center; font-weight: 600;">Trusted by 10M+ families</p>
-  <p style="margin: 0; font-size: 12px; color: #9ca3af; text-align: center;">⭐ 4.7 rating · 2,000+ reviews</p>
-</td></tr>
-
 <!-- Footer -->
-<tr><td style="padding: 16px 24px 24px; background-color: #f9fafb; border-top: 1px solid #f3f4f6;">
-  <p style="margin: 0; font-size: 11px; color: #9ca3af; text-align: center; line-height: 1.6;">
+<tr><td style="padding:12px 20px;border-top:1px solid #f3f4f6;">
+  <p style="margin:0;font-size:11px;color:#9ca3af;text-align:center;">Trusted by 10M+ families · ⭐ 4.7 rating</p>
+  <p style="margin:6px 0 0;font-size:10px;color:#bcc0c7;text-align:center;line-height:1.5;">
     This assessment is for informational purposes only and does not replace professional medical consultation.<br/>
     © 2026 Kinedu. All rights reserved.
   </p>
@@ -331,19 +266,19 @@ Deno.serve(async (req) => {
     const currentAreaId = session.current_area_id;
     const resumeLink = `https://growwise-tracker.lovable.app/resume?session=${session_id}`;
 
-    const areaChecklistHtml = buildAreaChecklist(selectedAreas, completedAreas, currentAreaId);
+    const stepTrackerHtml = buildStepTracker(selectedAreas, completedAreas, currentAreaId);
 
     const headline = is_second_email
-      ? `${babyName}'s report will expire in 24 hours`
-      : `${babyName}'s report is<br/>almost ready`;
+      ? `${babyName}'s report expires in 24h`
+      : `${babyName}'s report is almost ready`;
 
     const subText = is_second_email
-      ? `After 48 hours, you'll need to start over. Pick up right where you left off — it only takes 2 more minutes.`
-      : `You started the assessment but didn't finish.<br/>Pick up right where you left off — it only takes<br/><strong>2 more minutes</strong>.`;
+      ? `After 48 hours, you'll need to start over. Pick up where you left off — only <strong>2 more minutes</strong>.`
+      : `You started but didn't finish. Pick up where you left off — only <strong>2 more minutes</strong>.`;
 
     const subject = is_second_email
       ? `Last chance — ${babyName}'s assessment expires soon`
-      : `${babyName}'s development report is ${progress}% done 📋`;
+      : `${babyName}'s development report is ${progress}% done`;
 
     const emailHtml = buildEmailHtml({
       subject,
@@ -351,11 +286,10 @@ Deno.serve(async (req) => {
       headline,
       subText,
       progress,
-      areaChecklistHtml,
+      stepTrackerHtml,
       resumeLink,
     });
 
-    // Send via Resend
     const resendResp = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -379,7 +313,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Update flags
     const updatePayload = is_second_email
       ? { second_email_sent: true }
       : { email_sent: true, email_sent_at: new Date().toISOString() };
