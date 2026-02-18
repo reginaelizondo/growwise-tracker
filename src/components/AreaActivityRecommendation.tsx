@@ -72,10 +72,10 @@ export function AreaActivityRecommendation({
         className="w-full flex items-center justify-center gap-2 py-3 transition-colors hover:opacity-80"
       >
         <span 
-          className="text-sm font-semibold"
+          className="text-xs font-medium"
           style={{ color: areaColor }}
         >
-          Recommended Activities to Keep Building These Skills
+          Recommended Activity
         </span>
         {isExpanded ? (
           <ChevronUp className="w-5 h-5" style={{ color: areaColor }} />
