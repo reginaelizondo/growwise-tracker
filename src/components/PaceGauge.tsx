@@ -298,31 +298,23 @@ export const PaceGauge = ({
         </div>
 
         {/* Vertical lines gauge */}
-      <div className={compact ? "relative h-8 flex items-end justify-between gap-[1.5px]" : "relative h-16 flex items-end justify-between gap-[2px]"}>
+      <div className={compact ? "relative h-6 flex items-end justify-between gap-[1.5px]" : "relative h-16 flex items-end justify-between gap-[2px]"}>
           {Array.from({
           length: compact ? 30 : 60
         }).map((_, i) => {
           const totalBars = compact ? 30 : 60;
           const position = i / (totalBars - 1); // 0 to 1
           
-          // Linear mapping: 0x -> 0%, 1.5x -> 50%, 3x -> 100%
-          // paceAtPosition ranges from 0 to 3 (visual scale)
           const paceAtPosition = MIN_PACE_DISPLAY + (position * DISPLAY_RANGE);
-
-          // Find the visual position of the current pace (0 to 1)
           const currentPacePosition = (pace - MIN_PACE_DISPLAY) / DISPLAY_RANGE;
-          
-          // Calculate visual distance (in position space, not pace value space)
           const visualDistance = Math.abs(position - currentPacePosition);
           const isCurrentPosition = visualDistance < 0.02;
           
-          // Wider gradient range for compact mode
           const gradientRange = compact ? 0.07 : 0.05;
           const isInGradient = visualDistance > 0.02 && visualDistance <= gradientRange;
           
-          // Calculate intensity based on visual distance (closer = more intense)
-          const baseHeight = compact ? 12 : 40;
-          const maxHeight = compact ? 28 : 60;
+          const baseHeight = compact ? 10 : 40;
+          const maxHeight = compact ? 24 : 60;
           let lineHeight = baseHeight;
           let lineOpacity = compact ? 0.5 : 0.2;
           let lineColor = compact ? "#E8E9ED" : "hsl(220, 15%, 50%)";
@@ -342,21 +334,23 @@ export const PaceGauge = ({
             height: `${lineHeight}px`,
             backgroundColor: lineColor,
             opacity: lineOpacity,
-            minWidth: compact ? '3px' : undefined,
-            boxShadow: isCurrentPosition ? `0 0 ${compact ? '8' : '12'}px ${color}40` : 'none'
+            minWidth: compact ? '2px' : undefined,
+            boxShadow: isCurrentPosition ? `0 0 ${compact ? '6' : '12'}px ${color}40` : 'none'
           }} />;
         })}
         </div>
 
-        {/* Tick marks */}
-        <div className="relative h-2 mt-1">
-          <div className="absolute top-0 left-0 w-0.5 h-2 bg-muted-foreground/40" />
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-0.5 h-3 bg-muted-foreground/60" />
-          <div className="absolute top-0 right-0 w-0.5 h-2 bg-muted-foreground/40" />
-        </div>
+        {/* Tick marks - hide in compact */}
+        {!compact && (
+          <div className="relative h-2 mt-1">
+            <div className="absolute top-0 left-0 w-0.5 h-2 bg-muted-foreground/40" />
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-0.5 h-3 bg-muted-foreground/60" />
+            <div className="absolute top-0 right-0 w-0.5 h-2 bg-muted-foreground/40" />
+          </div>
+        )}
 
         {/* Scale labels */}
-        <div className={compact ? "flex justify-between text-[11px] font-medium text-muted-foreground/70 mt-0.5" : "flex justify-between text-[10px] text-muted-foreground/70 mt-1"}>
+        <div className={compact ? "flex justify-between text-[9px] text-muted-foreground/50 mt-0.5 leading-none" : "flex justify-between text-[10px] text-muted-foreground/70 mt-1"}>
           <span>0×</span>
           <span>1×</span>
           <span>2×</span>
