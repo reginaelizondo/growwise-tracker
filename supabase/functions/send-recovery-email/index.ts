@@ -153,6 +153,9 @@ function buildEmailHtml(params: {
 <tr><td style="padding:2px 16px 0;">
   <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F0F7FF;border:1px solid #E0E8F5;border-radius:10px;">
     <tr><td align="center" style="padding:14px 16px 4px;">
+      <img src="${storageBase}/app-awards.png" alt="App of the day · Editor's Choice" width="220" style="width:220px;height:auto;display:block;" />
+    </td></tr>
+    <tr><td align="center" style="padding:6px 16px 4px;">
       <table cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff;border-radius:100px;border:1px solid #E5E7EB;">
         <tr><td style="padding:4px 12px;font-size:12px;color:#374151;font-weight:700;">⭐ 4.7 rating · 6.7k+ reviews</td></tr>
       </table>
