@@ -35,36 +35,29 @@ function buildStepTracker(selectedAreas: number[], completedAreas: number[], cur
     const isCurrent = areaId === currentAreaId && !isCompleted;
 
     if (isCompleted) {
-      return `<td style="text-align:center;padding:0 4px;">
+      return `<td style="text-align:center;padding:0 6px;">
         <div style="font-size:13px;color:#22c55e;font-weight:700;">✓</div>
-        <img src="${iconUrl}" width="20" height="20" alt="${name}" style="width:20px;height:20px;border-radius:50%;display:block;margin:2px auto;" />
+        <img src="${iconUrl}" width="28" height="28" alt="${name}" style="width:28px;height:28px;border-radius:50%;display:block;margin:2px auto;" />
         <div style="font-size:10px;color:${color};font-weight:600;margin-top:2px;">${name}</div>
       </td>`;
     } else if (isCurrent) {
-      return `<td style="text-align:center;padding:0 4px;">
-        <div style="font-size:13px;color:#2563eb;font-weight:700;">📍</div>
-        <img src="${iconUrl}" width="20" height="20" alt="${name}" style="width:20px;height:20px;border-radius:50%;display:block;margin:2px auto;" />
+      return `<td style="text-align:center;padding:0 6px;">
+        <div style="width:8px;height:8px;background-color:#2563eb;border-radius:50%;margin:4px auto 2px;"></div>
+        <div style="border:2px solid #2563eb;border-radius:50%;padding:1px;display:inline-block;">
+          <img src="${iconUrl}" width="28" height="28" alt="${name}" style="width:28px;height:28px;border-radius:50%;display:block;" />
+        </div>
         <div style="font-size:10px;color:${color};font-weight:700;margin-top:2px;">${name}</div>
       </td>`;
     } else {
-      return `<td style="text-align:center;padding:0 4px;">
-        <div style="font-size:13px;color:#d1d5db;">○</div>
-        <img src="${iconUrl}" width="20" height="20" alt="${name}" style="width:20px;height:20px;border-radius:50%;display:block;margin:2px auto;opacity:0.4;" />
+      return `<td style="text-align:center;padding:0 6px;">
+        <div style="width:8px;height:8px;border-radius:50%;margin:4px auto 2px;"></div>
+        <img src="${iconUrl}" width="28" height="28" alt="${name}" style="width:28px;height:28px;border-radius:50%;display:block;margin:2px auto;opacity:0.35;" />
         <div style="font-size:10px;color:#9ca3af;margin-top:2px;">${name}</div>
       </td>`;
     }
   });
 
-  // Add arrows between steps
-  const withArrows: string[] = [];
-  steps.forEach((step, i) => {
-    withArrows.push(step);
-    if (i < steps.length - 1) {
-      withArrows.push(`<td style="color:#d1d5db;font-size:11px;padding:0 2px;vertical-align:middle;">→</td>`);
-    }
-  });
-
-  return `<tr>${withArrows.join("")}</tr>`;
+  return `<tr>${steps.join("")}</tr>`;
 }
 
 function buildCtaButton(babyName: string, resumeLink: string): string {
@@ -82,35 +75,34 @@ function buildAppSection(babyName: string): string {
   const appStoreUrl = `${storageBase}/app-store-badge-final.png`;
   const googlePlayUrl = `${storageBase}/google-play-badge.png`;
 
-  const appPreviewUrl = `${storageBase}/kinedu-app-preview.png`;
-
   return `
-  <tr><td style="padding:8px 20px 0;">
+  <tr><td style="padding:4px 20px 0;">
     <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F0F7FF;border:1px solid #E0E8F5;border-radius:12px;">
-      <tr><td style="padding:16px 16px 0;">
-        <p style="margin:0;font-size:9px;color:#6b7280;font-weight:700;letter-spacing:1px;text-transform:uppercase;text-align:center;">THE #1 APP RECOMMENDED BY PEDIATRICIANS</p>
-      </td></tr>
-      <tr><td style="padding:8px 16px 0;">
-        <p style="margin:0;font-size:18px;font-weight:800;color:#1B2B4B;text-align:center;line-height:1.3;">Know exactly what to do with ${babyName} every day</p>
-      </td></tr>
-      <tr><td align="center" style="padding:8px 16px 0;">
-        <img src="${appPreviewUrl}" alt="Kinedu App" width="220" style="width:220px;height:auto;display:block;border-radius:8px;" />
-      </td></tr>
-      <tr><td style="padding:6px 16px 0;">
-        <p style="margin:0;font-size:12px;color:#4b5563;text-align:center;">5 min/day · 1,800+ expert activities · Results in 2-4 weeks</p>
-      </td></tr>
-      <tr><td align="center" style="padding:8px 16px 0;">
+      <tr><td align="center" style="padding:14px 16px 0;">
         <table cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff;border-radius:16px;">
           <tr><td style="padding:4px 12px;font-size:12px;color:#374151;font-weight:600;">⭐ 4.7 rating · 6.7k+ reviews</td></tr>
         </table>
       </td></tr>
-      <tr><td style="padding:12px 16px 0;">
+      <tr><td style="padding:6px 16px 0;">
+        <p style="margin:0;font-size:9px;color:#6b7280;font-weight:700;letter-spacing:1px;text-transform:uppercase;text-align:center;">THE #1 APP RECOMMENDED BY PEDIATRICIANS</p>
+      </td></tr>
+      <tr><td style="padding:6px 16px 0;">
+        <p style="margin:0;font-size:18px;font-weight:800;color:#1B2B4B;text-align:center;line-height:1.3;">Know exactly what to do with ${babyName} every day</p>
+      </td></tr>
+      <tr><td style="padding:10px 16px 0;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr><td style="padding:3px 0;font-size:13px;color:#374151;">✓ Ensure ${babyName}'s healthy development</td></tr>
+          <tr><td style="padding:3px 0;font-size:13px;color:#374151;">✓ Unlock ${babyName}'s full potential — 1,800+ activities</td></tr>
+          <tr><td style="padding:3px 0;font-size:13px;color:#374151;">✓ Create a deeper bond through daily playtime</td></tr>
+        </table>
+      </td></tr>
+      <tr><td style="padding:10px 16px 0;">
         <a href="https://app.kinedu.com/ia-signuppage/?swc=ia-report" style="display:block;background-color:#1B2B4B;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:14px 0;border-radius:12px;text-align:center;">Start 7 Days Free Trial</a>
       </td></tr>
       <tr><td align="center" style="padding:4px 16px 0;">
         <p style="margin:0;font-size:11px;color:#9ca3af;">No commitment · Cancel anytime</p>
       </td></tr>
-      <tr><td align="center" style="padding:10px 16px 16px;">
+      <tr><td align="center" style="padding:8px 16px 14px;">
         <table cellpadding="0" cellspacing="0" border="0"><tr>
           <td style="padding-right:6px;"><a href="https://apps.apple.com/mx/app/kinedu-desarrollo-del-beb%C3%A9/id741277284"><img src="${appStoreUrl}" alt="App Store" width="110" style="width:110px;height:auto;display:block;" /></a></td>
           <td><a href="https://play.google.com/store/apps/details?id=com.kinedu.appkinedu&hl=es_MX"><img src="${googlePlayUrl}" alt="Google Play" width="120" style="width:120px;height:auto;display:block;" /></a></td>
@@ -179,17 +171,15 @@ function buildEmailHtml(params: {
     <tr><td style="padding:10px 12px 4px;">
       <p style="margin:0;font-size:11px;color:#6b7280;font-weight:600;">${progress}% complete</p>
     </td></tr>
-    <tr><td style="padding:0 8px 10px;">
+    <tr><td style="padding:0 8px 6px;">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         ${stepTrackerHtml}
       </table>
     </td></tr>
+    <tr><td align="center" style="padding:0 8px 10px;border-top:1px solid #e5e7eb;">
+      <p style="margin:6px 0 0;font-size:12px;color:#6b7280;">📊 Full report · 🎯 Focus areas · 🧸 Daily activities</p>
+    </td></tr>
   </table>
-</td></tr>
-
-<!-- Value Props (inline) -->
-<tr><td align="center" style="padding:0 20px 12px;">
-  <p style="margin:0;font-size:12px;color:#6b7280;">📊 Full report · 🎯 Focus areas · 🧸 Daily activities</p>
 </td></tr>
 
 <!-- Kinedu App Section -->
