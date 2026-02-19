@@ -10,7 +10,7 @@ import {
   Loader2, CheckCircle, XCircle, Clock, MousePointer, Download, 
   ExternalLink, ChevronDown, ChevronUp, Smartphone, Monitor, Tablet,
   MessageSquare, HelpCircle, ArrowLeft, SkipForward, Eye, LogOut,
-  Play, BarChart3, Timer, Target, FileText, Zap
+  Play, BarChart3, Timer, Target, FileText, Zap, Mail
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { externalSupabase } from '@/integrations/supabase/external-client';
@@ -96,6 +96,7 @@ export function AssessmentBreakdownDialog({
   const [deviceInfo, setDeviceInfo] = useState<DeviceInfo | null>(null);
   const [timelineOpen, setTimelineOpen] = useState(false);
   const [reportActions, setReportActions] = useState({ downloaded: false, ctaClicked: false, kineduDownloadClicked: false, activityClicked: false });
+  const [emailInfo, setEmailInfo] = useState<{ email: string | null; capturedAt: 'before' | 'after' | 'none'; capturedTimestamp: string | null } | null>(null);
 
   const areaNames: Record<number, string> = {
     1: 'Physical', 2: 'Cognitive', 3: 'Linguistic', 4: 'Socio-Emotional'
@@ -165,7 +166,7 @@ export function AssessmentBreakdownDialog({
     try {
       // Parallel fetches
       const [assessmentRes, responsesRes, allEventsRes] = await Promise.all([
-        supabase.from('assessments').select('completed_at, started_at, reference_age_months').eq('id', assessmentId).maybeSingle(),
+        supabase.from('assessments').select('completed_at, started_at, reference_age_months, baby_id').eq('id', assessmentId).maybeSingle(),
         supabase.from('assessment_responses').select('area_id, skill_id, milestone_id, answer, created_at').eq('assessment_id', assessmentId).order('created_at', { ascending: true }),
         supabase.from('assessment_events').select('id, event_type, area_id, skill_id, milestone_id, question_index, created_at, event_data, user_agent').eq('assessment_id', assessmentId).order('created_at', { ascending: true })
       ]);
@@ -173,6 +174,21 @@ export function AssessmentBreakdownDialog({
       const assessmentData = assessmentRes.data;
       const responses = responsesRes.data || [];
       const allEvents = allEventsRes.data || [];
+
+      // Fetch baby info for email tracking
+      if (assessmentData?.baby_id) {
+        const { data: babyData } = await supabase.from('babies').select('email, created_at').eq('id', assessmentData.baby_id).maybeSingle();
+        const emailPostEvent = allEvents.find(e => e.event_type === 'email_captured_post_assessment');
+        if (babyData?.email) {
+          if (emailPostEvent) {
+            setEmailInfo({ email: babyData.email, capturedAt: 'after', capturedTimestamp: emailPostEvent.created_at });
+          } else {
+            setEmailInfo({ email: babyData.email, capturedAt: 'before', capturedTimestamp: babyData.created_at });
+          }
+        } else {
+          setEmailInfo({ email: null, capturedAt: 'none', capturedTimestamp: null });
+        }
+      }
 
       // Device info from first event with user_agent
       const firstWithUA = allEvents.find(e => e.user_agent);
@@ -378,7 +394,7 @@ export function AssessmentBreakdownDialog({
       });
 
       // Build timeline
-      const startTime = assessmentData?.started_at || (allEvents.length > 0 ? allEvents[0].created_at : null);
+      const startTime = assessmentData?.started_at || (allEvents.length > 0 ? allEvents[0].created_at : responses[0]?.created_at || null);
       if (startTime) {
         const timelineItems: TimelineEvent[] = [];
         
@@ -391,69 +407,140 @@ export function AssessmentBreakdownDialog({
           });
         }
 
-        // Add all events (skip question_duration as it's redundant with answer)
-        allEvents.filter(e => e.event_type !== 'question_duration').forEach(event => {
-          const mInfo = event.milestone_id ? milestoneMap.get(event.milestone_id) : null;
-          const skillName = event.skill_id ? (skillNameMap.get(event.skill_id) || `Skill ${event.skill_id}`) : null;
-          const areaName = event.area_id ? (areaNames[event.area_id] || `Area ${event.area_id}`) : null;
+        const hasDetailedEvents = allEvents.some(e => e.event_type === 'answer' || e.event_type === 'question_view');
 
-          let label = event.event_type;
-          let detail: string | null = null;
+        if (hasDetailedEvents) {
+          // Use assessment_events for detailed timeline
+          allEvents.filter(e => e.event_type !== 'question_duration').forEach(event => {
+            const mInfo = event.milestone_id ? milestoneMap.get(event.milestone_id) : null;
+            const skillName = event.skill_id ? (skillNameMap.get(event.skill_id) || `Skill ${event.skill_id}`) : null;
 
-          switch (event.event_type) {
-            case 'question_view':
-              label = `Vio pregunta`;
-              detail = mInfo ? `${mInfo.question.substring(0, 80)}${mInfo.question.length > 80 ? '...' : ''}` : (skillName ? `${skillName}` : null);
-              break;
-            case 'answer': {
-              const ans = (event.event_data as any)?.answer;
-              const timeMs = (event.event_data as any)?.time_to_answer_ms;
-              label = `Respondió ${ans === 'yes' ? '✓ Sí' : '✗ No'}`;
-              const parts: string[] = [];
-              if (mInfo) parts.push(mInfo.question.substring(0, 60) + (mInfo.question.length > 60 ? '...' : ''));
-              if (timeMs) parts.push(`(${formatDuration(timeMs)})`);
-              detail = parts.length > 0 ? parts.join(' ') : null;
-              break;
+            let label = event.event_type;
+            let detail: string | null = null;
+
+            switch (event.event_type) {
+              case 'question_view':
+                label = `Vio pregunta`;
+                detail = mInfo ? `${mInfo.question.substring(0, 80)}${mInfo.question.length > 80 ? '...' : ''}` : (skillName ? `${skillName}` : null);
+                break;
+              case 'answer': {
+                const ans = (event.event_data as any)?.answer;
+                const timeMs = (event.event_data as any)?.time_to_answer_ms;
+                label = `Respondió ${ans === 'yes' ? '✓ Sí' : '✗ No'}`;
+                const parts: string[] = [];
+                if (mInfo) parts.push(mInfo.question.substring(0, 60) + (mInfo.question.length > 60 ? '...' : ''));
+                if (timeMs) parts.push(`(${formatDuration(timeMs)})`);
+                detail = parts.length > 0 ? parts.join(' ') : null;
+                break;
+              }
+              case 'helper_open':
+                label = 'Abrió helper/info';
+                detail = mInfo ? mInfo.question.substring(0, 60) : null;
+                break;
+              case 'back':
+                label = '← Retrocedió';
+                break;
+              case 'skip':
+                label = '→ Saltó pregunta';
+                break;
+              case 'report_view':
+                label = '📊 Vio el reporte';
+                break;
+              case 'unlock_report_view':
+                label = '🔓 Vio pantalla de unlock';
+                break;
+              case 'cta_clicked':
+                label = '🎯 Click en CTA "Try 7 days free"';
+                break;
+              case 'kinedu_download_clicked':
+                label = '📱 Click en descarga Kinedu';
+                break;
+              case 'report_downloaded':
+                label = '📥 Descargó reporte PDF';
+                break;
+              case 'exit':
+                label = '🚪 Salió del assessment';
+                detail = (event.event_data as any)?.reason || null;
+                break;
+              case 'email_captured_post_assessment':
+                label = '📧 Dejó email (post-assessment)';
+                break;
             }
-            case 'helper_open':
-              label = 'Abrió helper/info';
-              detail = mInfo ? mInfo.question.substring(0, 60) : null;
-              break;
-            case 'back':
-              label = '← Retrocedió';
-              break;
-            case 'skip':
-              label = '→ Saltó pregunta';
-              break;
-            case 'report_view':
-              label = '📊 Vio el reporte';
-              break;
-            case 'unlock_report_view':
-              label = '🔓 Vio pantalla de unlock';
-              break;
-            case 'cta_clicked':
-              label = '🎯 Click en CTA "Try 7 days free"';
-              break;
-            case 'kinedu_download_clicked':
-              label = '📱 Click en descarga Kinedu';
-              break;
-            case 'report_downloaded':
-              label = '📥 Descargó reporte PDF';
-              break;
-            case 'exit':
-              label = '🚪 Salió del assessment';
-              detail = (event.event_data as any)?.reason || null;
-              break;
-          }
 
-          timelineItems.push({
-            id: event.id, event_type: event.event_type, created_at: event.created_at!,
-            relative_time: formatRelativeTime(event.created_at!, startTime),
-            label, detail,
-            icon: getEventIcon(event.event_type),
-            color: getEventColor(event.event_type)
+            timelineItems.push({
+              id: event.id, event_type: event.event_type, created_at: event.created_at!,
+              relative_time: formatRelativeTime(event.created_at!, startTime),
+              label, detail,
+              icon: getEventIcon(event.event_type),
+              color: getEventColor(event.event_type)
+            });
           });
-        });
+        } else {
+          // Fallback: build timeline from response timestamps
+          // Group responses by skill to show skill transitions
+          let lastSkillId: number | null = null;
+          responses.forEach((resp, idx) => {
+            const mInfo = milestoneMap.get(resp.milestone_id);
+            const skillId = resp.skill_id || 0;
+            const sName = skillNameMap.get(skillId) || `Skill ${skillId}`;
+
+            // Add skill start marker when skill changes
+            if (skillId !== lastSkillId && resp.created_at) {
+              timelineItems.push({
+                id: `skill-start-${skillId}-${idx}`, event_type: 'skill_start',
+                created_at: resp.created_at,
+                relative_time: formatRelativeTime(resp.created_at, startTime),
+                label: `📋 Inició skill: ${sName}`,
+                detail: null,
+                icon: 'eye', color: 'text-blue-600'
+              });
+              lastSkillId = skillId;
+            }
+
+            // Add each answer
+            if (resp.created_at) {
+              timelineItems.push({
+                id: `resp-${resp.milestone_id}-${idx}`, event_type: 'answer',
+                created_at: resp.created_at,
+                relative_time: formatRelativeTime(resp.created_at, startTime),
+                label: `Respondió ${resp.answer === 'yes' ? '✓ Sí' : '✗ No'}`,
+                detail: mInfo?.question?.substring(0, 80) || `Milestone #${resp.milestone_id}`,
+                icon: 'message', color: resp.answer === 'yes' ? 'text-green-600' : 'text-red-600'
+              });
+            }
+          });
+
+          // Add report/email events from allEvents (non-answer events that might exist)
+          allEvents.filter(e => !['answer', 'question_view', 'question_duration'].includes(e.event_type)).forEach(event => {
+            let label = event.event_type;
+            switch (event.event_type) {
+              case 'report_view': label = '📊 Vio el reporte'; break;
+              case 'cta_clicked': label = '🎯 Click en CTA'; break;
+              case 'email_captured_post_assessment': label = '📧 Dejó email (post-assessment)'; break;
+              case 'exit': label = '🚪 Salió'; break;
+            }
+            timelineItems.push({
+              id: event.id, event_type: event.event_type, created_at: event.created_at!,
+              relative_time: formatRelativeTime(event.created_at!, startTime),
+              label, detail: null,
+              icon: getEventIcon(event.event_type),
+              color: getEventColor(event.event_type)
+            });
+          });
+        }
+
+        // Add completion event
+        if (assessmentData?.completed_at) {
+          timelineItems.push({
+            id: 'completed', event_type: 'completed', created_at: assessmentData.completed_at,
+            relative_time: formatRelativeTime(assessmentData.completed_at, startTime),
+            label: '🏁 Assessment completado', detail: null,
+            icon: 'play', color: 'text-green-600'
+          });
+        }
+
+        // Sort by timestamp
+        timelineItems.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
         setTimeline(timelineItems);
       }
@@ -606,6 +693,34 @@ export function AssessmentBreakdownDialog({
                     Start Plan {reportActions.ctaClicked ? '✓' : '✗'}
                   </Badge>
                 </div>
+
+                {/* Email capture tracking */}
+                {emailInfo && (
+                  <Card className={`p-3 ${emailInfo.capturedAt === 'before' ? 'bg-green-50 border-green-200' : emailInfo.capturedAt === 'after' ? 'bg-blue-50 border-blue-200' : 'bg-red-50 border-red-200'}`}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Mail className={`h-4 w-4 ${emailInfo.capturedAt === 'none' ? 'text-red-500' : 'text-green-600'}`} />
+                      <span className="text-xs font-medium text-muted-foreground">Email</span>
+                    </div>
+                    {emailInfo.capturedAt === 'before' && (
+                      <>
+                        <p className="text-sm font-bold text-green-700">📧 Dejó email al inicio</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{emailInfo.email}</p>
+                      </>
+                    )}
+                    {emailInfo.capturedAt === 'after' && (
+                      <>
+                        <p className="text-sm font-bold text-blue-700">📧 Dejó email después del assessment</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{emailInfo.email}</p>
+                        {emailInfo.capturedTimestamp && (
+                          <p className="text-[10px] text-muted-foreground/70 mt-0.5">{format(new Date(emailInfo.capturedTimestamp), 'MMM dd, HH:mm')}</p>
+                        )}
+                      </>
+                    )}
+                    {emailInfo.capturedAt === 'none' && (
+                      <p className="text-sm font-bold text-red-600">✗ No dejó email</p>
+                    )}
+                  </Card>
+                )}
               </div>
             )}
 
