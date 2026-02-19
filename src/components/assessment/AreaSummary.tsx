@@ -216,11 +216,11 @@ export const AreaSummary = ({
                   }}
                 >
                   {/* Left: Skill name + percentile — fixed width */}
-                  <div className="flex-shrink-0 pt-0.5" style={{ width: '130px' }}>
-                    <h3 className="text-[12px] font-bold text-foreground leading-tight">
+                  <div className="flex-shrink-0 pt-0.5" style={{ width: '140px' }}>
+                    <h3 className="text-sm font-bold text-foreground leading-tight">
                       {skill.skill_name}
                     </h3>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       Percentile <span className="font-semibold" style={{ color: areaColor }}>
                         {skill.percentile !== null ? `${Math.round(skill.percentile)}th` : '—'}
                       </span>
