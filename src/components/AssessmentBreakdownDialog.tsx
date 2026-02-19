@@ -184,9 +184,9 @@ export function AssessmentBreakdownDialog({
       let totalExpectedMilestones = 0;
       let totalExpectedSkills = 0;
       if (assessmentData?.reference_age_months !== undefined) {
-        const { data: milestonesForAge } = await supabase
+        const { data: milestonesForAge } = await externalSupabase
           .from('milestones').select('milestone_id, skill_id')
-          .lte('age', assessmentData.reference_age_months).eq('locale', 'en');
+          .lte('age', assessmentData.reference_age_months).eq('locale', 'en').limit(2000);
         if (milestonesForAge) {
           totalExpectedMilestones = milestonesForAge.length;
           totalExpectedSkills = new Set(milestonesForAge.map(m => m.skill_id)).size;
