@@ -183,8 +183,11 @@ export function AssessmentBreakdownDialog({
         .eq('assessment_id', assessmentId)
         .maybeSingle();
 
-      const selectedAreas: number[] = (abandonedSession?.selected_areas as number[]) || [];
-      const progressPercentage = abandonedSession?.progress_percentage || null;
+      // Infer selectedAreas from responses when abandoned_session is missing
+      let selectedAreas: number[] = (abandonedSession?.selected_areas as number[]) || [];
+      if (selectedAreas.length === 0 && responses.length > 0) {
+        selectedAreas = [...new Set(responses.map(r => r.area_id).filter(Boolean) as number[])];
+      }
 
       // Fetch baby info for email tracking
       if (assessmentData?.baby_id) {
@@ -212,7 +215,7 @@ export function AssessmentBreakdownDialog({
       let totalExpectedMilestones = responses.length; // fallback
       let totalExpectedSkills = new Set(responses.map(r => r.skill_id).filter(Boolean)).size; // fallback
 
-      if (ageMonths > 0 && selectedAreas.length > 0) {
+      if (selectedAreas.length > 0) {
         // Query external milestones to get the real total assigned to this user
         const { data: assignedMilestones } = await externalSupabase
           .from('milestones')
@@ -407,10 +410,8 @@ export function AssessmentBreakdownDialog({
 
       const uniqueSkillsAnswered = new Set(responses.map(r => r.skill_id).filter(Boolean));
 
-      // Build KPI - use progressPercentage from abandoned_sessions if available
-      const progressPct = progressPercentage !== null
-        ? progressPercentage
-        : (totalExpectedMilestones > 0 ? (responses.length / totalExpectedMilestones) * 100 : 0);
+      // Always compute progress dynamically from actual data
+      const progressPct = totalExpectedMilestones > 0 ? (responses.length / totalExpectedMilestones) * 100 : 0;
 
       setKpi({
         progress: { answered: responses.length, total: totalExpectedMilestones, percentage: progressPct },
