@@ -35,17 +35,15 @@ Deno.serve(async (req) => {
     // Step 1: Get auth token — try Bearer header first, then body
     let authToken: string | null = null;
 
-    // Attempt 1: Bearer header
-    console.log("Attempting create_auth_token with Bearer header...");
+    // Attempt 1: token directly in Authorization header (no Bearer prefix), empty body
+    console.log("Attempting create_auth_token with raw token in header...");
     const attempt1 = await fetch(
       `${baseUrl}/general_projects/create_session/create_auth_token`,
       {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${staticToken}`,
+          Authorization: staticToken,
         },
-        body: JSON.stringify({}),
       }
     );
 
@@ -63,12 +61,15 @@ Deno.serve(async (req) => {
 
     // Attempt 2: token in body
     if (!authToken) {
-      console.log("Attempting create_auth_token with token in body...");
+      console.log("Attempting create_auth_token with token in body (no Bearer)...");
       const attempt2 = await fetch(
         `${baseUrl}/general_projects/create_session/create_auth_token`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: staticToken,
+          },
           body: JSON.stringify({ token: staticToken }),
         }
       );
