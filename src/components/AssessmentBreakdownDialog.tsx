@@ -185,6 +185,7 @@ export function AssessmentBreakdownDialog({
 
       // Infer selectedAreas from responses when abandoned_session is missing
       let selectedAreas: number[] = (abandonedSession?.selected_areas as number[]) || [];
+      const hasAbandonedSession = selectedAreas.length > 0;
       if (selectedAreas.length === 0 && responses.length > 0) {
         selectedAreas = [...new Set(responses.map(r => r.area_id).filter(Boolean) as number[])];
       }
@@ -216,18 +217,53 @@ export function AssessmentBreakdownDialog({
       let totalExpectedSkills = new Set(responses.map(r => r.skill_id).filter(Boolean)).size; // fallback
 
       if (selectedAreas.length > 0) {
-        // Query external milestones to get the real total assigned to this user
-        const { data: assignedMilestones } = await externalSupabase
-          .from('milestones')
-          .select('milestone_id, skill_id, area_id')
-          .lte('age', ageMonths)
-          .in('area_id', selectedAreas)
-          .eq('locale', 'en')
-          .limit(2000);
-        
-        if (assignedMilestones && assignedMilestones.length > 0) {
-          totalExpectedMilestones = assignedMilestones.length;
-          totalExpectedSkills = new Set(assignedMilestones.map((m: any) => m.skill_id)).size;
+        // Replicate assessment logic: find skills in core age range, then get ALL milestones for those skills
+        const minAge = Math.max(0, ageMonths - 3);
+        const maxAge = ageMonths + 5;
+
+        // Step 1: Find milestones in age range to discover relevant skills
+        const { data: milestonesInRange } = await externalSupabase
+          .from('skill_milestone')
+          .select('milestone_id, age, skill_id')
+          .gte('age', minAge)
+          .lte('age', maxAge);
+
+        if (milestonesInRange && milestonesInRange.length > 0) {
+          // Filter to core range skills (referenceAge to +1)
+          const coreRangeMilestones = milestonesInRange.filter((m: any) => 
+            m.age >= ageMonths && m.age <= ageMonths + 1
+          );
+          const coreSkillIds = [...new Set(coreRangeMilestones.map((m: any) => m.skill_id))];
+
+          // When abandoned_session exists, filter to selected areas; otherwise use all core skills
+          let filteredSkillIds: number[];
+          if (hasAbandonedSession) {
+            const { data: skillAreas } = await externalSupabase
+              .from('skills_area')
+              .select('skill_id, area_id')
+              .in('skill_id', coreSkillIds);
+
+            filteredSkillIds = (skillAreas || [])
+              .filter((sa: any) => selectedAreas.includes(sa.area_id))
+              .map((sa: any) => sa.skill_id);
+          } else {
+            // No abandoned_session: use all core range skills as best approximation
+            filteredSkillIds = coreSkillIds;
+          }
+
+          if (filteredSkillIds.length > 0) {
+            // Get ALL milestones for these skills (no age filter, matching assessment logic)
+            const { data: allSkillMilestones } = await externalSupabase
+              .from('skill_milestone')
+              .select('milestone_id, skill_id')
+              .in('skill_id', filteredSkillIds)
+              .limit(2000);
+
+            if (allSkillMilestones && allSkillMilestones.length > 0) {
+              totalExpectedMilestones = allSkillMilestones.length;
+              totalExpectedSkills = new Set(allSkillMilestones.map((m: any) => m.skill_id)).size;
+            }
+          }
         }
       }
 
