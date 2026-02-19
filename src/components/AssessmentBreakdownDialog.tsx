@@ -181,33 +181,50 @@ export function AssessmentBreakdownDialog({
       }
 
       // Get total expected milestones
-      let totalExpectedMilestones = 0;
-      let totalExpectedSkills = 0;
-      if (assessmentData?.reference_age_months !== undefined) {
-        const { data: milestonesForAge } = await externalSupabase
-          .from('milestones').select('milestone_id, skill_id')
-          .lte('age', assessmentData.reference_age_months).eq('locale', 'en').limit(2000);
-        if (milestonesForAge) {
-          totalExpectedMilestones = milestonesForAge.length;
-          totalExpectedSkills = new Set(milestonesForAge.map(m => m.skill_id)).size;
-        }
-      }
+      // Derive totals from actual responses (what was presented to the user)
+      const totalExpectedMilestones = responses.length;
+      const totalExpectedSkills = new Set(responses.map(r => r.skill_id).filter(Boolean)).size;
 
-      // Fetch milestone details (question text) from external supabase
+      // Fetch milestone details from external supabase
       const milestoneIds = [...new Set(responses.map(r => r.milestone_id))];
       const skillIds = [...new Set(responses.map(r => r.skill_id).filter(Boolean) as number[])];
       
-      const { data: milestonesData } = await externalSupabase
-        .from('milestones')
-        .select('milestone_id, question, skill_id, skill_name, area_id, area_name')
-        .in('milestone_id', milestoneIds.length > 0 ? milestoneIds : [0]);
+      // Get milestone texts, skill names, and area mappings in parallel
+      const [milestoneTextsRes, skillNamesRes, skillAreasRes] = await Promise.all([
+        externalSupabase.from('milestones_locale').select('milestone_id, title').in('milestone_id', milestoneIds.length > 0 ? milestoneIds : [0]).eq('locale', 'en'),
+        externalSupabase.from('skills_locales').select('skill_id, title').in('skill_id', skillIds.length > 0 ? skillIds : [0]).eq('locale', 'en'),
+        externalSupabase.from('skills_area').select('skill_id, area_id').in('skill_id', skillIds.length > 0 ? skillIds : [0])
+      ]);
+      
+      const milestoneTexts = milestoneTextsRes.data || [];
+      const skillNames = skillNamesRes.data || [];
+      const skillAreas = skillAreasRes.data || [];
+      
+      // Build combined milestone map
+      const milestoneTextMap = new Map(milestoneTexts.map((m: any) => [m.milestone_id, m.title]));
+      const skillNameMap2 = new Map(skillNames.map((s: any) => [s.skill_id, s.title]));
+      const skillAreaMap = new Map(skillAreas.map((s: any) => [s.skill_id, s.area_id]));
+      
+      const milestonesData = milestoneIds.map(mid => {
+        const resp = responses.find(r => r.milestone_id === mid);
+        const skillId = resp?.skill_id || 0;
+        const areaId = resp?.area_id || skillAreaMap.get(skillId) || 0;
+        return {
+          milestone_id: mid,
+          question: milestoneTextMap.get(mid) || `Milestone #${mid}`,
+          skill_id: skillId,
+          skill_name: skillNameMap2.get(skillId) || `Skill ${skillId}`,
+          area_id: areaId,
+          area_name: areaNames[areaId] || `Area ${areaId}`
+        };
+      });
 
       // Build maps
       const milestoneMap = new Map<number, { question: string; skill_name: string; area_name: string; skill_id: number; area_id: number }>();
       const skillNameMap = new Map<number, string>();
       const areaIdMap = new Map<number, number>();
       
-      milestonesData?.forEach(m => {
+      milestonesData.forEach((m: any) => {
         milestoneMap.set(m.milestone_id, { question: m.question, skill_name: m.skill_name, area_name: m.area_name, skill_id: m.skill_id, area_id: m.area_id });
         skillNameMap.set(m.skill_id, m.skill_name);
         areaIdMap.set(m.skill_id, m.area_id);
