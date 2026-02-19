@@ -32,139 +32,129 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Step 1: Get auth token — try Bearer header first, then body
-    let authToken: string | null = null;
-
-    // Attempt 1: token directly in Authorization header (no Bearer prefix), empty body
-    console.log("Attempting create_auth_token with raw token in header...");
-    const attempt1 = await fetch(
+    // Step 1: Get auth token
+    console.log("=== STEP 1: create_auth_token ===");
+    const tokenRes = await fetch(
       `${baseUrl}/general_projects/create_session/create_auth_token`,
       {
         method: "POST",
-        headers: {
-          Authorization: staticToken,
-        },
+        headers: { Authorization: staticToken },
       }
     );
 
-    const attempt1Data = await attempt1.json().catch(() => null);
-    console.log("Attempt 1 status:", attempt1.status, "data:", JSON.stringify(attempt1Data));
+    const tokenText = await tokenRes.text();
+    console.log("create_auth_token status:", tokenRes.status);
+    console.log("create_auth_token FULL response:", tokenText);
 
-    if (attempt1.ok && attempt1Data) {
-      authToken =
-        attempt1Data.token ||
-        attempt1Data.auth_token ||
-        attempt1Data.data?.token ||
-        attempt1Data.data?.auth_token ||
-        null;
+    let tokenData: any;
+    try {
+      tokenData = JSON.parse(tokenText);
+    } catch {
+      return new Response(
+        JSON.stringify({ success: false, error: "Invalid JSON from create_auth_token", raw: tokenText }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    // Attempt 2: token in body
+    // Extract token - try multiple paths
+    const authToken =
+      tokenData.token ||
+      tokenData.auth_token ||
+      tokenData.data?.token ||
+      tokenData.data?.auth_token ||
+      tokenData.session?.token ||
+      null;
+
+    console.log("Extracted authToken:", authToken ? `${authToken.substring(0, 20)}...` : "NULL");
+
     if (!authToken) {
-      console.log("Attempting create_auth_token with token in body (no Bearer)...");
-      const attempt2 = await fetch(
-        `${baseUrl}/general_projects/create_session/create_auth_token`,
+      return new Response(
+        JSON.stringify({ success: false, error: "No auth token found in response", keys: Object.keys(tokenData) }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Step 2: user_validation - try 3 strategies
+    const baseBody = {
+      name,
+      lastname: "",
+      email,
+      access_code: "",
+      entry_name: "Lovable_Assessment",
+    };
+
+    const strategies = [
+      {
+        label: "A: raw token in Authorization",
+        headers: { "Content-Type": "application/json", Authorization: authToken },
+        body: baseBody,
+      },
+      {
+        label: "B: Bearer token in Authorization",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+        body: baseBody,
+      },
+      {
+        label: "C: token in body",
+        headers: { "Content-Type": "application/json", Authorization: authToken },
+        body: { ...baseBody, auth_token: authToken },
+      },
+    ];
+
+    for (const strategy of strategies) {
+      console.log(`=== STEP 2 Strategy ${strategy.label} ===`);
+      const res = await fetch(
+        `${baseUrl}/general_projects/user_validation`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: staticToken,
-          },
-          body: JSON.stringify({ token: staticToken }),
+          headers: strategy.headers,
+          body: JSON.stringify(strategy.body),
         }
       );
 
-      const attempt2Data = await attempt2.json().catch(() => null);
-      console.log("Attempt 2 status:", attempt2.status, "data:", JSON.stringify(attempt2Data));
+      const resText = await res.text();
+      console.log(`Strategy ${strategy.label} status:`, res.status);
+      console.log(`Strategy ${strategy.label} FULL response:`, resText);
 
-      if (attempt2.ok && attempt2Data) {
-        authToken =
-          attempt2Data.token ||
-          attempt2Data.auth_token ||
-          attempt2Data.data?.token ||
-          attempt2Data.data?.auth_token ||
-          null;
-      }
+      let resData: any;
+      try { resData = JSON.parse(resText); } catch { resData = { raw: resText }; }
 
-      if (!authToken) {
+      const isSuccess = res.status === 200 || res.status === 201;
+      const isAlreadyExists =
+        res.status === 409 ||
+        res.status === 422 ||
+        (resData?.error && /already|exist|duplicate/i.test(String(resData.error)));
+
+      if (isSuccess || isAlreadyExists) {
+        console.log(`SUCCESS with strategy ${strategy.label}`);
+
+        // Update baby record
+        if (baby_id) {
+          const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+          const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+          const supabase = createClient(supabaseUrl, supabaseKey);
+          await supabase.from("babies").update({ kinedu_registered: true } as any).eq("id", baby_id);
+        }
+
         return new Response(
-          JSON.stringify({
-            success: false,
-            error: "Could not obtain auth token from Kinedu",
-            debug: { attempt1_status: attempt1.status, attempt2_status: attempt2.status },
-          }),
-          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ success: true, already_exists: isAlreadyExists, strategy: strategy.label }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
     }
 
-    // Step 2: Register user via user_validation
-    console.log("Calling user_validation...");
-    const validationRes = await fetch(
-      `${baseUrl}/general_projects/user_validation`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: authToken,
-        },
-        body: JSON.stringify({
-          name,
-          lastname: "",
-          email,
-          access_code: "",
-          entry_name: "Lovable_Assessment",
-        }),
-      }
-    );
-
-    const validationData = await validationRes.json().catch(() => null);
-    console.log("user_validation status:", validationRes.status, "data:", JSON.stringify(validationData));
-
-    const isSuccess = validationRes.ok || validationRes.status === 200 || validationRes.status === 201;
-    // Treat "already exists" as success too
-    const isAlreadyExists =
-      validationRes.status === 409 ||
-      validationRes.status === 422 ||
-      (validationData?.error && /already|exist|duplicate/i.test(String(validationData.error)));
-
-    if (isSuccess || isAlreadyExists) {
-      // Update baby record in Supabase
-      if (baby_id) {
-        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-        const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-        const supabase = createClient(supabaseUrl, supabaseKey);
-
-        await supabase
-          .from("babies")
-          .update({ kinedu_registered: true } as any)
-          .eq("id", baby_id);
-      }
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          already_exists: isAlreadyExists,
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
+    // All strategies failed
     return new Response(
       JSON.stringify({
         success: false,
-        error: validationData?.error || validationData?.message || "Registration failed",
-        status: validationRes.status,
+        error: "All 3 auth strategies failed for user_validation. Check edge function logs for details.",
       }),
       { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err: unknown) {
     console.error("Error in register-kinedu-user:", err);
     return new Response(
-      JSON.stringify({
-        success: false,
-        error: err instanceof Error ? err.message : "Unknown error",
-      }),
+      JSON.stringify({ success: false, error: err instanceof Error ? err.message : "Unknown error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
