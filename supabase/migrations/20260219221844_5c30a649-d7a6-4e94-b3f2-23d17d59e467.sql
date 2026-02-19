@@ -1,0 +1,1 @@
+ALTER TABLE public.babies ADD COLUMN kinedu_registered BOOLEAN DEFAULT FALSE;

@@ -268,6 +268,7 @@ export type Database = {
           email: string | null
           gestational_weeks: number | null
           id: string
+          kinedu_registered: boolean | null
           name: string
           sex_at_birth: string | null
           user_id: string | null
@@ -278,6 +279,7 @@ export type Database = {
           email?: string | null
           gestational_weeks?: number | null
           id?: string
+          kinedu_registered?: boolean | null
           name: string
           sex_at_birth?: string | null
           user_id?: string | null
@@ -288,6 +290,7 @@ export type Database = {
           email?: string | null
           gestational_weeks?: number | null
           id?: string
+          kinedu_registered?: boolean | null
           name?: string
           sex_at_birth?: string | null
           user_id?: string | null
