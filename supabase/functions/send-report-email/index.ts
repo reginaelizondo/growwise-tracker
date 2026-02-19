@@ -167,18 +167,18 @@ function buildEmailHtml(babyName: string, ageMonths: number, areas: AreaResult[]
     return `
       <table width="100%" cellpadding="0" cellspacing="0" style="background: #FBF9F6; border-radius: 16px; border: 1.5px solid #E8E4DF;">
         
-        <tr><td style="padding: 14px 14px 12px;">
+        <tr><td style="padding: 18px 16px 16px;">
           <table width="100%" cellpadding="0" cellspacing="0"><tr>
             <td style="vertical-align: middle;">
-              <img src="${iconUrl}" alt="${name}" style="width: 20px; height: 20px; vertical-align: middle;" />
-              <span style="font-size: 14px; font-weight: 800; color: ${color}; vertical-align: middle; margin-left: 4px;">${name}</span>
+              <img src="${iconUrl}" alt="${name}" style="width: 28px; height: 28px; vertical-align: middle;" />
+              <span style="font-size: 16px; font-weight: 800; color: ${color}; vertical-align: middle; margin-left: 4px;">${name}</span>
             </td>
             <td style="text-align: right; vertical-align: middle;">
-              <span style="font-size: 18px; font-weight: 800; color: ${color};">${a.pace.toFixed(1)}×</span>
+              <span style="font-size: 22px; font-weight: 800; color: ${color};">${a.pace.toFixed(1)}×</span>
             </td>
           </tr></table>
-          ${buildGaugeHtml(a.pace, color)}
-          <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:6px;"><tr><td style="font-size: 11px; color: #718096; font-weight: 700; text-align: center;">${pl.emoji} ${pl.label}</td></tr></table>
+          <div style="margin-top: 4px;">${buildGaugeHtml(a.pace, color)}</div>
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:6px;"><tr><td style="font-size: 12px; color: #718096; font-weight: 700; text-align: center;">${pl.emoji} ${pl.label}</td></tr></table>
         </td></tr>
       </table>`
   }
