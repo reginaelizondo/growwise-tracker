@@ -485,6 +485,7 @@ const Report = () => {
         babyName={babyName}
         assessmentId={id}
         babyId={baby.id}
+        kineduRegistered={baby.kinedu_registered === true}
       />
     </div>
   );

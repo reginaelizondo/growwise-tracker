@@ -5,12 +5,17 @@ interface MobileStickyCtaProps {
   babyName: string;
   assessmentId?: string;
   babyId?: string;
+  kineduRegistered?: boolean;
 }
 
-export const MobileStickyCta = ({ babyName, assessmentId, babyId }: MobileStickyCtaProps) => {
+export const MobileStickyCta = ({ babyName, assessmentId, babyId, kineduRegistered }: MobileStickyCtaProps) => {
+  const ctaUrl = kineduRegistered
+    ? 'https://kinedu.superwall.app/ia-report'
+    : 'https://app.kinedu.com/ia-signuppage/?swc=ia-report';
+
   const handleClick = () => {
-    console.log('🔵 Mobile sticky CTA clicked', { assessmentId, babyId });
-    window.location.href = 'https://app.kinedu.com/ia-signuppage/?swc=ia-report';
+    console.log('🔵 Mobile sticky CTA clicked', { assessmentId, babyId, kineduRegistered });
+    window.location.href = ctaUrl;
     
     if (assessmentId && babyId) {
       supabase.from('assessment_events').insert({
@@ -19,7 +24,8 @@ export const MobileStickyCta = ({ babyName, assessmentId, babyId }: MobileSticky
         event_type: 'cta_clicked',
         event_data: { 
           cta_type: 'mobile_sticky_cta',
-          url: 'https://app.kinedu.com/ia-signuppage/?swc=ia-report',
+          kinedu_registered: kineduRegistered,
+          url: ctaUrl,
           timestamp: new Date().toISOString() 
         }
       });

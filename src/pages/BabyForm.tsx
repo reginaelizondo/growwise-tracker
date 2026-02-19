@@ -39,6 +39,8 @@ const BabyForm = () => {
   const [prematureOpen, setPrematureOpen] = useState(false);
   const [babyName, setBabyName] = useState("");
   const [parentEmail, setParentEmail] = useState("");
+  const [parentName, setParentName] = useState("");
+  const [registeringKinedu, setRegisteringKinedu] = useState(false);
   const [birthMonth, setBirthMonth] = useState("");
   const [birthDay, setBirthDay] = useState("");
   const [birthYear, setBirthYear] = useState("");
@@ -116,7 +118,7 @@ const BabyForm = () => {
         toast.error("Please enter a valid email address");
         return;
       }
-      trackStep('form_email_completed', { has_email: !!parentEmail });
+      trackStep('form_email_completed', { has_email: !!parentEmail, has_parent_name: !!parentName });
       setStep(4);
     }
   };
@@ -158,6 +160,13 @@ const BabyForm = () => {
         .select()
         .single();
       if (babyError) throw babyError;
+
+      // If Kinedu registration was initiated, update baby_id for tracking
+      if (parentEmail && parentName) {
+        supabase.functions.invoke('register-kinedu-user', {
+          body: { name: parentName, email: parentEmail, baby_id: baby.id }
+        }).catch(err => console.warn('Kinedu baby_id update failed:', err));
+      }
 
       const babyBirthDate = new Date(baby.birthdate);
       const today = new Date();
@@ -390,22 +399,31 @@ const BabyForm = () => {
           </div>
         )}
 
-        {/* Step 3: Email */}
+        {/* Step 3: Contact Info */}
         {step === 3 && !loading && (
           <div className="animate-fade-in space-y-8">
             <div className="text-center">
-              <h1 className="text-2xl font-bold text-primary mb-2">What's your email?</h1>
+              <h1 className="text-2xl font-bold text-primary mb-2">Your contact info</h1>
               <p className="text-sm text-muted-foreground"><span className="font-bold">Optional</span> — we'll send you {displayName}'s results</p>
             </div>
 
-            <Input
-              type="email"
-              placeholder="parent@email.com"
-              value={parentEmail}
-              onChange={(e) => setParentEmail(e.target.value)}
-              className="h-14 text-lg bg-card border-border rounded-2xl text-center"
-              autoFocus
-            />
+            <div className="space-y-4">
+              <Input
+                type="text"
+                placeholder="Your name"
+                value={parentName}
+                onChange={(e) => setParentName(e.target.value)}
+                className="h-14 text-lg bg-card border-border rounded-2xl text-center"
+                autoFocus
+              />
+              <Input
+                type="email"
+                placeholder="parent@email.com"
+                value={parentEmail}
+                onChange={(e) => setParentEmail(e.target.value)}
+                className="h-14 text-lg bg-card border-border rounded-2xl text-center"
+              />
+            </div>
 
             <div className="space-y-3">
               <Button
