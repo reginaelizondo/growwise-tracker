@@ -342,6 +342,25 @@ export function AssessmentBreakdownDialog({
       if (assessmentData?.started_at && lastAnswerEvent) {
         totalDurationMs = new Date(lastAnswerEvent.created_at).getTime() - new Date(assessmentData.started_at).getTime();
       }
+      
+      // Fallback: use response timestamps if no events
+      if (totalDurationMs === null && assessmentData?.started_at && responses.length > 0) {
+        const lastResponse = responses[responses.length - 1];
+        if (lastResponse.created_at) {
+          totalDurationMs = new Date(lastResponse.created_at).getTime() - new Date(assessmentData.started_at).getTime();
+        }
+      }
+
+      // Fallback avg time: calculate from response timestamps if no event-level timing
+      let avgTimeFallback = avgTime;
+      if (avgTimeFallback === null && responses.length > 1 && assessmentData?.started_at) {
+        const firstResp = responses[0]?.created_at;
+        const lastResp = responses[responses.length - 1]?.created_at;
+        if (firstResp && lastResp) {
+          const totalAnsweringMs = new Date(lastResp).getTime() - new Date(firstResp).getTime();
+          avgTimeFallback = totalAnsweringMs / responses.length;
+        }
+      }
 
       const uniqueSkillsAnswered = new Set(responses.map(r => r.skill_id).filter(Boolean));
 
@@ -349,7 +368,7 @@ export function AssessmentBreakdownDialog({
       setKpi({
         progress: { answered: responses.length, total: totalExpectedMilestones, percentage: totalExpectedMilestones > 0 ? (responses.length / totalExpectedMilestones) * 100 : 0 },
         duration: formatDuration(totalDurationMs),
-        avgTimePerQuestion: formatDuration(avgTime),
+        avgTimePerQuestion: formatDuration(avgTimeFallback),
         skillsCompleted: { done: uniqueSkillsAnswered.size, total: totalExpectedSkills },
         sawReport, ctaClicked,
         isCompleted: !!assessmentData?.completed_at,
