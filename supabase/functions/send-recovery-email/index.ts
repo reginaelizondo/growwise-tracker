@@ -36,10 +36,10 @@ function buildStepTracker(selectedAreas: number[], completedAreas: number[], cur
 
     if (isCompleted) {
       return `<td align="center" style="padding:0 4px;">
-          <div style="border:3px solid #34A853;border-radius:50%;padding:1px;display:inline-block;">
+          <div style="border:3px solid ${areaColor};border-radius:50%;padding:1px;display:inline-block;">
             <img src="${iconUrl}" width="36" height="36" alt="${name}" style="width:36px;height:36px;border-radius:50%;display:block;" />
           </div>
-          <div style="font-size:9px;color:#34A853;font-weight:700;margin-top:2px;">${name}</div>
+          <div style="font-size:9px;color:${areaColor};font-weight:700;margin-top:2px;">${name}</div>
         </td>`;
     } else if (isCurrent) {
       return `<td align="center" style="padding:0 4px;">
