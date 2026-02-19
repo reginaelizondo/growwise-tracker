@@ -70,6 +70,7 @@ interface KPIData {
   duration: string;
   avgTimePerQuestion: string;
   skillsCompleted: { done: number; total: number };
+  areasSelected: number;
   sawReport: boolean;
   ctaClicked: boolean;
   isCompleted: boolean;
@@ -175,6 +176,16 @@ export function AssessmentBreakdownDialog({
       const responses = responsesRes.data || [];
       const allEvents = allEventsRes.data || [];
 
+      // Fetch abandoned_sessions for selected_areas and progress_percentage
+      const { data: abandonedSession } = await supabase
+        .from('abandoned_sessions')
+        .select('selected_areas, progress_percentage')
+        .eq('assessment_id', assessmentId)
+        .maybeSingle();
+
+      const selectedAreas: number[] = (abandonedSession?.selected_areas as number[]) || [];
+      const progressPercentage = abandonedSession?.progress_percentage || null;
+
       // Fetch baby info for email tracking
       if (assessmentData?.baby_id) {
         const { data: babyData } = await supabase.from('babies').select('email, created_at').eq('id', assessmentData.baby_id).maybeSingle();
@@ -196,10 +207,26 @@ export function AssessmentBreakdownDialog({
         setDeviceInfo(parseDevice(firstWithUA.user_agent));
       }
 
-      // Get total expected milestones
-      // Derive totals from actual responses (what was presented to the user)
-      const totalExpectedMilestones = responses.length;
-      const totalExpectedSkills = new Set(responses.map(r => r.skill_id).filter(Boolean)).size;
+      // Get total expected milestones & skills from external DB based on age + selected areas
+      const ageMonths = assessmentData?.reference_age_months || 0;
+      let totalExpectedMilestones = responses.length; // fallback
+      let totalExpectedSkills = new Set(responses.map(r => r.skill_id).filter(Boolean)).size; // fallback
+
+      if (ageMonths > 0 && selectedAreas.length > 0) {
+        // Query external milestones to get the real total assigned to this user
+        const { data: assignedMilestones } = await externalSupabase
+          .from('milestones')
+          .select('milestone_id, skill_id, area_id')
+          .lte('age', ageMonths)
+          .in('area_id', selectedAreas)
+          .eq('locale', 'en')
+          .limit(2000);
+        
+        if (assignedMilestones && assignedMilestones.length > 0) {
+          totalExpectedMilestones = assignedMilestones.length;
+          totalExpectedSkills = new Set(assignedMilestones.map((m: any) => m.skill_id)).size;
+        }
+      }
 
       // Fetch milestone details from external supabase
       const milestoneIds = [...new Set(responses.map(r => r.milestone_id))];
@@ -380,12 +407,17 @@ export function AssessmentBreakdownDialog({
 
       const uniqueSkillsAnswered = new Set(responses.map(r => r.skill_id).filter(Boolean));
 
-      // Build KPI
+      // Build KPI - use progressPercentage from abandoned_sessions if available
+      const progressPct = progressPercentage !== null
+        ? progressPercentage
+        : (totalExpectedMilestones > 0 ? (responses.length / totalExpectedMilestones) * 100 : 0);
+
       setKpi({
-        progress: { answered: responses.length, total: totalExpectedMilestones, percentage: totalExpectedMilestones > 0 ? (responses.length / totalExpectedMilestones) * 100 : 0 },
+        progress: { answered: responses.length, total: totalExpectedMilestones, percentage: progressPct },
         duration: formatDuration(totalDurationMs),
         avgTimePerQuestion: formatDuration(avgTimeFallback),
         skillsCompleted: { done: uniqueSkillsAnswered.size, total: totalExpectedSkills },
+        areasSelected: selectedAreas.length || new Set(responses.map(r => r.area_id).filter(Boolean)).size,
         sawReport, ctaClicked,
         isCompleted: !!assessmentData?.completed_at,
         completedAt: assessmentData?.completed_at || null,
@@ -616,8 +648,18 @@ export function AssessmentBreakdownDialog({
                   )}
                 </div>
 
-                {/* 6 KPI cards */}
+                {/* KPI cards */}
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {/* Areas selected */}
+                  <Card className="p-3">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Target className="h-4 w-4 text-indigo-600" />
+                      <span className="text-xs font-medium text-muted-foreground">Áreas</span>
+                    </div>
+                    <p className="text-xl font-bold">{kpi.areasSelected}/4</p>
+                    <p className="text-xs text-muted-foreground">seleccionadas</p>
+                  </Card>
+
                   {/* Progress */}
                   <Card className="p-3">
                     <div className="flex items-center gap-2 mb-1">
@@ -626,7 +668,7 @@ export function AssessmentBreakdownDialog({
                     </div>
                     <p className="text-xl font-bold">{kpi.progress.answered}/{kpi.progress.total}</p>
                     <Progress value={kpi.progress.percentage} className="h-1.5 mt-1" />
-                    <p className="text-xs text-muted-foreground mt-0.5">{Math.round(kpi.progress.percentage)}%</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{Math.round(kpi.progress.percentage)}% completado</p>
                   </Card>
 
                   {/* Duration */}
@@ -656,7 +698,7 @@ export function AssessmentBreakdownDialog({
                       <span className="text-xs font-medium text-muted-foreground">Skills</span>
                     </div>
                     <p className="text-xl font-bold">{kpi.skillsCompleted.done}/{kpi.skillsCompleted.total}</p>
-                    <p className="text-xs text-muted-foreground">completados</p>
+                    <p className="text-xs text-muted-foreground">respondidos / asignados</p>
                   </Card>
 
                   {/* Saw Report */}
