@@ -411,39 +411,101 @@ export default function Analytics() {
         {/* ============================================================ */}
         {/* 4. DROP-OFF BY AREA */}
         {/* ============================================================ */}
-        {dropOffByArea.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5" />
-                Drop-off por Área
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                {dropOffByArea.map((area) => (
-                  <div key={area.area_id} className="rounded-lg border p-4 space-y-2">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: getAreaColor(area.area_id) }} />
-                      <span className="font-semibold text-sm">{area.area_name}</span>
-                    </div>
-                    <div className="text-2xl font-bold" style={{ color: getAreaColor(area.area_id) }}>
-                      {area.drop_off_pct.toFixed(0)}%
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {area.dropped} abandonaron de {area.reached} que llegaron
-                    </p>
-                    <Progress
-                      value={area.drop_off_pct}
-                      className="h-2"
-                      style={{ '--progress-color': area.drop_off_pct > 30 ? 'hsl(var(--destructive))' : getAreaColor(area.area_id) } as React.CSSProperties}
-                    />
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {dropOffByArea.length > 0 && (() => {
+          // Order: Cognitive (2) → Physical (1) → Linguistic (3) → Socio-Emotional (4)
+          const areaOrder = [2, 1, 3, 4];
+          const sortedAreas = areaOrder
+            .map(id => dropOffByArea.find(a => a.area_id === id))
+            .filter(Boolean) as DropOffByAreaData[];
+          // If there are areas not in the predefined order, append them
+          dropOffByArea.forEach(a => { if (!areaOrder.includes(a.area_id)) sortedAreas.push(a); });
+          const maxReached = Math.max(...sortedAreas.map(a => a.reached), 1);
+
+          return (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5" />
+                  Drop-off por Área (Funnel)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-1">
+                  {sortedAreas.map((area, i) => {
+                    const widthPct = Math.max((area.reached / maxReached) * 100, 15);
+                    const color = getAreaColor(area.area_id);
+                    const survived = area.reached - area.dropped;
+                    return (
+                      <div key={area.area_id}>
+                        {i > 0 && (
+                          <div className="flex items-center gap-2 py-1 pl-4">
+                            <ArrowDown className="w-3 h-3 text-destructive" />
+                            <span className="text-xs text-destructive font-medium">
+                              {sortedAreas[i - 1].dropped > 0
+                                ? `-${sortedAreas[i - 1].drop_off_pct.toFixed(0)}% abandonaron en ${sortedAreas[i - 1].area_name}`
+                                : `0% drop-off en ${sortedAreas[i - 1].area_name}`}
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-3">
+                          <div className="w-40 text-right shrink-0 flex items-center justify-end gap-2">
+                            <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                            <span className="text-sm font-medium text-muted-foreground">{area.area_name}</span>
+                          </div>
+                          <div className="flex-1">
+                            <div
+                              className="h-12 rounded-md flex items-center justify-between px-4 text-white font-semibold text-sm transition-all duration-500"
+                              style={{ width: `${widthPct}%`, minWidth: '140px', backgroundColor: color }}
+                            >
+                              <span>{area.reached} llegaron</span>
+                              <span className="text-white/80 text-xs">
+                                {area.dropped > 0 ? `${area.dropped} abandonaron (${area.drop_off_pct.toFixed(0)}%)` : '0 abandonaron'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {/* Final: survived all areas */}
+                  {sortedAreas.length > 0 && (() => {
+                    const lastArea = sortedAreas[sortedAreas.length - 1];
+                    const survivedAll = lastArea.reached - lastArea.dropped;
+                    const widthPct = Math.max((survivedAll / maxReached) * 100, 10);
+                    return (
+                      <>
+                        <div className="flex items-center gap-2 py-1 pl-4">
+                          <ArrowDown className="w-3 h-3 text-destructive" />
+                          <span className="text-xs text-destructive font-medium">
+                            {lastArea.dropped > 0
+                              ? `-${lastArea.drop_off_pct.toFixed(0)}% abandonaron en ${lastArea.area_name}`
+                              : `0% drop-off en ${lastArea.area_name}`}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-40 text-right shrink-0">
+                            <span className="text-sm font-medium text-green-600">✅ Completaron</span>
+                          </div>
+                          <div className="flex-1">
+                            <div
+                              className="h-12 rounded-md flex items-center justify-between px-4 text-white font-semibold text-sm bg-green-600"
+                              style={{ width: `${widthPct}%`, minWidth: '120px' }}
+                            >
+                              <span>{survivedAll}</span>
+                              <span className="text-white/80 text-xs">
+                                {maxReached > 0 ? `${((survivedAll / maxReached) * 100).toFixed(0)}% del total` : ''}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })()}
 
         {/* ============================================================ */}
         {/* 5. INDIVIDUAL ASSESSMENTS TABLE */}
