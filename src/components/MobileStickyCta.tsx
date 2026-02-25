@@ -15,7 +15,7 @@ export const MobileStickyCta = ({ babyName, assessmentId, babyId, kineduRegister
     : 'https://app.kinedu.com/ia-signuppage/?swc=ia-report';
   
   const ctaUrl = email
-    ? `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}customer_email=${encodeURIComponent(email)}`
+    ? `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}email=${encodeURIComponent(email)}`
     : baseUrl;
 
   const handleClick = () => {
