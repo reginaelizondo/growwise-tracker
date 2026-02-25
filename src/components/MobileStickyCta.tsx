@@ -6,12 +6,17 @@ interface MobileStickyCtaProps {
   assessmentId?: string;
   babyId?: string;
   kineduRegistered?: boolean;
+  email?: string;
 }
 
-export const MobileStickyCta = ({ babyName, assessmentId, babyId, kineduRegistered }: MobileStickyCtaProps) => {
-  const ctaUrl = kineduRegistered
+export const MobileStickyCta = ({ babyName, assessmentId, babyId, kineduRegistered, email }: MobileStickyCtaProps) => {
+  const baseUrl = kineduRegistered
     ? 'https://kinedu.superwall.app/ia-report'
     : 'https://app.kinedu.com/ia-signuppage/?swc=ia-report';
+  
+  const ctaUrl = email
+    ? `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}customer_email=${encodeURIComponent(email)}`
+    : baseUrl;
 
   const handleClick = () => {
     console.log('🔵 Mobile sticky CTA clicked', { assessmentId, babyId, kineduRegistered });

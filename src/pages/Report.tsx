@@ -486,6 +486,7 @@ const Report = () => {
         assessmentId={id}
         babyId={baby.id}
         kineduRegistered={baby.kinedu_registered === true}
+        email={baby.email || undefined}
       />
     </div>
   );
