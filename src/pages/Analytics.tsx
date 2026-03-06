@@ -2,17 +2,59 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Loader2, RefreshCw, TrendingDown, Users, Clock, Target, CalendarIcon, X, Trash2, Baby, ChevronDown, ChevronLeft, ChevronRight, BarChart3, Eye, MousePointerClick, ArrowDown, CheckCircle2, XCircle, AlertTriangle } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
+  DropdownMenuItem, DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
+import {
+  Loader2, RefreshCw, TrendingDown, Users, Clock, Target, CalendarIcon, X,
+  Trash2, Baby, ChevronDown, ChevronLeft, ChevronRight, BarChart3, Eye,
+  MousePointerClick, ArrowDown, CheckCircle2, XCircle, AlertTriangle,
+  MoreVertical, Download, Lock,
+} from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { format } from 'date-fns';
+import { format, subDays, startOfDay } from 'date-fns';
 import { AssessmentBreakdownDialog } from '@/components/AssessmentBreakdownDialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { toast } from '@/hooks/use-toast';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend } from 'recharts';
+import logoKineduBlue from '@/assets/logo-kinedu-blue.png';
+
+// ============================================================
+// CONFIG
+// ============================================================
+const ANALYTICS_PASSWORD = import.meta.env.VITE_ANALYTICS_PASSWORD || 'kinedu2024';
+
+const FUNNEL_LABEL_MAP: Record<string, string> = {
+  'Landing Click': 'Clic en Landing',
+  'Nombre': 'Nombre',
+  'Cumpleaños': 'Cumpleaños',
+  'Email': 'Email',
+  'Áreas → Continuar': 'Áreas → Continuar',
+  'Assessment Creado': 'Assessment Creado',
+  '1+ Respuesta': '1+ Respuesta',
+  '50%+ Completado': '50%+ Completado',
+  'Assessment Completo': 'Assessment Completo',
+  'Vio Reporte': 'Vio Reporte',
+  'Click en CTA': 'Clic en CTA Kinedu',
+};
+
+const DATE_PRESETS = [
+  { label: 'Hoy', getRange: () => ({ start: startOfDay(new Date()), end: undefined as Date | undefined }) },
+  { label: '7 días', getRange: () => ({ start: subDays(new Date(), 7), end: undefined as Date | undefined }) },
+  { label: '30 días', getRange: () => ({ start: subDays(new Date(), 30), end: undefined as Date | undefined }) },
+  { label: 'Todo', getRange: () => ({ start: undefined as Date | undefined, end: undefined as Date | undefined }) },
+];
 
 // ============================================================
 // TYPES
@@ -96,16 +138,26 @@ interface AgeDistributionData {
 // COMPONENT
 // ============================================================
 export default function Analytics() {
+  // Auth
+  const [isAuthenticated, setIsAuthenticated] = useState(() => sessionStorage.getItem('analytics_auth') === 'true');
+  const [passwordInput, setPasswordInput] = useState('');
+
+  // Data
   const [fullFunnel, setFullFunnel] = useState<FullFunnelData | null>(null);
   const [dailyStats, setDailyStats] = useState<DailyStatData[]>([]);
   const [dropOffByArea, setDropOffByArea] = useState<DropOffByAreaData[]>([]);
   const [individualAssessments, setIndividualAssessments] = useState<IndividualAssessmentData[]>([]);
   const [ageDistribution, setAgeDistribution] = useState<AgeDistributionData | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Date filters
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
   const [startDateOpen, setStartDateOpen] = useState(false);
   const [endDateOpen, setEndDateOpen] = useState(false);
+  const [activePreset, setActivePreset] = useState<string>('Todo');
+
+  // Interactions
   const [selectedAssessment, setSelectedAssessment] = useState<{ id: string; name: string } | null>(null);
   const [breakdownOpen, setBreakdownOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -116,10 +168,35 @@ export default function Analytics() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
+  // Load data when authenticated or date filters change
   useEffect(() => {
-    loadAnalytics();
-  }, [startDate, endDate]);
+    if (isAuthenticated) loadAnalytics();
+  }, [isAuthenticated, startDate, endDate]);
 
+  // Auto-refresh every 60s
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const interval = setInterval(() => loadAnalytics(), 60_000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated, startDate, endDate]);
+
+  // ============================================================
+  // AUTH
+  // ============================================================
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordInput === ANALYTICS_PASSWORD) {
+      setIsAuthenticated(true);
+      sessionStorage.setItem('analytics_auth', 'true');
+    } else {
+      toast({ variant: 'destructive', title: 'Contraseña incorrecta' });
+      setPasswordInput('');
+    }
+  };
+
+  // ============================================================
+  // DATA LOADING
+  // ============================================================
   const loadAnalytics = async () => {
     setLoading(true);
     setCurrentPage(1);
@@ -140,7 +217,6 @@ export default function Analytics() {
       if (dailyResult.data) setDailyStats(dailyResult.data);
       if (dropOffResult.data) setDropOffByArea(dropOffResult.data);
       if (individualResult.data) setIndividualAssessments(individualResult.data);
-      if (individualResult.data) setIndividualAssessments(individualResult.data);
       if (ageResult.data) setAgeDistribution(ageResult.data);
     } catch (error) {
       console.error('Error loading analytics:', error);
@@ -149,6 +225,9 @@ export default function Analytics() {
     }
   };
 
+  // ============================================================
+  // ACTIONS
+  // ============================================================
   const handleDelete = async () => {
     if (!assessmentToDelete) return;
     setDeleting(true);
@@ -159,11 +238,11 @@ export default function Analytics() {
       if (error) {
         toast({ variant: 'destructive', title: 'Error al eliminar', description: error.message });
       } else {
-        toast({ title: 'Eliminado correctamente', description: `${assessmentToDelete.name} ha sido eliminado` });
+        toast({ title: 'Eliminado', description: `${assessmentToDelete.name} eliminado correctamente` });
         loadAnalytics();
       }
     } catch {
-      toast({ variant: 'destructive', title: 'Error al eliminar', description: 'Hubo un error al eliminar el assessment' });
+      toast({ variant: 'destructive', title: 'Error', description: 'Hubo un error al eliminar' });
     } finally {
       setDeleting(false);
       setDeleteConfirmOpen(false);
@@ -203,24 +282,107 @@ export default function Analytics() {
     }
   };
 
+  const exportCSV = () => {
+    if (!individualAssessments || individualAssessments.length === 0) {
+      toast({ title: 'Sin datos', description: 'No hay assessments para exportar.' });
+      return;
+    }
+    const headers = [
+      'Bebé', 'Edad (meses)', 'Inicio', 'Estado', 'Duración (seg)',
+      'Preguntas Contestadas', 'Total Preguntas', 'Progreso %',
+      'Área de Abandono', 'Skill de Abandono',
+      'Vio Reporte', 'Clic CTA', 'Retrocesos', 'Ayudas', 'Omisiones',
+    ];
+    const rows = individualAssessments.map(a => [
+      a.baby_name,
+      a.reference_age_months,
+      a.started_at,
+      a.status === 'completed' ? 'Completado' : a.status === 'in_progress' ? 'En Progreso' : 'Abandonado',
+      a.duration_seconds,
+      a.skills_answered,
+      a.total_skills,
+      a.total_skills > 0 ? ((a.skills_answered / a.total_skills) * 100).toFixed(0) : '0',
+      a.drop_off_area_name || '',
+      a.drop_off_skill_name || '',
+      a.saw_report ? 'Sí' : 'No',
+      a.cta_clicked ? 'Sí' : 'No',
+      a.back_count,
+      a.helper_count,
+      a.skip_count,
+    ]);
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `analytics-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast({ title: 'CSV exportado', description: `${individualAssessments.length} assessments exportados.` });
+  };
+
+  // ============================================================
+  // HELPERS
+  // ============================================================
   const getAreaColor = (areaId: number | null): string => {
-    const colors: Record<number, string> = {
-      1: '#00A3E0',
-      2: '#00C853',
-      3: '#FF8A00',
-      4: '#F06292',
-    };
+    const colors: Record<number, string> = { 1: '#00A3E0', 2: '#00C853', 3: '#FF8A00', 4: '#F06292' };
     return areaId ? colors[areaId] || 'hsl(var(--primary))' : 'hsl(var(--primary))';
   };
 
-  if (loading) {
+  // ============================================================
+  // PASSWORD GATE
+  // ============================================================
+  if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-50 to-slate-100 p-4">
+        <Card className="w-full max-w-sm shadow-lg">
+          <CardHeader className="text-center space-y-4">
+            <img src={logoKineduBlue} alt="Kinedu" className="h-8 mx-auto" />
+            <div>
+              <CardTitle className="text-xl">Panel de Analytics</CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">Ingresa la contraseña para acceder</p>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handlePasswordSubmit} className="space-y-4">
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  type="password"
+                  placeholder="Contraseña"
+                  value={passwordInput}
+                  onChange={(e) => setPasswordInput(e.target.value)}
+                  className="pl-10"
+                  autoFocus
+                />
+              </div>
+              <Button type="submit" className="w-full">Acceder</Button>
+            </form>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
+  // ============================================================
+  // LOADING
+  // ============================================================
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-50 to-slate-100">
+        <div className="text-center space-y-3">
+          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
+          <p className="text-sm text-muted-foreground">Cargando analytics...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ============================================================
+  // COMPUTED VALUES
+  // ============================================================
   const totalPages = Math.ceil((individualAssessments?.length || 0) / itemsPerPage);
   const paginatedAssessments = individualAssessments?.slice(
     (currentPage - 1) * itemsPerPage,
@@ -232,7 +394,6 @@ export default function Analytics() {
   const totalAssessments = individualAssessments?.length || 0;
   const completionRate = fullFunnel?.completion_rate || (totalAssessments > 0 ? (completedCount / totalAssessments) * 100 : 0);
 
-  // Median duration of completed assessments only
   const completedDurations = (individualAssessments || [])
     .filter(a => a.status === 'completed' && a.duration_seconds > 0)
     .map(a => a.duration_seconds)
@@ -241,85 +402,199 @@ export default function Analytics() {
     ? completedDurations[Math.floor(completedDurations.length / 2)]
     : 0;
 
+  const ctaClicks = fullFunnel?.cta_clicks || 0;
+  const reportViews = fullFunnel?.report_views || 0;
+  const ctaRate = reportViews > 0 ? ((ctaClicks / reportViews) * 100) : 0;
+
+  // ============================================================
+  // RENDER
+  // ============================================================
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-secondary/20 p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 p-4 md:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Assessment Analytics</h1>
-            <p className="text-muted-foreground mt-1">Visibilidad completa del journey del usuario</p>
+
+        {/* ============================================================ */}
+        {/* HEADER */}
+        {/* ============================================================ */}
+        <div className="space-y-4">
+          {/* Row 1: Brand + Actions */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex items-center gap-3">
+              <img src={logoKineduBlue} alt="Kinedu" className="h-7" />
+              <Separator orientation="vertical" className="h-8 hidden sm:block" />
+              <div>
+                <h1 className="text-2xl font-bold text-foreground">Panel de Analytics</h1>
+                <p className="text-sm text-muted-foreground">Visibilidad completa del journey del usuario</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <MoreVertical className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={exportCSV}>
+                    <Download className="w-4 h-4 mr-2" />
+                    Exportar CSV
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => setDeleteAllConfirmOpen(true)}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Borrar Todos los Datos
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button onClick={loadAnalytics} variant="outline" size="sm" className="gap-2">
+                <RefreshCw className="w-4 h-4" />
+                <span className="hidden sm:inline">Actualizar</span>
+              </Button>
+            </div>
           </div>
+
+          {/* Row 2: Date Filters */}
           <div className="flex items-center gap-2 flex-wrap">
+            {DATE_PRESETS.map(preset => (
+              <Button
+                key={preset.label}
+                variant={activePreset === preset.label ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => {
+                  const r = preset.getRange();
+                  setStartDate(r.start);
+                  setEndDate(r.end);
+                  setActivePreset(preset.label);
+                }}
+                className="text-xs"
+              >
+                {preset.label}
+              </Button>
+            ))}
+            <Separator orientation="vertical" className="h-6 mx-1 hidden sm:block" />
             <Popover open={startDateOpen} onOpenChange={setStartDateOpen}>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <CalendarIcon className="w-4 h-4 mr-2" />
-                  {startDate ? format(startDate, 'PP') : 'Desde'}
+                <Button variant="outline" size="sm" className="text-xs">
+                  <CalendarIcon className="w-3.5 h-3.5 mr-1.5" />
+                  {startDate ? format(startDate, 'dd MMM yyyy') : 'Desde'}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0 z-50" align="end">
-                <Calendar mode="single" selected={startDate} onSelect={(d) => { setStartDate(d); setStartDateOpen(false); }} initialFocus />
+                <Calendar
+                  mode="single"
+                  selected={startDate}
+                  onSelect={(d) => { setStartDate(d); setStartDateOpen(false); setActivePreset(''); }}
+                  initialFocus
+                />
               </PopoverContent>
             </Popover>
             <Popover open={endDateOpen} onOpenChange={setEndDateOpen}>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <CalendarIcon className="w-4 h-4 mr-2" />
-                  {endDate ? format(endDate, 'PP') : 'Hasta'}
+                <Button variant="outline" size="sm" className="text-xs">
+                  <CalendarIcon className="w-3.5 h-3.5 mr-1.5" />
+                  {endDate ? format(endDate, 'dd MMM yyyy') : 'Hasta'}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0 z-50" align="end">
-                <Calendar mode="single" selected={endDate} onSelect={(d) => { setEndDate(d); setEndDateOpen(false); }} initialFocus />
+                <Calendar
+                  mode="single"
+                  selected={endDate}
+                  onSelect={(d) => { setEndDate(d); setEndDateOpen(false); setActivePreset(''); }}
+                  initialFocus
+                />
               </PopoverContent>
             </Popover>
-            {(startDate || endDate) && (
-              <Button variant="ghost" size="sm" onClick={() => { setStartDate(undefined); setEndDate(undefined); }}>
+            {(startDate || endDate) && activePreset === '' && (
+              <Button variant="ghost" size="sm" onClick={() => { setStartDate(undefined); setEndDate(undefined); setActivePreset('Todo'); }}>
                 <X className="w-4 h-4" />
               </Button>
             )}
-            <Button onClick={loadAnalytics} variant="outline" size="sm">
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Actualizar
-            </Button>
+            <span className="text-[10px] text-muted-foreground ml-auto hidden sm:inline">Auto-refresh: 60s</span>
           </div>
         </div>
 
         {/* ============================================================ */}
-        {/* 1. KPI CARDS */}
+        {/* CONVERSION BANNER */}
         {/* ============================================================ */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          <KpiCard label="Total Sesiones" value={fullFunnel?.landing_clicks || 0} icon={<Users className="w-4 h-4" />} />
-          <KpiCard label="Assessments Creados" value={fullFunnel?.assessments_created || 0} icon={<Target className="w-4 h-4" />} />
+        {fullFunnel && (
+          <div className="rounded-xl border-2 border-green-200 bg-gradient-to-r from-green-50 via-emerald-50 to-teal-50 p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-xl bg-green-100 shrink-0">
+                <MousePointerClick className="w-6 h-6 text-green-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-green-800/70">Conversión a Kinedu — Objetivo Principal</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-bold text-green-700">{ctaRate.toFixed(1)}%</span>
+                  <span className="text-sm text-green-600/70">
+                    ({ctaClicks} de {reportViews} que vieron reporte)
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="text-right text-xs text-muted-foreground hidden md:block">
+              <p>Usuarios que vieron el reporte</p>
+              <p>e hicieron clic en el CTA de Kinedu</p>
+            </div>
+          </div>
+        )}
+
+        {/* ============================================================ */}
+        {/* KPI CARDS */}
+        {/* ============================================================ */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <KpiCard
+            label="Total Sesiones"
+            value={fullFunnel?.landing_clicks || 0}
+            icon={<Users className="w-4 h-4" />}
+            iconBg="bg-blue-100 text-blue-600"
+          />
+          <KpiCard
+            label="Assessments Creados"
+            value={fullFunnel?.assessments_created || 0}
+            icon={<Target className="w-4 h-4" />}
+            iconBg="bg-indigo-100 text-indigo-600"
+          />
           <KpiCard
             label="Tasa Completado"
             value={`${completionRate.toFixed(0)}%`}
             icon={<CheckCircle2 className="w-4 h-4" />}
-            valueColor={completionRate >= 60 ? 'text-green-600' : completionRate >= 30 ? 'text-yellow-600' : 'text-destructive'}
+            iconBg={completionRate >= 60 ? 'bg-green-100 text-green-600' : completionRate >= 30 ? 'bg-amber-100 text-amber-600' : 'bg-red-100 text-red-600'}
+            valueColor={completionRate >= 60 ? 'text-green-600' : completionRate >= 30 ? 'text-amber-600' : 'text-red-600'}
           />
           <KpiCard
             label="Abandonados"
             value={abandonedCount}
             subtitle={totalAssessments > 0 ? `${((abandonedCount / totalAssessments) * 100).toFixed(0)}%` : undefined}
             icon={<XCircle className="w-4 h-4" />}
-            valueColor="text-destructive"
+            iconBg="bg-red-100 text-red-600"
+            valueColor="text-red-600"
           />
           <KpiCard
             label="Duración Mediana"
             value={`${Math.floor(medianDuration / 60)}m ${medianDuration % 60}s`}
             subtitle="(completados)"
             icon={<Clock className="w-4 h-4" />}
+            iconBg="bg-amber-100 text-amber-600"
           />
-          <KpiCard label="Vieron Reporte" value={fullFunnel?.report_views || 0} icon={<Eye className="w-4 h-4" />} />
+          <KpiCard
+            label="Vieron Reporte"
+            value={reportViews}
+            icon={<Eye className="w-4 h-4" />}
+            iconBg="bg-purple-100 text-purple-600"
+          />
         </div>
 
         {/* ============================================================ */}
-        {/* 2. FULL END-TO-END FUNNEL */}
+        {/* FULL FUNNEL */}
         {/* ============================================================ */}
         {fullFunnel && fullFunnel.steps && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+          <Card className="shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
                 <TrendingDown className="w-5 h-5" />
                 Funnel Completo del Usuario
               </CardTitle>
@@ -331,30 +606,32 @@ export default function Analytics() {
                   const widthPct = maxCount > 0 ? Math.max((step.count / maxCount) * 100, 8) : 8;
                   const colors = [
                     'bg-blue-600', 'bg-blue-500', 'bg-indigo-500', 'bg-violet-500',
-                    'bg-purple-500', 'bg-green-600', 'bg-emerald-500', 'bg-teal-500'
+                    'bg-purple-500', 'bg-green-600', 'bg-emerald-500', 'bg-teal-500',
+                    'bg-green-700', 'bg-cyan-600', 'bg-rose-500',
                   ];
+                  const displayLabel = FUNNEL_LABEL_MAP[step.label] || step.label;
                   return (
                     <div key={step.label}>
                       {i > 0 && step.drop_off_pct > 0 && (
                         <div className="flex items-center gap-2 py-1 pl-4">
-                          <ArrowDown className="w-3 h-3 text-destructive" />
-                          <span className="text-xs text-destructive font-medium">
-                            -{step.drop_off_pct.toFixed(0)}% drop-off
+                          <ArrowDown className="w-3 h-3 text-red-400" />
+                          <span className="text-xs text-red-400 font-medium">
+                            -{step.drop_off_pct.toFixed(0)}% abandono
                           </span>
                         </div>
                       )}
                       <div className="flex items-center gap-3">
                         <div className="w-44 text-right text-sm font-medium text-muted-foreground shrink-0">
-                          {step.label}
+                          {displayLabel}
                         </div>
                         <div className="flex-1">
                           <div
-                            className={`h-10 ${colors[i % colors.length]} rounded-md flex items-center justify-between px-4 text-white font-semibold text-sm transition-all duration-500`}
-                            style={{ width: `${widthPct}%`, minWidth: '120px' }}
+                            className={`h-9 ${colors[i % colors.length]} rounded-md flex items-center justify-between px-3 text-white font-semibold text-sm transition-all duration-500`}
+                            style={{ width: `${widthPct}%`, minWidth: '100px' }}
                           >
                             <span>{step.count}</span>
                             {i > 0 && maxCount > 0 && (
-                              <span className="text-white/80 text-xs">
+                              <span className="text-white/70 text-xs">
                                 {((step.count / maxCount) * 100).toFixed(0)}%
                               </span>
                             )}
@@ -370,12 +647,12 @@ export default function Analytics() {
         )}
 
         {/* ============================================================ */}
-        {/* 3. DAILY TREND CHART */}
+        {/* DAILY TREND CHART */}
         {/* ============================================================ */}
         {dailyStats.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+          <Card className="shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
                 <BarChart3 className="w-5 h-5" />
                 Tendencia Diaria
               </CardTitle>
@@ -389,12 +666,12 @@ export default function Analytics() {
                       dataKey="date"
                       tickFormatter={(d: string) => {
                         const parts = d.split('-');
-                        return `${parts[1]}/${parts[2]}`;
+                        return `${parts[2]}/${parts[1]}`;
                       }}
                       className="text-xs"
                     />
                     <YAxis className="text-xs" />
-                    <Tooltip
+                    <RechartsTooltip
                       contentStyle={{ borderRadius: '8px', fontSize: '12px' }}
                       labelFormatter={(d: string) => `Fecha: ${d}`}
                     />
@@ -409,24 +686,22 @@ export default function Analytics() {
         )}
 
         {/* ============================================================ */}
-        {/* 4. DROP-OFF BY AREA */}
+        {/* DROP-OFF BY AREA */}
         {/* ============================================================ */}
         {dropOffByArea.length > 0 && (() => {
-          // Order: Cognitive (2) → Physical (1) → Linguistic (3) → Socio-Emotional (4)
           const areaOrder = [2, 1, 3, 4];
           const sortedAreas = areaOrder
             .map(id => dropOffByArea.find(a => a.area_id === id))
             .filter(Boolean) as DropOffByAreaData[];
-          // If there are areas not in the predefined order, append them
           dropOffByArea.forEach(a => { if (!areaOrder.includes(a.area_id)) sortedAreas.push(a); });
           const maxReached = Math.max(...sortedAreas.map(a => a.reached), 1);
 
           return (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+            <Card className="shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
                   <AlertTriangle className="w-5 h-5" />
-                  Drop-off por Área (Funnel)
+                  Abandono por Área
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -434,16 +709,15 @@ export default function Analytics() {
                   {sortedAreas.map((area, i) => {
                     const widthPct = Math.max((area.reached / maxReached) * 100, 15);
                     const color = getAreaColor(area.area_id);
-                    const survived = area.reached - area.dropped;
                     return (
                       <div key={area.area_id}>
                         {i > 0 && (
                           <div className="flex items-center gap-2 py-1 pl-4">
-                            <ArrowDown className="w-3 h-3 text-destructive" />
-                            <span className="text-xs text-destructive font-medium">
+                            <ArrowDown className="w-3 h-3 text-red-400" />
+                            <span className="text-xs text-red-400 font-medium">
                               {sortedAreas[i - 1].dropped > 0
                                 ? `-${sortedAreas[i - 1].drop_off_pct.toFixed(0)}% abandonaron en ${sortedAreas[i - 1].area_name}`
-                                : `0% drop-off en ${sortedAreas[i - 1].area_name}`}
+                                : `0% abandono en ${sortedAreas[i - 1].area_name}`}
                             </span>
                           </div>
                         )}
@@ -454,7 +728,7 @@ export default function Analytics() {
                           </div>
                           <div className="flex-1">
                             <div
-                              className="h-12 rounded-md flex items-center justify-between px-4 text-white font-semibold text-sm transition-all duration-500"
+                              className="h-11 rounded-md flex items-center justify-between px-4 text-white font-semibold text-sm transition-all duration-500"
                               style={{ width: `${widthPct}%`, minWidth: '140px', backgroundColor: color }}
                             >
                               <span>{area.reached} llegaron</span>
@@ -475,20 +749,20 @@ export default function Analytics() {
                     return (
                       <>
                         <div className="flex items-center gap-2 py-1 pl-4">
-                          <ArrowDown className="w-3 h-3 text-destructive" />
-                          <span className="text-xs text-destructive font-medium">
+                          <ArrowDown className="w-3 h-3 text-red-400" />
+                          <span className="text-xs text-red-400 font-medium">
                             {lastArea.dropped > 0
                               ? `-${lastArea.drop_off_pct.toFixed(0)}% abandonaron en ${lastArea.area_name}`
-                              : `0% drop-off en ${lastArea.area_name}`}
+                              : `0% abandono en ${lastArea.area_name}`}
                           </span>
                         </div>
                         <div className="flex items-center gap-3">
                           <div className="w-40 text-right shrink-0">
-                            <span className="text-sm font-medium text-green-600">✅ Completaron</span>
+                            <span className="text-sm font-semibold text-green-600">Completaron</span>
                           </div>
                           <div className="flex-1">
                             <div
-                              className="h-12 rounded-md flex items-center justify-between px-4 text-white font-semibold text-sm bg-green-600"
+                              className="h-11 rounded-md flex items-center justify-between px-4 text-white font-semibold text-sm bg-green-600"
                               style={{ width: `${widthPct}%`, minWidth: '120px' }}
                             >
                               <span>{survivedAll}</span>
@@ -508,108 +782,117 @@ export default function Analytics() {
         })()}
 
         {/* ============================================================ */}
-        {/* 5. INDIVIDUAL ASSESSMENTS TABLE */}
+        {/* INDIVIDUAL ASSESSMENTS TABLE */}
         {/* ============================================================ */}
-        <Card>
-          <CardHeader>
+        <Card className="shadow-sm">
+          <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-lg">
                 <Users className="w-5 h-5" />
                 Assessments Individuales
+                <Badge variant="secondary" className="ml-1 text-xs">{individualAssessments?.length || 0}</Badge>
               </CardTitle>
-              {individualAssessments && individualAssessments.length > 0 && (
-                <Button variant="destructive" size="sm" onClick={() => setDeleteAllConfirmOpen(true)} className="gap-2">
-                  <Trash2 className="h-4 w-4" />
-                  Borrar Todos
-                </Button>
-              )}
+              <Button variant="ghost" size="sm" onClick={exportCSV} className="gap-2 text-muted-foreground text-xs">
+                <Download className="w-3.5 h-3.5" />
+                CSV
+              </Button>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-3 text-sm font-medium">Baby</th>
-                    <th className="text-left p-3 text-sm font-medium">Edad</th>
-                    <th className="text-left p-3 text-sm font-medium">Inicio</th>
-                    <th className="text-left p-3 text-sm font-medium">Status</th>
-                    <th className="text-left p-3 text-sm font-medium">Duración</th>
-                    <th className="text-left p-3 text-sm font-medium">Progreso</th>
-                    <th className="text-left p-3 text-sm font-medium">Drop-off</th>
-                    <th className="text-center p-3 text-sm font-medium">Reporte</th>
-                    <th className="text-center p-3 text-sm font-medium">CTA</th>
-                    <th className="text-center p-3 text-sm font-medium">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
+            <div className="overflow-x-auto rounded-lg border">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/30">
+                    <TableHead className="font-semibold">Bebé</TableHead>
+                    <TableHead className="font-semibold">Edad</TableHead>
+                    <TableHead className="font-semibold">Inicio</TableHead>
+                    <TableHead className="font-semibold">Estado</TableHead>
+                    <TableHead className="font-semibold">Duración</TableHead>
+                    <TableHead className="font-semibold">Progreso</TableHead>
+                    <TableHead className="font-semibold">Abandono</TableHead>
+                    <TableHead className="font-semibold text-center">Reporte</TableHead>
+                    <TableHead className="font-semibold text-center">CTA</TableHead>
+                    <TableHead className="font-semibold text-center w-12"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {paginatedAssessments?.map((a) => (
-                    <tr
+                    <TableRow
                       key={a.assessment_id}
-                      className="border-b hover:bg-secondary/20 transition-colors cursor-pointer"
+                      className="cursor-pointer hover:bg-muted/40 transition-colors"
                       onClick={() => {
                         setSelectedAssessment({ id: a.assessment_id, name: a.baby_name });
                         setBreakdownOpen(true);
                       }}
                     >
-                      <td className="p-3 font-medium text-primary">{a.baby_name}</td>
-                      <td className="p-3 text-sm text-muted-foreground">{a.reference_age_months}m</td>
-                      <td className="p-3 text-sm text-muted-foreground">
-                        {format(new Date(a.started_at), 'MMM dd, HH:mm')}
-                      </td>
-                      <td className="p-3">
-                        <Badge variant={a.status === 'completed' ? 'default' : a.status === 'in_progress' ? 'secondary' : 'destructive'}>
-                          {a.status === 'completed' ? '✅ Completado' : a.status === 'in_progress' ? '🔄 En Progreso' : '❌ Abandonado'}
-                        </Badge>
-                      </td>
-                      <td className="p-3 text-sm">
+                      <TableCell className="font-medium text-primary">{a.baby_name}</TableCell>
+                      <TableCell className="text-muted-foreground">{a.reference_age_months}m</TableCell>
+                      <TableCell className="text-muted-foreground text-xs">
+                        {format(new Date(a.started_at), 'dd MMM, HH:mm')}
+                      </TableCell>
+                      <TableCell>
+                        {a.status === 'completed' ? (
+                          <Badge className="bg-green-100 text-green-700 border-green-200 hover:bg-green-100 text-xs font-medium">
+                            Completado
+                          </Badge>
+                        ) : a.status === 'in_progress' ? (
+                          <Badge className="bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100 text-xs font-medium">
+                            En Progreso
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-red-100 text-red-700 border-red-200 hover:bg-red-100 text-xs font-medium">
+                            Abandonado
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-sm tabular-nums">
                         {Math.floor(a.duration_seconds / 60)}m {a.duration_seconds % 60}s
-                      </td>
-                      <td className="p-3">
+                      </TableCell>
+                      <TableCell>
                         <div className="flex items-center gap-2">
                           <Progress
                             value={a.total_skills > 0 ? (a.skills_answered / a.total_skills) * 100 : 0}
-                            className="w-20"
+                            className="w-16 h-2"
                             style={{
                               '--progress-color': a.status === 'completed' ? 'hsl(var(--primary))' : getAreaColor(a.last_area_id),
                             } as React.CSSProperties}
                           />
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-xs text-muted-foreground tabular-nums">
                             {a.total_skills > 0 ? ((a.skills_answered / a.total_skills) * 100).toFixed(0) : '0'}%
                           </span>
                         </div>
-                      </td>
-                      <td className="p-3 text-sm">
+                      </TableCell>
+                      <TableCell className="text-sm">
                         {a.status === 'completed' ? (
-                          <span className="text-primary font-medium">—</span>
+                          <span className="text-muted-foreground/40">—</span>
                         ) : a.drop_off_area_name ? (
                           <div>
-                            <span className="font-medium" style={{ color: getAreaColor(a.last_area_id) }}>
+                            <span className="font-medium text-xs" style={{ color: getAreaColor(a.last_area_id) }}>
                               {a.drop_off_area_name}
                             </span>
                             {a.drop_off_skill_name && (
-                              <div className="text-xs text-muted-foreground">{a.drop_off_skill_name}</div>
+                              <div className="text-[10px] text-muted-foreground truncate max-w-[120px]">{a.drop_off_skill_name}</div>
                             )}
                           </div>
                         ) : (
-                          <span className="text-muted-foreground">—</span>
+                          <span className="text-muted-foreground/40">—</span>
                         )}
-                      </td>
-                      <td className="p-3 text-center">
+                      </TableCell>
+                      <TableCell className="text-center">
                         {a.saw_report ? (
                           <CheckCircle2 className="w-4 h-4 text-green-600 mx-auto" />
                         ) : (
-                          <XCircle className="w-4 h-4 text-muted-foreground/40 mx-auto" />
+                          <span className="text-muted-foreground/30">—</span>
                         )}
-                      </td>
-                      <td className="p-3 text-center">
+                      </TableCell>
+                      <TableCell className="text-center">
                         {a.cta_clicked ? (
-                          <MousePointerClick className="w-4 h-4 text-green-600 mx-auto" />
+                          <Badge className="bg-green-100 text-green-700 border-green-200 hover:bg-green-100 text-[10px]">Sí</Badge>
                         ) : (
-                          <XCircle className="w-4 h-4 text-muted-foreground/40 mx-auto" />
+                          <span className="text-muted-foreground/30">—</span>
                         )}
-                      </td>
-                      <td className="p-3 text-center">
+                      </TableCell>
+                      <TableCell className="text-center">
                         <Button
                           variant="ghost"
                           size="sm"
@@ -618,36 +901,34 @@ export default function Analytics() {
                             setAssessmentToDelete({ id: a.assessment_id, babyId: a.baby_id, name: a.baby_name });
                             setDeleteConfirmOpen(true);
                           }}
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          className="text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3.5 h-3.5" />
                         </Button>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
               {(!individualAssessments || individualAssessments.length === 0) && (
-                <div className="text-center py-8 text-muted-foreground">
-                  No hay assessments en el rango de fechas seleccionado
+                <div className="text-center py-12 text-muted-foreground">
+                  No hay assessments en el rango seleccionado
                 </div>
               )}
             </div>
 
             {/* Pagination */}
             {individualAssessments && individualAssessments.length > itemsPerPage && (
-              <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                <span className="text-sm text-muted-foreground">
-                  {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, individualAssessments.length)} de {individualAssessments.length}
+              <div className="flex items-center justify-between mt-4 pt-3 border-t">
+                <span className="text-xs text-muted-foreground">
+                  {((currentPage - 1) * itemsPerPage) + 1} – {Math.min(currentPage * itemsPerPage, individualAssessments.length)} de {individualAssessments.length}
                 </span>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(p - 1, 1))} disabled={currentPage === 1}>
+                <div className="flex items-center gap-1">
+                  <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(p - 1, 1))} disabled={currentPage === 1} className="h-8 w-8 p-0">
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
-                  <span className="text-sm font-medium">
-                    {currentPage} / {totalPages}
-                  </span>
-                  <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))} disabled={currentPage === totalPages}>
+                  <span className="text-xs font-medium px-2">{currentPage} / {totalPages}</span>
+                  <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))} disabled={currentPage === totalPages} className="h-8 w-8 p-0">
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
@@ -657,14 +938,14 @@ export default function Analytics() {
         </Card>
 
         {/* ============================================================ */}
-        {/* 6. AGE DISTRIBUTION (collapsible) */}
+        {/* AGE DISTRIBUTION (collapsible) */}
         {/* ============================================================ */}
         {ageDistribution && (
           <Collapsible defaultOpen={false}>
-            <Card>
+            <Card className="shadow-sm">
               <CardHeader className="pb-3">
                 <CollapsibleTrigger className="flex items-center justify-between w-full group">
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-lg">
                     <Baby className="w-5 h-5" />
                     Distribución de Edades
                   </CardTitle>
@@ -673,37 +954,37 @@ export default function Analytics() {
               </CardHeader>
               <CollapsibleContent>
                 <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-                    <div className="bg-secondary/50 rounded-lg p-4 text-center">
-                      <p className="text-3xl font-bold text-primary">{ageDistribution.average}</p>
-                      <p className="text-sm text-muted-foreground">Promedio (meses)</p>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+                    <div className="bg-blue-50 rounded-lg p-4 text-center">
+                      <p className="text-2xl font-bold text-blue-600">{ageDistribution.average}</p>
+                      <p className="text-xs text-muted-foreground">Promedio (meses)</p>
                     </div>
-                    <div className="bg-secondary/50 rounded-lg p-4 text-center">
-                      <p className="text-3xl font-bold text-primary">{ageDistribution.median}</p>
-                      <p className="text-sm text-muted-foreground">Mediana</p>
+                    <div className="bg-indigo-50 rounded-lg p-4 text-center">
+                      <p className="text-2xl font-bold text-indigo-600">{ageDistribution.median}</p>
+                      <p className="text-xs text-muted-foreground">Mediana</p>
                     </div>
-                    <div className="bg-secondary/50 rounded-lg p-4 text-center">
-                      <p className="text-3xl font-bold">{ageDistribution.min}</p>
-                      <p className="text-sm text-muted-foreground">Mínimo</p>
+                    <div className="bg-slate-50 rounded-lg p-4 text-center">
+                      <p className="text-2xl font-bold text-slate-600">{ageDistribution.min}</p>
+                      <p className="text-xs text-muted-foreground">Mínimo</p>
                     </div>
-                    <div className="bg-secondary/50 rounded-lg p-4 text-center">
-                      <p className="text-3xl font-bold">{ageDistribution.max}</p>
-                      <p className="text-sm text-muted-foreground">Máximo</p>
+                    <div className="bg-slate-50 rounded-lg p-4 text-center">
+                      <p className="text-2xl font-bold text-slate-600">{ageDistribution.max}</p>
+                      <p className="text-xs text-muted-foreground">Máximo</p>
                     </div>
-                    <div className="bg-secondary/50 rounded-lg p-4 text-center">
-                      <p className="text-3xl font-bold text-primary">{ageDistribution.total}</p>
-                      <p className="text-sm text-muted-foreground">Total</p>
+                    <div className="bg-purple-50 rounded-lg p-4 text-center">
+                      <p className="text-2xl font-bold text-purple-600">{ageDistribution.total}</p>
+                      <p className="text-xs text-muted-foreground">Total</p>
                     </div>
                   </div>
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {ageDistribution.distribution.map((range) => (
                       <div key={range.label} className="space-y-1">
                         <div className="flex justify-between text-sm">
                           <span className="font-medium">{range.label}</span>
-                          <span className="text-muted-foreground">{range.count} ({range.percentage.toFixed(1)}%)</span>
+                          <span className="text-muted-foreground tabular-nums">{range.count} ({range.percentage.toFixed(1)}%)</span>
                         </div>
-                        <div className="h-6 bg-secondary rounded-full overflow-hidden">
-                          <div className="h-full bg-primary rounded-full transition-all duration-500" style={{ width: `${Math.max(range.percentage, 2)}%` }} />
+                        <div className="h-5 bg-secondary rounded-full overflow-hidden">
+                          <div className="h-full bg-primary/70 rounded-full transition-all duration-500" style={{ width: `${Math.max(range.percentage, 2)}%` }} />
                         </div>
                       </div>
                     ))}
@@ -715,31 +996,31 @@ export default function Analytics() {
         )}
 
         {/* ============================================================ */}
-        {/* 7. EMAIL METRICS */}
+        {/* EMAIL METRICS */}
         {/* ============================================================ */}
         {fullFunnel && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+          <Card className="shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
                 <Target className="w-5 h-5" />
                 Métricas de Email
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="rounded-lg border p-4 text-center space-y-1">
-                  <p className="text-3xl font-bold text-primary">{fullFunnel.emails_at_profile || 0}</p>
-                  <p className="text-sm font-medium">Emails en perfil</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="rounded-lg bg-blue-50 border border-blue-100 p-4 text-center space-y-1">
+                  <p className="text-3xl font-bold text-blue-600">{fullFunnel.emails_at_profile || 0}</p>
+                  <p className="text-sm font-medium text-foreground">Emails en perfil</p>
                   <p className="text-xs text-muted-foreground">Dejaron email al crear perfil</p>
                 </div>
-                <div className="rounded-lg border p-4 text-center space-y-1">
-                  <p className="text-3xl font-bold text-primary">{fullFunnel.emails_post_assessment || 0}</p>
-                  <p className="text-sm font-medium">Emails post-assessment</p>
+                <div className="rounded-lg bg-purple-50 border border-purple-100 p-4 text-center space-y-1">
+                  <p className="text-3xl font-bold text-purple-600">{fullFunnel.emails_post_assessment || 0}</p>
+                  <p className="text-sm font-medium text-foreground">Emails post-assessment</p>
                   <p className="text-xs text-muted-foreground">Dejaron email al ver reporte</p>
                 </div>
-                <div className="rounded-lg border p-4 text-center space-y-1">
-                  <p className="text-3xl font-bold text-primary">{fullFunnel.babies_with_email || 0}</p>
-                  <p className="text-sm font-medium">Total con email</p>
+                <div className="rounded-lg bg-green-50 border border-green-100 p-4 text-center space-y-1">
+                  <p className="text-3xl font-bold text-green-600">{fullFunnel.babies_with_email || 0}</p>
+                  <p className="text-sm font-medium text-foreground">Total con email</p>
                   <p className="text-xs text-muted-foreground">Bebés con email registrado</p>
                 </div>
               </div>
@@ -748,7 +1029,9 @@ export default function Analytics() {
         )}
       </div>
 
-      {/* Dialogs */}
+      {/* ============================================================ */}
+      {/* DIALOGS */}
+      {/* ============================================================ */}
       <AssessmentBreakdownDialog
         assessmentId={selectedAssessment?.id || null}
         babyName={selectedAssessment?.name || ''}
@@ -777,7 +1060,7 @@ export default function Analytics() {
       <AlertDialog open={deleteAllConfirmOpen} onOpenChange={setDeleteAllConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>⚠️ ¿Eliminar TODOS los assessments?</AlertDialogTitle>
+            <AlertDialogTitle>¿Eliminar TODOS los assessments?</AlertDialogTitle>
             <AlertDialogDescription>
               Se eliminarán <strong>{individualAssessments?.length || 0}</strong> assessments y todos los datos asociados.
               <strong className="block mt-2 text-destructive">Esta acción no se puede deshacer.</strong>
@@ -803,23 +1086,25 @@ function KpiCard({
   value,
   subtitle,
   icon,
-  valueColor = 'text-primary',
+  iconBg = 'bg-primary/10 text-primary',
+  valueColor = 'text-foreground',
 }: {
   label: string;
   value: string | number;
   subtitle?: string;
   icon?: React.ReactNode;
+  iconBg?: string;
   valueColor?: string;
 }) {
   return (
-    <Card>
-      <CardContent className="pt-5 pb-4">
-        <div className="flex items-center gap-2 mb-1 text-muted-foreground">
+    <Card className="shadow-sm hover:shadow-md transition-shadow">
+      <CardContent className="pt-4 pb-3 px-4">
+        <div className={`inline-flex p-2 rounded-lg mb-2 ${iconBg}`}>
           {icon}
-          <span className="text-xs font-medium uppercase tracking-wide">{label}</span>
         </div>
         <div className={`text-2xl font-bold ${valueColor}`}>{value}</div>
-        {subtitle && <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>}
+        <p className="text-xs font-medium text-muted-foreground mt-0.5">{label}</p>
+        {subtitle && <p className="text-[10px] text-muted-foreground">{subtitle}</p>}
       </CardContent>
     </Card>
   );
