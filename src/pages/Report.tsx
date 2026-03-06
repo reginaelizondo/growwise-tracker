@@ -84,10 +84,15 @@ const Report = () => {
   const [userEmail, setUserEmail] = useState('');
   const [submittingEmail, setSubmittingEmail] = useState(false);
 
-  // Safety timeout
+  const [loadingTimedOut, setLoadingTimedOut] = useState(false);
+
+  // Safety timeout — show retry instead of "not found"
   useEffect(() => {
     const timeout = setTimeout(() => {
-      if (loading) setLoading(false);
+      if (loading) {
+        setLoadingTimedOut(true);
+        setLoading(false);
+      }
     }, 15000);
     return () => clearTimeout(timeout);
   }, [loading]);
@@ -118,9 +123,20 @@ const Report = () => {
           baby_id: assessmentData.babies?.id,
           event_type: 'report_view',
           event_data: { source: 'report_page' }
-        });
+        }).then(() => {}).catch((err: any) => console.error('Report view tracking error:', err));
 
-        // If has email, fire email in background (Path A) with delay + retry
+        // Fetch responses
+        const { data: responsesData } = await supabase
+          .from("assessment_responses")
+          .select("milestone_id, answer, skill_id, area_id")
+          .eq("assessment_id", id);
+
+        if (!responsesData?.length) {
+          setLoading(false);
+          return;
+        }
+
+        // If has email AND has responses, fire email in background (Path A) with delay + retry
         if (assessmentData.babies?.email) {
           const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
           const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -145,17 +161,6 @@ const Report = () => {
           };
           // Delay 3s to avoid race condition with response writes
           setTimeout(() => sendEmail(), 3000);
-        }
-
-        // Fetch responses
-        const { data: responsesData } = await supabase
-          .from("assessment_responses")
-          .select("milestone_id, answer, skill_id, area_id")
-          .eq("assessment_id", id);
-
-        if (!responsesData?.length) {
-          setLoading(false);
-          return;
         }
 
         const skillIds = [...new Set(responsesData.map(r => r.skill_id).filter(Boolean))];
@@ -254,14 +259,17 @@ const Report = () => {
     fetchData();
   }, [id, navigate]);
 
-  // Strengths and focus areas
-  const { strengths, focusAreas } = useMemo(() => {
-    if (allSkillResults.length === 0) return { strengths: [], focusAreas: [] };
+  // Strengths and focus areas (used in timeline / future features)
+  const strengths = useMemo(() => {
+    if (allSkillResults.length === 0) return [];
     const sorted = [...allSkillResults].sort((a, b) => b.score - a.score);
-    return {
-      strengths: sorted.slice(0, 3),
-      focusAreas: sorted.slice(-3).reverse(),
-    };
+    return sorted.slice(0, 3);
+  }, [allSkillResults]);
+
+  const focusAreas = useMemo(() => {
+    if (allSkillResults.length === 0) return [];
+    const sorted = [...allSkillResults].sort((a, b) => b.score - a.score);
+    return sorted.slice(-3).reverse();
   }, [allSkillResults]);
 
   // Handle email submit (Path B)
@@ -342,20 +350,23 @@ const Report = () => {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: '#FBF9F6' }}>
         <Card className="p-6 text-center">
-          <p className="text-muted-foreground mb-4">Report not found</p>
-          <Button onClick={() => navigate("/")}>Back to home</Button>
+          <p className="text-muted-foreground mb-4">
+            {loadingTimedOut ? "Loading is taking longer than expected" : "Report not found"}
+          </p>
+          {loadingTimedOut ? (
+            <Button onClick={() => { setLoading(true); setLoadingTimedOut(false); window.location.reload(); }}>
+              Retry
+            </Button>
+          ) : (
+            <Button onClick={() => navigate("/")}>Back to home</Button>
+          )}
         </Card>
       </div>
     );
   }
 
-  const babyName = baby.name;
+  const babyName = baby.name || 'Your baby';
   const showFullDetails = hasEmail || emailUnlocked;
-  const timelineSteps = emailUnlocked
-    ? 2 // Path B after unlock: 2 done
-    : hasEmail
-      ? 1 // Path A: 1 done
-      : 0; // Path B before unlock: 0 done (but step 1 is done always since assessment is complete)
 
   return (
     <div className="min-h-screen pb-36" style={{ background: '#FBF9F6' }}>
@@ -445,9 +456,41 @@ const Report = () => {
           })}
         </div>
 
-        {/* Skills breakdown removed */}
+        {/* 3. Email Capture Form (Path B) — shown when user has no email */}
+        {!hasEmail && !emailUnlocked && (
+          <div className="rounded-2xl p-5 border bg-white animate-fade-in" style={{ borderColor: '#E8E4DF' }}>
+            <div className="text-center mb-4">
+              <Mail className="w-8 h-8 text-primary mx-auto mb-2" />
+              <h3 className="font-bold text-base text-foreground">
+                Get {babyName}'s full report by email
+              </h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Enter your email to unlock detailed results and personalized recommendations.
+              </p>
+            </div>
+            <form onSubmit={handleEmailSubmit} className="space-y-3">
+              <Input
+                type="email"
+                placeholder="parent@email.com"
+                value={userEmail}
+                onChange={(e) => setUserEmail(e.target.value)}
+                className="h-12 text-base rounded-xl text-center"
+                required
+              />
+              <Button
+                type="submit"
+                className="w-full h-12 font-bold rounded-full"
+                style={{ background: 'hsl(210, 80%, 45%)' }}
+                disabled={submittingEmail || !userEmail.trim()}
+              >
+                {submittingEmail ? 'Sending...' : 'Unlock Full Report'}
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </form>
+          </div>
+        )}
 
-        {/* 5. Timeline */}
+        {/* 4. Timeline */}
         {showFullDetails && (
           <div className={`rounded-2xl p-5 border bg-white ${emailUnlocked ? 'animate-[fadeIn_0.6s_ease-out_0.4s_both]' : ''}`} style={{ borderColor: '#E8E4DF' }}>
             <h3 className="font-bold text-base text-foreground mb-4">

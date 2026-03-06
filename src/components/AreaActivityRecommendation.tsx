@@ -6,6 +6,7 @@ import { useRecommendedActivity } from "@/hooks/useRecommendedActivity";
 import { Skeleton } from "@/components/ui/skeleton";
 import { sanitizeHtml } from "@/lib/sanitizeHtml";
 import kineduLogo from "@/assets/logo-kinedu.png";
+import { KINEDU_SIGNUP_URL } from "@/config/kinedu";
 
 interface Skill {
   skill_id: number;
@@ -137,7 +138,7 @@ export function AreaActivityRecommendation({
                 backgroundColor: areaColor,
                 color: 'white'
               }}
-              onClick={() => window.open('https://app.kinedu.com/ia-signuppage/?swc=ia-report', '_blank')}
+              onClick={() => window.open(KINEDU_SIGNUP_URL, '_blank')}
             >
               Go to activity
             </Button>

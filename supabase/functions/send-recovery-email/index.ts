@@ -19,6 +19,8 @@ const AREA_ICON_URLS: Record<number, string> = {
   4: "https://ogyvfohbhwxwwxlwyjth.supabase.co/storage/v1/object/public/email-assets/Logo_Emotional_HD.png",
 };
 
+const KINEDU_SIGNUP_URL = Deno.env.get('KINEDU_SIGNUP_URL') || 'https://app.kinedu.com/ia-signuppage/?swc=ia-report';
+
 const AREA_COLORS: Record<number, string> = {
   2: "#34A853", // Cognitive - green
   1: "#4A90D9", // Physical - blue
@@ -200,7 +202,7 @@ function buildEmailHtml(params: {
       </table>
     </td></tr>
     <tr><td style="padding:6px 16px 4px;">
-      <a href="https://app.kinedu.com/ia-signuppage/?swc=ia-report" style="display:block;background-color:#34A853;color:#ffffff;text-decoration:none;font-size:15px;font-weight:800;padding:14px 0;border-radius:10px;text-align:center;">
+      <a href="${KINEDU_SIGNUP_URL}" style="display:block;background-color:#34A853;color:#ffffff;text-decoration:none;font-size:15px;font-weight:800;padding:14px 0;border-radius:10px;text-align:center;">
         Start 7 Day Free Trial
       </a>
     </td></tr>

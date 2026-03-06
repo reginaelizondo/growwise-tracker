@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,11 +23,8 @@ const months = [
   "July", "August", "September", "October", "November", "December"
 ];
 
-const currentYear = new Date().getFullYear();
-const years = Array.from({ length: 7 }, (_, i) => currentYear - i);
-
 const getDaysInMonth = (month: number, year: number) => {
-  if (!month || !year) return 31;
+  if (isNaN(month) || isNaN(year) || !month || !year) return 31;
   return new Date(year, month, 0).getDate();
 };
 
@@ -40,12 +37,16 @@ const BabyForm = () => {
   const [babyName, setBabyName] = useState("");
   const [parentEmail, setParentEmail] = useState("");
   const [parentName, setParentName] = useState("");
-  const [registeringKinedu, setRegisteringKinedu] = useState(false);
   const [birthMonth, setBirthMonth] = useState("");
   const [birthDay, setBirthDay] = useState("");
   const [birthYear, setBirthYear] = useState("");
   const [gestationalWeeks, setGestationalWeeks] = useState("40");
   const [selectedAreas, setSelectedAreas] = useState<number[]>([2, 1, 3, 4]); // All selected by default
+  const submittingRef = useRef(false); // Prevent double-submit
+
+  // Compute years dynamically (not at module level) so it updates if tab stays open across New Year
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 7 }, (_, i) => currentYear - i);
 
   const areaOptions = [
     { id: 2, name: "Cognitive", icon: logoCognitive, color: "hsl(var(--cognitive))" },
@@ -70,45 +71,69 @@ const BabyForm = () => {
     checkAuth();
   }, []);
 
+  // Clamp day when month/year changes to avoid invalid dates (e.g., Feb 31)
+  const daysInMonth = getDaysInMonth(parseInt(birthMonth), parseInt(birthYear));
+  useEffect(() => {
+    if (birthDay && parseInt(birthDay) > daysInMonth) {
+      setBirthDay(daysInMonth.toString());
+    }
+  }, [birthMonth, birthYear, daysInMonth, birthDay]);
+
+  const dayOptions = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+
   const birthDate = birthMonth && birthDay && birthYear
     ? new Date(parseInt(birthYear), parseInt(birthMonth) - 1, parseInt(birthDay))
     : null;
+
+  // Validate birth date is not in the future
+  const isFutureDate = birthDate ? birthDate > new Date() : false;
+
+  // Validate gestational weeks
+  const parsedGestationalWeeks = parseInt(gestationalWeeks);
+  const isValidGestationalWeeks = !isNaN(parsedGestationalWeeks) && parsedGestationalWeeks >= 24 && parsedGestationalWeeks <= 42;
 
   const calculateCorrectedAge = () => {
     if (!birthDate) return null;
     const today = new Date();
     const chronologicalMonths = differenceInMonths(today, birthDate);
-    const weeks = parseInt(gestationalWeeks);
-    if (weeks < 37) {
-      const correctionWeeks = 40 - weeks;
+    if (isValidGestationalWeeks && parsedGestationalWeeks < 37) {
+      const correctionWeeks = 40 - parsedGestationalWeeks;
       const correctionMonths = Math.round(correctionWeeks / 4.33);
       return Math.max(0, chronologicalMonths - correctionMonths);
     }
-    return chronologicalMonths;
+    return Math.max(0, chronologicalMonths);
   };
 
   const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const trackStep = (stepName: string, extraData?: Record<string, any>) => {
-    try {
-      supabase.from('page_events').insert({
-        event_type: stepName,
-        event_data: { source: 'baby_form', ...extraData },
-        user_agent: navigator.userAgent,
-        session_id: getSessionId()
-      }).then(() => {});
-    } catch (err) {
-      console.error('Tracking error:', err);
-    }
+    // Remove PII from tracking data
+    const safeData = { ...extraData };
+    delete safeData.name;
+
+    supabase.from('page_events').insert({
+      event_type: stepName,
+      event_data: { source: 'baby_form', ...safeData },
+      user_agent: navigator.userAgent,
+      session_id: getSessionId()
+    }).then(() => {}).catch((err: any) => console.error('Tracking error:', err));
   };
 
   const handleNextStep = () => {
     if (step === 1) {
-      trackStep('form_name_completed', { name: babyName });
+      trackStep('form_name_completed');
       setStep(2);
     } else if (step === 2) {
       if (!birthDate) {
         toast.error("Please select the birth date");
+        return;
+      }
+      if (isFutureDate) {
+        toast.error("Birth date cannot be in the future");
+        return;
+      }
+      if (prematureOpen && !isValidGestationalWeeks) {
+        toast.error("Gestational weeks must be between 24 and 42");
         return;
       }
       trackStep('form_birthday_completed');
@@ -124,15 +149,26 @@ const BabyForm = () => {
   };
 
   const handleSubmit = async () => {
+    // Prevent double-submit
+    if (submittingRef.current) return;
+    submittingRef.current = true;
+
     if (selectedAreas.length === 0) {
       toast.error("Please select at least one area");
+      submittingRef.current = false;
       return;
     }
     if (!birthDate) {
       toast.error("Please select the birth date");
+      submittingRef.current = false;
       return;
     }
-    
+    if (isFutureDate) {
+      toast.error("Birth date cannot be in the future");
+      submittingRef.current = false;
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -148,12 +184,14 @@ const BabyForm = () => {
 
     try {
       const birthDateStr = format(birthDate, "yyyy-MM-dd");
+      const safeGestationalWeeks = isValidGestationalWeeks ? parsedGestationalWeeks : 40;
+
       const { data: baby, error: babyError } = await supabase
         .from("babies")
         .insert({
           name: babyName || "Baby",
           birthdate: birthDateStr,
-          gestational_weeks: parseInt(gestationalWeeks),
+          gestational_weeks: safeGestationalWeeks,
           user_id: userId,
           email: parentEmail || null,
         })
@@ -171,7 +209,7 @@ const BabyForm = () => {
       const babyBirthDate = new Date(baby.birthdate);
       const today = new Date();
       const chronologicalMonths = differenceInMonths(today, babyBirthDate);
-      let referenceAgeMonths = chronologicalMonths;
+      let referenceAgeMonths = Math.max(0, chronologicalMonths);
       if (baby.gestational_weeks && baby.gestational_weeks < 37) {
         const correctionWeeks = 40 - baby.gestational_weeks;
         const correctionMonths = Math.round(correctionWeeks / 4.33);
@@ -215,17 +253,16 @@ const BabyForm = () => {
       navigate(`/assessment/${assessment.id}`);
     } catch (error: any) {
       console.error("Error creating baby:", error);
-      toast.error(error.message || "Failed to start assessment");
+      toast.error("Failed to start assessment. Please try again.");
     } finally {
       setLoading(false);
+      submittingRef.current = false;
     }
   };
 
   const correctedAge = calculateCorrectedAge();
-  const isPremature = parseInt(gestationalWeeks) < 37;
+  const isPremature = isValidGestationalWeeks && parsedGestationalWeeks < 37;
   const progressValue = step === 1 ? 10 : step === 2 ? 16 : step === 3 ? 20 : 24;
-  const daysInMonth = getDaysInMonth(parseInt(birthMonth), parseInt(birthYear));
-  const dayOptions = Array.from({ length: daysInMonth }, (_, i) => i + 1);
   const displayName = babyName || "your baby";
 
   return (
@@ -260,9 +297,6 @@ const BabyForm = () => {
               className="h-14 text-lg bg-card border-border rounded-2xl text-center"
               autoFocus
             />
-
-
-
 
             <Button
               variant="success"
@@ -333,6 +367,11 @@ const BabyForm = () => {
               </div>
             </div>
 
+            {/* Future date warning */}
+            {isFutureDate && (
+              <p className="text-sm text-destructive text-center">Birth date cannot be in the future</p>
+            )}
+
             {/* Separator + Premature */}
             <div className="border-t border-border pt-4">
               <Collapsible open={prematureOpen} onOpenChange={setPrematureOpen}>
@@ -353,9 +392,23 @@ const BabyForm = () => {
                     min="24"
                     max="42"
                     value={gestationalWeeks}
-                    onChange={(e) => setGestationalWeeks(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      // Only allow numbers in range
+                      if (val === '') {
+                        setGestationalWeeks('');
+                        return;
+                      }
+                      const num = parseInt(val);
+                      if (!isNaN(num) && num >= 0 && num <= 50) {
+                        setGestationalWeeks(val);
+                      }
+                    }}
                     className="h-12 text-base bg-card border-border rounded-xl"
                   />
+                  {gestationalWeeks && !isValidGestationalWeeks && (
+                    <p className="text-xs text-destructive">Must be between 24 and 42 weeks</p>
+                  )}
                   <p className="text-xs text-muted-foreground/80 leading-relaxed">
                     Important for premature babies (&lt;37 weeks) to calculate corrected age
                   </p>
@@ -382,7 +435,7 @@ const BabyForm = () => {
                 variant="success"
                 className="w-full h-14 text-lg font-bold rounded-full shadow-lg hover:shadow-xl transition-all group"
                 onClick={handleNextStep}
-                disabled={!birthDate}
+                disabled={!birthDate || isFutureDate}
               >
                 Continue
                 <ArrowRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
@@ -465,12 +518,13 @@ const BabyForm = () => {
                   3: "--linguistic",
                   4: "--emotional",
                 }[area.id];
-                
+
                 return (
                   <button
                     key={area.id}
                     type="button"
                     onClick={() => toggleArea(area.id)}
+                    aria-pressed={isSelected}
                     className={cn("relative flex flex-col items-center gap-3 p-5 rounded-2xl border-2 transition-all duration-200 bg-card", !isSelected && "border-border hover:border-muted-foreground/30")}
                     style={isSelected ? {
                       borderColor: `hsl(var(${colorVar}))`,
@@ -481,7 +535,7 @@ const BabyForm = () => {
                     data-unselected={!isSelected ? "true" : undefined}
                   >
                     {isSelected && (
-                      <div 
+                      <div
                         className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center"
                         style={{ backgroundColor: `hsl(var(${colorVar}))` }}
                       >

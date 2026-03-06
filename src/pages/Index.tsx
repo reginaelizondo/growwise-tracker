@@ -162,7 +162,7 @@ const Index = () => {
               <a href="https://blog.kinedu.com/privacy-policy/" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Terms</a>
               <a href="mailto:hello@kinedu.com" className="hover:text-foreground transition-colors">Contact Us</a>
             </div>
-            <div className="mt-2">© 2025 Kinedu. All rights reserved.</div>
+            <div className="mt-2">&copy; {new Date().getFullYear()} Kinedu. All rights reserved.</div>
           </div>
         </div>
       </footer>

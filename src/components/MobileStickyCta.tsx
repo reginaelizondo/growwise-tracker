@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { getKineduRedirectUrl } from "@/config/kinedu";
 
 interface MobileStickyCtaProps {
   babyName: string;
@@ -10,31 +11,42 @@ interface MobileStickyCtaProps {
 }
 
 export const MobileStickyCta = ({ babyName, assessmentId, babyId, kineduRegistered, email }: MobileStickyCtaProps) => {
-  const baseUrl = kineduRegistered
-    ? 'https://kinedu.superwall.app/ia-report'
-    : 'https://app.kinedu.com/ia-signuppage/?swc=ia-report';
-  
-  const ctaUrl = email
-    ? `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}email=${encodeURIComponent(email)}`
-    : baseUrl;
+  const ctaUrl = getKineduRedirectUrl(!!kineduRegistered, email);
 
-  const handleClick = () => {
+  const handleClick = async () => {
     console.log('🔵 Mobile sticky CTA clicked', { assessmentId, babyId, kineduRegistered });
-    window.location.href = ctaUrl;
-    
+
+    // Track event BEFORE navigating (use sendBeacon as fallback)
     if (assessmentId && babyId) {
-      supabase.from('assessment_events').insert({
-        assessment_id: assessmentId,
-        baby_id: babyId,
-        event_type: 'cta_clicked',
-        event_data: { 
-          cta_type: 'mobile_sticky_cta',
-          kinedu_registered: kineduRegistered,
-          url: ctaUrl,
-          timestamp: new Date().toISOString() 
+      try {
+        const payload = {
+          assessment_id: assessmentId,
+          baby_id: babyId,
+          event_type: 'cta_clicked',
+          event_data: {
+            cta_type: 'mobile_sticky_cta',
+            kinedu_registered: kineduRegistered,
+            url: ctaUrl,
+            timestamp: new Date().toISOString()
+          }
+        };
+        // Use sendBeacon for reliability during navigation
+        const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/assessment_events`;
+        const beaconData = JSON.stringify(payload);
+        const sent = navigator.sendBeacon?.(
+          url + `?apikey=${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          new Blob([beaconData], { type: 'application/json' })
+        );
+        if (!sent) {
+          // Fallback: fire and don't wait
+          supabase.from('assessment_events').insert(payload).then(() => {}).catch(() => {});
         }
-      });
+      } catch (err) {
+        console.error('CTA tracking error:', err);
+      }
     }
+
+    window.location.href = ctaUrl;
   };
 
   return (
@@ -61,7 +73,7 @@ export const MobileStickyCta = ({ babyName, assessmentId, babyId, kineduRegister
           }}
           onClick={handleClick}
         >
-          Start {babyName}'s Plan — 7 Days Free
+          Start {babyName ? `${babyName}'s` : 'Your'} Plan — 7 Days Free
         </Button>
         <p className="text-center text-xs text-muted-foreground mt-1.5 mb-1">
           No commitment required

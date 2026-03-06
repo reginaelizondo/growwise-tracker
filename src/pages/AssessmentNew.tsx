@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useParams, useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -394,20 +394,29 @@ const AssessmentNew = () => {
 
       const completionPercentage = totalCount > 0 ? (masteredCount / totalCount) * 100 : 0;
 
-      // Fetch percentile from percentile_skills
+      // Fetch percentile from percentile_skills with age tolerance
       let percentile: number | null = null;
+      const tryAges = [referenceAge, referenceAge - 1, referenceAge + 1, referenceAge - 2, referenceAge + 2].filter(a => a >= 0);
+
       try {
-        const { data: curves } = await externalSupabase
-          .from('percentile_skills')
-          .select('percentile, completion_percentage')
-          .eq('skill_id', skill.skill_id)
-          .eq('baby_age', referenceAge)
-          .order('completion_percentage', { ascending: true });
+        let curves: any[] | null = null;
+        for (const tryAge of tryAges) {
+          const { data } = await externalSupabase
+            .from('percentile_skills')
+            .select('percentile, completion_percentage')
+            .eq('skill_id', skill.skill_id)
+            .eq('baby_age', tryAge)
+            .order('completion_percentage', { ascending: true });
+          if (data?.length) {
+            curves = data;
+            break;
+          }
+        }
 
         if (curves?.length) {
           const targetCompletion = completionPercentage / 100;
           for (let i = 0; i < curves.length - 1; i++) {
-            if (curves[i].completion_percentage <= targetCompletion && 
+            if (curves[i].completion_percentage <= targetCompletion &&
                 targetCompletion <= curves[i + 1].completion_percentage) {
               percentile = Math.round(curves[i + 1].percentile * 100);
               break;
@@ -424,7 +433,7 @@ const AssessmentNew = () => {
       newScores.set(skill.skill_id, {
         percentile,
         masteredCount,
-        totalCount: skill.milestones.length
+        totalCount
       });
     }
 
@@ -454,19 +463,26 @@ const AssessmentNew = () => {
     }
   };
 
+  // Use a ref to always have the latest responses (avoids stale closure in handleNextSkill)
+  const responsesRef = useRef(responses);
+  responsesRef.current = responses;
+
   // Handle next skill
   const handleNextSkill = async () => {
     if (viewState.type !== 'skill') return;
 
     const { areaIndex, skillIndex } = viewState;
     const currentArea = areas[areaIndex];
+    const currentSkill = currentArea.skills[skillIndex];
+
+    // Use ref to get the LATEST responses (avoids stale closure)
+    const currentResponses = responsesRef.current;
 
     // Mark unanswered milestones as "no"
-    const currentSkill = currentArea.skills[skillIndex];
-    const unansweredMilestones = currentSkill.milestones.filter(m => !responses[m.milestone_id]);
-    
+    const unansweredMilestones = currentSkill.milestones.filter(m => !currentResponses[m.milestone_id]);
+
     if (unansweredMilestones.length > 0) {
-      const newResponses = { ...responses };
+      const newResponses = { ...currentResponses };
       const batchInserts = unansweredMilestones.map(m => {
         newResponses[m.milestone_id] = 'no';
         return {
@@ -478,9 +494,9 @@ const AssessmentNew = () => {
           source: 'manual'
         };
       });
-      
+
       setResponses(newResponses);
-      
+
       try {
         await supabase
           .from("assessment_responses")

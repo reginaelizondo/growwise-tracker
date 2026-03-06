@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { KINEDU_SIGNUP_URL } from "@/config/kinedu";
 
 interface SkillResult {
   skill_id: number;
@@ -50,7 +51,7 @@ export const DomainCTA = ({
 
   const handleClick = () => {
     // Open URL immediately to avoid popup blocker on mobile
-    window.location.href = 'https://app.kinedu.com/ia-signuppage/?swc=ia-report';
+    window.location.href = KINEDU_SIGNUP_URL;
     
     // Track event in background
     if (assessmentId && babyId) {

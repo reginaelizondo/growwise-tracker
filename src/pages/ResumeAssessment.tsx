@@ -42,6 +42,9 @@ const ResumeAssessment = () => {
           );
         }
 
+        // CRITICAL: Store the session_id in localStorage so AssessmentNew can find the abandoned session
+        localStorage.setItem('analytics_session_id', sessionId);
+
         // Navigate to assessment with resume flag
         navigate(`/assessment/${session.assessment_id}?resume=true`, { replace: true });
       } catch (err) {

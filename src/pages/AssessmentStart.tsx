@@ -4,17 +4,19 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, ArrowRight, Baby, Edit, X, Check } from "lucide-react";
+import { ArrowLeft, ArrowRight, Baby, Edit, X, Check, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { differenceInMonths, differenceInDays, addMonths } from "date-fns";
+import { getSessionId } from "@/hooks/useSessionId";
 
 const AssessmentStart = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const babyId = searchParams.get("babyId");
   const [baby, setBaby] = useState<any>(null);
+  const [fetchingBaby, setFetchingBaby] = useState(true);
   const [loading, setLoading] = useState(false);
   const [editingAge, setEditingAge] = useState(false);
   const [manualMonths, setManualMonths] = useState<number | null>(null);
@@ -27,6 +29,7 @@ const AssessmentStart = () => {
     }
 
     const fetchBaby = async () => {
+      setFetchingBaby(true);
       const { data, error } = await supabase
         .from("babies")
         .select("*")
@@ -40,6 +43,7 @@ const AssessmentStart = () => {
       }
 
       setBaby(data);
+      setFetchingBaby(false);
     };
 
     fetchBaby();
@@ -49,31 +53,31 @@ const AssessmentStart = () => {
     const birthDate = new Date(baby.birthdate);
     const today = new Date();
     let ageMonths = differenceInMonths(today, birthDate);
-    
+
     if (baby.gestational_weeks && baby.gestational_weeks < 37) {
       const correctionWeeks = 40 - baby.gestational_weeks;
       const correctionMonths = Math.round(correctionWeeks / 4.33);
       ageMonths = Math.max(0, ageMonths - correctionMonths);
     }
-    
+
     return ageMonths;
   };
 
   const calculateAgeWithDays = (baby: any) => {
     const birthDate = new Date(baby.birthdate);
     const today = new Date();
-    
+
     let referenceDate = birthDate;
     if (baby.gestational_weeks && baby.gestational_weeks < 37) {
       const correctionWeeks = 40 - baby.gestational_weeks;
       const correctionDays = correctionWeeks * 7;
       referenceDate = new Date(birthDate.getTime() + correctionDays * 24 * 60 * 60 * 1000);
     }
-    
+
     const months = differenceInMonths(today, referenceDate);
     const monthsDate = addMonths(referenceDate, months);
     const days = differenceInDays(today, monthsDate);
-    
+
     return { months: Math.max(0, months), days: Math.max(0, days) };
   };
 
@@ -95,10 +99,34 @@ const AssessmentStart = () => {
 
       if (error) throw error;
 
+      // Store default selected areas (all) so assessment has area data
+      const defaultAreas = [2, 1, 3, 4];
+      localStorage.setItem(`assessment_areas_${assessment.id}`, JSON.stringify(defaultAreas));
+
+      // Create abandoned_sessions row for recovery
+      try {
+        await (supabase.from('abandoned_sessions' as any) as any).insert({
+          session_id: getSessionId(),
+          baby_id: baby.id,
+          assessment_id: assessment.id,
+          baby_name: baby.name || 'Baby',
+          baby_birthday: baby.birthdate,
+          email: baby.email || null,
+          selected_areas: defaultAreas,
+          completed_areas: [],
+          current_area_id: defaultAreas[0],
+          current_skill_index: 0,
+          milestone_answers: {},
+          progress_percentage: 24,
+        });
+      } catch (err) {
+        console.error('Error creating abandoned session:', err);
+      }
+
       navigate(`/assessment/${assessment.id}`);
     } catch (error: any) {
       console.error("Error creating assessment:", error);
-      toast.error(error.message || "Failed to start assessment");
+      toast.error("Failed to start assessment. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -130,12 +158,25 @@ const AssessmentStart = () => {
     setEditingAge(false);
   };
 
-  if (!baby) {
-    return null;
+  // Loading state while fetching baby data
+  if (fetchingBaby || !baby) {
+    return (
+      <div className="min-h-screen bg-gradient-warm flex items-center justify-center px-4">
+        <div className="flex flex-col items-center space-y-6">
+          <div className="relative flex items-center justify-center">
+            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+              <Sparkles className="w-9 h-9 text-primary animate-pulse" />
+            </div>
+            <div className="absolute inset-0 w-20 h-20 rounded-full border-[3px] border-primary/20 border-t-primary animate-spin" style={{ animationDuration: '1.2s' }} />
+          </div>
+          <p className="text-sm text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   const calculatedAge = calculateAgeWithDays(baby);
-  const ageInfo = manualMonths !== null && manualDays !== null 
+  const ageInfo = manualMonths !== null && manualDays !== null
     ? { months: manualMonths, days: manualDays }
     : calculatedAge;
   const isPremature = baby.gestational_weeks && baby.gestational_weeks < 37;
@@ -144,7 +185,7 @@ const AssessmentStart = () => {
     <div className="min-h-screen bg-gradient-warm py-8 px-4">
       <div className="container max-w-2xl mx-auto">
         <Button variant="ghost" asChild className="mb-6">
-          <Link to="/">
+          <Link to="/babies/new">
             <ArrowLeft className="w-4 h-4" />
             Back
           </Link>
@@ -154,16 +195,16 @@ const AssessmentStart = () => {
           <h1 className="text-2xl md:text-3xl font-bold mb-4">
             Let's check your baby's new milestones!
           </h1>
-          
+
           <div className="mb-8">
             <p className="text-lg text-muted-foreground mb-3">
               Your little one is now
             </p>
-            
+
             {!editingAge ? (
               <>
                 <p className="text-2xl md:text-3xl font-bold text-primary mb-2">
-                  {ageInfo.months === 0 
+                  {ageInfo.months === 0
                     ? `${ageInfo.days} ${ageInfo.days === 1 ? "day" : "days"}`
                     : `${ageInfo.months} ${ageInfo.months === 1 ? "month" : "months"} and ${ageInfo.days} ${ageInfo.days === 1 ? "day" : "days"}`
                   }
@@ -184,7 +225,7 @@ const AssessmentStart = () => {
                       id="months"
                       type="number"
                       min="0"
-                      value={manualMonths || 0}
+                      value={manualMonths ?? 0}
                       onChange={(e) => setManualMonths(parseInt(e.target.value) || 0)}
                       className="w-24 text-center"
                     />
@@ -196,7 +237,7 @@ const AssessmentStart = () => {
                       type="number"
                       min="0"
                       max="30"
-                      value={manualDays || 0}
+                      value={manualDays ?? 0}
                       onChange={(e) => setManualDays(parseInt(e.target.value) || 0)}
                       className="w-24 text-center"
                     />
@@ -236,9 +277,9 @@ const AssessmentStart = () => {
             </Button>
           )}
 
-          <Button 
-            variant="hero" 
-            size="lg" 
+          <Button
+            variant="hero"
+            size="lg"
             className="w-full"
             onClick={handleStart}
             disabled={loading}

@@ -7,6 +7,7 @@ import { sanitizeHtml } from "@/lib/sanitizeHtml";
 import { InfoCard } from "@/components/InfoCard";
 import { ChevronDown } from "lucide-react";
 import logoKinedu from "@/assets/logo-kinedu-blue.png";
+import { KINEDU_SIGNUP_URL } from "@/config/kinedu";
 
 interface Skill {
   skillId: number;
@@ -214,7 +215,7 @@ export const RecommendedActivityCard = ({
                     event_data: { source: 'recommended_activity', area: areaName }
                   });
                 }
-                window.open('https://app.kinedu.com/ia-signuppage/?swc=ia-report', '_blank');
+                window.open(KINEDU_SIGNUP_URL, '_blank');
               }}
             >
               {ctaText}
