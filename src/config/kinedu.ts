@@ -19,13 +19,11 @@ const config = {
   qa: {
     apiBaseUrl: 'https://qa.kinedu.com/api/v6',
     signupUrl: 'https://app.kinedu.com/ia-signuppage/?swc=ia-report',
-    // Superwall URLs — update when QA paywall URLs are confirmed
-    superwallUrl: 'https://kinedu.superwall.app/ia-report',
+    superwallUrl: 'https://kinedu.superwall.app/ia-report-test',
   },
   production: {
     apiBaseUrl: 'https://kinedu.com/api/v6',
     signupUrl: 'https://app.kinedu.com/ia-signuppage/?swc=ia-report',
-    // Superwall URLs — update when Production paywall URLs are confirmed
     superwallUrl: 'https://kinedu.superwall.app/ia-report',
   },
 } as const;
