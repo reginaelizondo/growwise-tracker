@@ -126,6 +126,10 @@ export default {
           "25%": { transform: "rotate(-10deg)" },
           "75%": { transform: "rotate(10deg)" },
         },
+        "slide-up": {
+          from: { opacity: "0", transform: "translateY(20px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -134,6 +138,7 @@ export default {
         "scale-in": "scale-in 0.3s ease-out",
         "slide-in-bottom": "slide-in-bottom 0.4s ease-out",
         "shake": "shake 0.5s ease-in-out",
+        "slide-up": "slide-up 0.5s ease-out",
       },
     },
   },

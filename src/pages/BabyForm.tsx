@@ -250,6 +250,17 @@ const BabyForm = () => {
         console.error('Error creating abandoned session:', err);
       }
 
+      // Save localStorage recovery record for resume banner on landing page
+      try {
+        localStorage.setItem('assessment_recovery', JSON.stringify({
+          assessment_id: assessment.id,
+          session_id: getSessionId(),
+          baby_name: babyName || 'Baby',
+          progress_percentage: 24,
+          timestamp: new Date().toISOString(),
+        }));
+      } catch (_) {}
+
       navigate(`/assessment/${assessment.id}`);
     } catch (error: any) {
       console.error("Error creating baby:", error);

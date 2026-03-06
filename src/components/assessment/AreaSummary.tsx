@@ -109,7 +109,7 @@ export const AreaSummary = ({
   );
 
   return (
-    <div className="min-h-screen bg-gradient-warm py-4 px-4">
+    <div className="min-h-screen bg-gradient-warm py-4 px-4 animate-slide-up">
       <div className="container max-w-2xl mx-auto">
         {/* Baby Info */}
         {babyName && (
@@ -204,14 +204,21 @@ export const AreaSummary = ({
             const pace = skill.percentile !== null ? calculatePace(skill.percentile) : 1.0;
             
             return (
-              <div key={skill.skill_id}>
+              <div
+                key={skill.skill_id}
+                style={{
+                  opacity: 0,
+                  animation: 'fade-in 0.4s ease-out forwards',
+                  animationDelay: `${index * 80}ms`,
+                }}
+              >
                 {index > 0 && (
                   <div className="mx-2" style={{ height: '1px', backgroundColor: '#ECEEF2' }} />
                 )}
-                <div 
+                <div
                   className="flex items-center gap-3 px-1 rounded-lg"
-                  style={{ 
-                    paddingTop: '12px', 
+                  style={{
+                    paddingTop: '12px',
                     paddingBottom: '12px'
                   }}
                 >

@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Timer, Lock, GraduationCap, LayoutDashboard } from "lucide-react";
+import { ArrowRight, Timer, Lock, GraduationCap, LayoutDashboard, Play } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +14,13 @@ import AcademicLogosBar from "@/components/AcademicLogosBar";
 const Index = () => {
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [recoveryData, setRecoveryData] = useState<{
+    assessment_id: string;
+    session_id: string;
+    baby_name: string;
+    progress_percentage: number;
+    timestamp: string;
+  } | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -25,6 +33,40 @@ const Index = () => {
     });
     return () => subscription.unsubscribe();
   }, []);
+
+  // Check for abandoned assessment to resume
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('assessment_recovery');
+      if (raw) {
+        const data = JSON.parse(raw);
+        const savedTime = new Date(data.timestamp).getTime();
+        const now = Date.now();
+        const twentyFourHours = 24 * 60 * 60 * 1000;
+        if (now - savedTime < twentyFourHours && data.assessment_id) {
+          setRecoveryData(data);
+        } else {
+          localStorage.removeItem('assessment_recovery');
+        }
+      }
+    } catch (_) {
+      localStorage.removeItem('assessment_recovery');
+    }
+  }, []);
+
+  const dismissRecovery = () => {
+    localStorage.removeItem('assessment_recovery');
+    setRecoveryData(null);
+  };
+
+  const handleResume = () => {
+    if (!recoveryData) return;
+    // Restore session_id so AssessmentNew can find the abandoned_session
+    if (recoveryData.session_id) {
+      localStorage.setItem('analytics_session_id', recoveryData.session_id);
+    }
+    navigate(`/assessment/${recoveryData.assessment_id}?resume=true`);
+  };
 
   const trackAndNavigate = async (source: string) => {
     try {
@@ -42,6 +84,47 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-warm">
+      {/* Resume Banner */}
+      {recoveryData && (
+        <div className="container mx-auto px-4 pt-4">
+          <div className="max-w-lg mx-auto animate-slide-up">
+            <div className="bg-card border border-primary/20 rounded-2xl p-4 shadow-soft">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <Play className="w-4 h-4 text-primary ml-0.5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-primary">
+                    Continue {recoveryData.baby_name}'s assessment
+                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Progress value={recoveryData.progress_percentage} className="h-1.5 flex-1 bg-muted/40" />
+                    <span className="text-[10px] font-bold text-muted-foreground whitespace-nowrap">
+                      {recoveryData.progress_percentage}%
+                    </span>
+                  </div>
+                </div>
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="rounded-full px-4 flex-shrink-0"
+                  onClick={handleResume}
+                >
+                  Continue
+                  <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                </Button>
+              </div>
+              <button
+                onClick={dismissRecovery}
+                className="w-full mt-2 text-[10px] text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+              >
+                Start fresh instead
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Hero Section */}
       <section className="container mx-auto px-4 pt-12 pb-6 md:pt-20 md:pb-10">
         <div className="max-w-lg mx-auto text-center animate-fade-in">

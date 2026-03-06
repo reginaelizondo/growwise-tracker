@@ -69,6 +69,7 @@ const AssessmentNew = () => {
   // Auto-save progress to abandoned_sessions
   const { saveProgress } = useAbandonedSessionSave({
     assessmentId: id,
+    babyName: baby?.name,
     areas,
     responses,
     viewState,
@@ -593,6 +594,7 @@ const AssessmentNew = () => {
               .eq('session_id', getSessionId())
               .eq('assessment_id', id);
           } catch (_) {}
+          localStorage.removeItem('assessment_recovery');
           navigate(`/report/${id}`);
         } catch (error) {
           console.error("Error completing assessment:", error);
@@ -647,6 +649,7 @@ const AssessmentNew = () => {
             .eq('session_id', getSessionId())
             .eq('assessment_id', id);
         } catch (_) {}
+        localStorage.removeItem('assessment_recovery');
         navigate(`/report/${id}`);
       } catch (error) {
         console.error("Error completing assessment:", error);
@@ -715,6 +718,7 @@ const AssessmentNew = () => {
 
     return (
       <SkillMilestoneList
+        key={`skill-${areaIndex}-${skillIndex}`}
         areaName={currentArea.area_name}
         areaIcon={getAreaIcon(currentArea.area_id)}
         skillName={currentSkill.skill_name}
@@ -754,6 +758,7 @@ const AssessmentNew = () => {
 
     return (
       <AreaSummary
+        key={`summary-${areaIndex}`}
         areaName={currentArea.area_name}
         areaId={currentArea.area_id}
         areaIcon={getAreaIcon(currentArea.area_id)}

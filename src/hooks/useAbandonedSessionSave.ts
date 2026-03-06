@@ -4,6 +4,7 @@ import { getSessionId } from './useSessionId';
 
 interface SaveData {
   assessmentId: string | undefined;
+  babyName?: string;
   areas: Array<{ area_id: number; skills: Array<{ milestones: Array<{ milestone_id: number }> }> }>;
   responses: { [key: number]: string };
   viewState: { type: string; areaIndex?: number; skillIndex?: number };
@@ -15,11 +16,11 @@ interface SaveOverrides {
   responses?: { [key: number]: string };
 }
 
-export const useAbandonedSessionSave = ({ assessmentId, areas, responses, viewState }: SaveData) => {
+export const useAbandonedSessionSave = ({ assessmentId, babyName, areas, responses, viewState }: SaveData) => {
   const lastSaveRef = useRef<string>('');
   // Keep refs for latest values so beforeunload always has fresh data
-  const latestRef = useRef({ areas, responses, viewState });
-  latestRef.current = { areas, responses, viewState };
+  const latestRef = useRef({ areas, responses, viewState, babyName });
+  latestRef.current = { areas, responses, viewState, babyName };
 
   const buildPayload = useCallback((overrides?: SaveOverrides) => {
     const currentAreas = latestRef.current.areas;
@@ -28,17 +29,17 @@ export const useAbandonedSessionSave = ({ assessmentId, areas, responses, viewSt
 
     if (!currentAreas.length) return null;
 
-    const areaIndex = overrides?.areaIndex ?? 
+    const areaIndex = overrides?.areaIndex ??
       ((currentViewState.type === 'skill' || currentViewState.type === 'areaSummary')
         ? (currentViewState.areaIndex ?? 0) : 0);
-    const skillIndex = overrides?.skillIndex ?? 
+    const skillIndex = overrides?.skillIndex ??
       (currentViewState.type === 'skill' ? (currentViewState.skillIndex ?? 0) : 0);
-    
+
     // Calculate progress from actual responses vs total milestones
     const totalMilestones = currentAreas.reduce((sum, a) => sum + a.skills.reduce((s, sk) => s + sk.milestones.length, 0), 0);
     const answeredCount = Object.keys(currentResponses).length;
-    const progress = totalMilestones > 0 
-      ? Math.round(22 + (answeredCount / totalMilestones) * 78) 
+    const progress = totalMilestones > 0
+      ? Math.round(22 + (answeredCount / totalMilestones) * 78)
       : 22;
 
     // Determine completed areas based on whether all milestones in an area are answered
@@ -79,6 +80,17 @@ export const useAbandonedSessionSave = ({ assessmentId, areas, responses, viewSt
         .update(payload)
         .eq('session_id', sessionId)
         .eq('assessment_id', assessmentId);
+
+      // Save localStorage recovery record for landing page resume banner
+      try {
+        localStorage.setItem('assessment_recovery', JSON.stringify({
+          assessment_id: assessmentId,
+          session_id: sessionId,
+          baby_name: latestRef.current.babyName || 'Baby',
+          progress_percentage: payload.progress_percentage,
+          timestamp: new Date().toISOString(),
+        }));
+      } catch (_) {}
     } catch (err) {
       console.error('Error saving abandoned session:', err);
     }
@@ -94,7 +106,7 @@ export const useAbandonedSessionSave = ({ assessmentId, areas, responses, viewSt
 
       const sessionId = getSessionId();
       const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/abandoned_sessions?session_id=eq.${sessionId}&assessment_id=eq.${assessmentId}`;
-      
+
       fetch(url, {
         method: 'PATCH',
         headers: {
@@ -106,6 +118,17 @@ export const useAbandonedSessionSave = ({ assessmentId, areas, responses, viewSt
         body: JSON.stringify(payload),
         keepalive: true,
       }).catch(() => {});
+
+      // Also save to localStorage for recovery banner (synchronous, always works)
+      try {
+        localStorage.setItem('assessment_recovery', JSON.stringify({
+          assessment_id: assessmentId,
+          session_id: sessionId,
+          baby_name: latestRef.current.babyName || 'Baby',
+          progress_percentage: payload.progress_percentage,
+          timestamp: new Date().toISOString(),
+        }));
+      } catch (_) {}
     };
 
     const handleVisibilityChange = () => {
@@ -121,6 +144,17 @@ export const useAbandonedSessionSave = ({ assessmentId, areas, responses, viewSt
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [assessmentId, saveProgress, buildPayload]);
+
+  // Periodic auto-save every 30 seconds
+  useEffect(() => {
+    if (!assessmentId) return;
+
+    const intervalId = setInterval(() => {
+      saveProgress();
+    }, 30000);
+
+    return () => clearInterval(intervalId);
+  }, [assessmentId, saveProgress]);
 
   return { saveProgress };
 };

@@ -68,7 +68,7 @@ export const SkillMilestoneList = ({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-warm py-4 px-4">
+    <div className="min-h-screen bg-gradient-warm py-4 px-4 animate-slide-up">
       <div className="container max-w-2xl mx-auto">
         {/* Global Progress Bar */}
         {overallProgress !== undefined && (
@@ -128,17 +128,20 @@ export const SkillMilestoneList = ({
 
         {/* Milestones List */}
         <div className="space-y-3 mb-6">
-          {milestones.map((milestone) => {
+          {milestones.map((milestone, index) => {
             const isChecked = responses[milestone.milestone_id] === "yes";
 
             return (
-              <Card 
-                key={milestone.milestone_id} 
+              <Card
+                key={milestone.milestone_id}
                 className={`p-3 border-2 transition-all duration-200 cursor-pointer hover:shadow-md ${
                   isChecked ? 'shadow-sm' : 'shadow-soft'
                 }`}
                 style={{
                   borderColor: isChecked ? areaColor : 'hsl(var(--border))',
+                  opacity: 0,
+                  animation: 'fade-in 0.4s ease-out forwards',
+                  animationDelay: `${index * 60}ms`,
                 }}
                 onClick={() => handleToggle(milestone.milestone_id)}
               >
