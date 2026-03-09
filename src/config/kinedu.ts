@@ -42,9 +42,9 @@ export const KINEDU_SIGNUP_URL = current.signupUrl;
 /** Kinedu Superwall paywall URL (for registered users) */
 export const KINEDU_SUPERWALL_URL = current.superwallUrl;
 
-/** Helper: get the correct redirect URL based on registration status */
-export const getKineduRedirectUrl = (kineduRegistered: boolean, email?: string): string => {
-  const baseUrl = kineduRegistered ? KINEDU_SUPERWALL_URL : KINEDU_SIGNUP_URL;
+/** Helper: get the Superwall redirect URL (always Superwall, never leadpages) */
+export const getKineduRedirectUrl = (_kineduRegistered: boolean, email?: string): string => {
+  const baseUrl = KINEDU_SUPERWALL_URL;
   if (email) {
     return `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}email=${encodeURIComponent(email)}`;
   }

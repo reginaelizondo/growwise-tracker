@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { externalSupabase } from "@/integrations/supabase/external-client";
 import { MobileStickyCta } from "@/components/MobileStickyCta";
 import { PaceGauge, calculatePace } from "@/components/PaceGauge";
-import { KINEDU_SIGNUP_URL } from "@/config/kinedu";
+import { KINEDU_SUPERWALL_URL } from "@/config/kinedu";
 
 import logoPhysical from "@/assets/Logo_Physical_HD.png";
 import logoCognitive from "@/assets/Logo_Cognitive_HD.png";
@@ -146,7 +146,7 @@ const Report = () => {
               const res = await fetch(`${supabaseUrl}/functions/v1/send-report-email`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'apikey': supabaseKey, 'Authorization': `Bearer ${supabaseKey}` },
-                body: JSON.stringify({ assessment_id: id, baby_id: assessmentData.babies?.id, kinedu_signup_url: KINEDU_SIGNUP_URL }),
+                body: JSON.stringify({ assessment_id: id, baby_id: assessmentData.babies?.id, kinedu_signup_url: KINEDU_SUPERWALL_URL }),
               });
               const data = await res.json();
               if (!res.ok && retryCount < 1) {
@@ -290,7 +290,7 @@ const Report = () => {
           const res = await fetch(`${supabaseUrl}/functions/v1/send-report-email`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'apikey': supabaseKey, 'Authorization': `Bearer ${supabaseKey}` },
-            body: JSON.stringify({ assessment_id: id, baby_id: baby.id, kinedu_signup_url: KINEDU_SIGNUP_URL }),
+            body: JSON.stringify({ assessment_id: id, baby_id: baby.id, kinedu_signup_url: KINEDU_SUPERWALL_URL }),
           });
           const data = await res.json();
           if (!res.ok && retryCount < 1) {
