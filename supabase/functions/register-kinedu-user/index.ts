@@ -130,16 +130,27 @@ Deno.serve(async (req) => {
       if (isSuccess || isAlreadyExists) {
         console.log(`SUCCESS with strategy ${strategy.label}`);
 
-        // Update baby record
+        // Extract the user validation token from the response
+        const userToken =
+          resData?.data?.token ||
+          resData?.token ||
+          resData?.data?.auth_token ||
+          null;
+        console.log("Extracted userToken:", userToken ? `${String(userToken).substring(0, 20)}...` : "NULL");
+
+        // Update baby record with registration flag and token
         if (baby_id) {
           const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
           const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
           const supabase = createClient(supabaseUrl, supabaseKey);
-          await supabase.from("babies").update({ kinedu_registered: true } as any).eq("id", baby_id);
+          await supabase.from("babies").update({
+            kinedu_registered: true,
+            kinedu_token: userToken,
+          } as any).eq("id", baby_id);
         }
 
         return new Response(
-          JSON.stringify({ success: true, already_exists: isAlreadyExists, strategy: strategy.label }),
+          JSON.stringify({ success: true, already_exists: isAlreadyExists, strategy: strategy.label, token: userToken }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }

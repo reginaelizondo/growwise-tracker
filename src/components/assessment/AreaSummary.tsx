@@ -26,6 +26,8 @@ interface AreaSummaryProps {
   isLastArea: boolean;
   babyAgeMonths: number;
   babyName?: string;
+  kineduToken?: string;
+  locale?: string;
 }
 
 export const AreaSummary = ({
@@ -38,6 +40,8 @@ export const AreaSummary = ({
   isLastArea,
   babyAgeMonths,
   babyName,
+  kineduToken,
+  locale,
 }: AreaSummaryProps) => {
   const isMobile = useIsMobile();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -269,6 +273,7 @@ export const AreaSummary = ({
               percentile: s.percentile ?? 50
             }))}
             babyAgeMonths={babyAgeMonths}
+            kineduToken={kineduToken}
           />
         </div>
 

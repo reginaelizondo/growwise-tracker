@@ -7,7 +7,7 @@ import { sanitizeHtml } from "@/lib/sanitizeHtml";
 import { InfoCard } from "@/components/InfoCard";
 import { ChevronDown } from "lucide-react";
 import logoKinedu from "@/assets/logo-kinedu-blue.png";
-import { KINEDU_SUPERWALL_URL } from "@/config/kinedu";
+import { getKineduRedirectUrl } from "@/config/kinedu";
 
 interface Skill {
   skillId: number;
@@ -25,6 +25,7 @@ interface RecommendedActivityCardProps {
   locale?: 'en' | 'es';
   assessmentId?: string;
   babyId?: string;
+  kineduToken?: string;
 }
 
 // Helper function to remove "When should I seek help?" section from HTML
@@ -113,7 +114,8 @@ export const RecommendedActivityCard = ({
   babyAgeMonths,
   locale = 'en',
   assessmentId,
-  babyId
+  babyId,
+  kineduToken
 }: RecommendedActivityCardProps) => {
   // Prioritize skills that need practice (7%-49% progress = "Reinforce" or "On Track")
   const skillsNeedingPractice = skills.filter(s => s.progress >= 7 && s.progress < 50);
@@ -215,7 +217,7 @@ export const RecommendedActivityCard = ({
                     event_data: { source: 'recommended_activity', area: areaName }
                   });
                 }
-                window.open(KINEDU_SUPERWALL_URL, '_blank');
+                window.open(getKineduRedirectUrl({ token: kineduToken, locale }), '_blank');
               }}
             >
               {ctaText}

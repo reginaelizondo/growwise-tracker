@@ -768,6 +768,8 @@ const AssessmentNew = () => {
         isLastArea={areaIndex >= areas.length - 1}
         babyAgeMonths={assessment?.reference_age_months ?? 0}
         babyName={baby?.name}
+        kineduToken={baby?.kinedu_token || undefined}
+        locale={assessment?.locale || 'en'}
       />
     );
   }

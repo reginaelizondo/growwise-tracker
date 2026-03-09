@@ -269,6 +269,7 @@ export type Database = {
           gestational_weeks: number | null
           id: string
           kinedu_registered: boolean | null
+          kinedu_token: string | null
           name: string
           sex_at_birth: string | null
           user_id: string | null
@@ -280,6 +281,7 @@ export type Database = {
           gestational_weeks?: number | null
           id?: string
           kinedu_registered?: boolean | null
+          kinedu_token?: string | null
           name: string
           sex_at_birth?: string | null
           user_id?: string | null
@@ -291,6 +293,7 @@ export type Database = {
           gestational_weeks?: number | null
           id?: string
           kinedu_registered?: boolean | null
+          kinedu_token?: string | null
           name?: string
           sex_at_birth?: string | null
           user_id?: string | null

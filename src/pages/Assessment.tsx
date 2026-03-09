@@ -3157,6 +3157,7 @@ const Assessment = () => {
                     locale={assessment?.locale || 'en'}
                     assessmentId={id}
                     babyId={baby?.id}
+                    kineduToken={baby?.kinedu_token || undefined}
                   />
                 </CollapsibleContent>
               </Collapsible>

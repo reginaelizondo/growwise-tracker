@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { KINEDU_SUPERWALL_URL } from "@/config/kinedu";
+import { getKineduRedirectUrl } from "@/config/kinedu";
 
 interface SkillResult {
   skill_id: number;
@@ -22,15 +22,19 @@ interface DomainCTAProps {
   assessmentId?: string;
   babyId?: string;
   domainColor: string;
+  kineduToken?: string;
+  locale?: string;
 }
 
-export const DomainCTA = ({ 
-  babyName, 
-  babyGender, 
-  domainSkills, 
-  assessmentId, 
+export const DomainCTA = ({
+  babyName,
+  babyGender,
+  domainSkills,
+  assessmentId,
   babyId,
-  domainColor 
+  domainColor,
+  kineduToken,
+  locale
 }: DomainCTAProps) => {
   if (domainSkills.length === 0) return null;
 
@@ -51,7 +55,7 @@ export const DomainCTA = ({
 
   const handleClick = () => {
     // Open URL immediately to avoid popup blocker on mobile
-    window.location.href = KINEDU_SUPERWALL_URL;
+    window.location.href = getKineduRedirectUrl({ token: kineduToken, locale });
     
     // Track event in background
     if (assessmentId && babyId) {

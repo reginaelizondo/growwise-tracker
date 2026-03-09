@@ -1,0 +1,1 @@
+ALTER TABLE public.babies ADD COLUMN IF NOT EXISTS kinedu_token TEXT DEFAULT NULL;

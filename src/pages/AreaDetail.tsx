@@ -392,7 +392,7 @@ const AreaDetail = () => {
           <RecommendedActivityCard
             areaId={area.areaId}
             areaName={
-              area.areaName === "Social-emotional" ? "Social & Emotional" : 
+              area.areaName === "Social-emotional" ? "Social & Emotional" :
               area.areaName === "Linguistic" ? "Lingustic" :
               area.areaName
             }
@@ -400,6 +400,7 @@ const AreaDetail = () => {
             skills={memoizedSkills}
             babyAgeMonths={babyAgeMonths}
             locale="en"
+            kineduToken={baby?.kinedu_token || undefined}
           />
         </div>
       </div>

@@ -8,10 +8,12 @@ interface MobileStickyCtaProps {
   babyId?: string;
   kineduRegistered?: boolean;
   email?: string;
+  kineduToken?: string;
+  locale?: string;
 }
 
-export const MobileStickyCta = ({ babyName, assessmentId, babyId, kineduRegistered, email }: MobileStickyCtaProps) => {
-  const ctaUrl = getKineduRedirectUrl(!!kineduRegistered, email);
+export const MobileStickyCta = ({ babyName, assessmentId, babyId, kineduRegistered, email, kineduToken, locale }: MobileStickyCtaProps) => {
+  const ctaUrl = getKineduRedirectUrl({ email, token: kineduToken, locale });
 
   const handleClick = async () => {
     console.log('🔵 Mobile sticky CTA clicked', { assessmentId, babyId, kineduRegistered });

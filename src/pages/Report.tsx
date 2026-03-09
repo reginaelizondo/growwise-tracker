@@ -531,6 +531,8 @@ const Report = () => {
         babyId={baby.id}
         kineduRegistered={baby.kinedu_registered === true}
         email={baby.email || undefined}
+        kineduToken={baby.kinedu_token || undefined}
+        locale={assessment?.locale || 'en'}
       />
     </div>
   );

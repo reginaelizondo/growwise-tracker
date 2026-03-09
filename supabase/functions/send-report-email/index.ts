@@ -141,7 +141,8 @@ function getSkillContext(skillName: string): string {
 const LOGO_URL = 'https://ogyvfohbhwxwwxlwyjth.supabase.co/storage/v1/object/public/email-assets/logo-kinedu-blue.png'
 let CTA_URL = Deno.env.get('KINEDU_CTA_URL') || 'https://kinedu.superwall.app/ia-report'
 
-function buildEmailHtml(babyName: string, ageMonths: number, areas: AreaResult[], overallPace: number): string {
+function buildEmailHtml(babyName: string, ageMonths: number, areas: AreaResult[], overallPace: number, ctaUrl?: string): string {
+  const finalCtaUrl = ctaUrl || CTA_URL
   // Find weakest skills (up to 4)
   const allSkills = areas.flatMap(a => a.skills)
   const weakestSkills = [...allSkills].sort((a, b) => a.percentage - b.percentage).slice(0, 4)
@@ -285,7 +286,7 @@ function buildEmailHtml(babyName: string, ageMonths: number, areas: AreaResult[]
                     </tr>
                   </table>
                   <!-- CTA -->
-                  <a href="${CTA_URL}" style="display: block; background-color: #22C55E; color: #ffffff; text-decoration: none; padding: 15px 24px; border-radius: 14px; font-weight: 800; font-size: 16px; text-align: center;">
+                  <a href="${finalCtaUrl}" style="display: block; background-color: #22C55E; color: #ffffff; text-decoration: none; padding: 15px 24px; border-radius: 14px; font-weight: 800; font-size: 16px; text-align: center;">
                     Start 7-Day Free Trial
                   </a>
                   <p style="font-size: 12px; color: #A0AEC0; margin: 8px 0 0; text-align: center;">No commitment required</p>
@@ -365,7 +366,7 @@ function buildEmailHtml(babyName: string, ageMonths: number, areas: AreaResult[]
                       <td><span style="font-size: 13px; color: #2D3748; font-weight: 700;">Parents see results in 2-4 weeks</span></td>
                     </tr></table></td></tr>
                   </table>
-                  <a href="${CTA_URL}" style="display: block; background-color: #22C55E; color: #ffffff; text-decoration: none; padding: 15px 24px; border-radius: 14px; font-weight: 800; font-size: 16px; text-align: center;">
+                  <a href="${finalCtaUrl}" style="display: block; background-color: #22C55E; color: #ffffff; text-decoration: none; padding: 15px 24px; border-radius: 14px; font-weight: 800; font-size: 16px; text-align: center;">
                     Start 7-Day Free Trial
                   </a>
                   <p style="font-size: 12px; color: #90A4B8; margin: 8px 0 0;">No commitment required</p>
@@ -639,7 +640,16 @@ Deno.serve(async (req) => {
       : 50
     const overallPace = calculatePace(avgPercentage)
 
-    const html = buildEmailHtml(baby.name || 'Your baby', assessment.reference_age_months, areas, overallPace)
+    // Build full Superwall CTA URL with token and params
+    const ctaParams = new URLSearchParams()
+    if (baby.kinedu_token) ctaParams.set('tokenAccess', baby.kinedu_token)
+    if (baby.email) ctaParams.set('email', baby.email)
+    ctaParams.set('isExternalFlow', 'true')
+    ctaParams.set('LanguageValue', assessment.locale || 'en')
+    ctaParams.set('premium', 'true')
+    const fullCtaUrl = `${CTA_URL}${CTA_URL.includes('?') ? '&' : '?'}${ctaParams.toString()}`
+
+    const html = buildEmailHtml(baby.name || 'Your baby', assessment.reference_age_months, areas, overallPace, fullCtaUrl)
 
     // Send via Resend
     const resendResponse = await fetch('https://api.resend.com/emails', {

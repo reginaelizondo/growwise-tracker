@@ -6,7 +6,7 @@ import { useRecommendedActivity } from "@/hooks/useRecommendedActivity";
 import { Skeleton } from "@/components/ui/skeleton";
 import { sanitizeHtml } from "@/lib/sanitizeHtml";
 import kineduLogo from "@/assets/logo-kinedu.png";
-import { KINEDU_SUPERWALL_URL } from "@/config/kinedu";
+import { getKineduRedirectUrl } from "@/config/kinedu";
 
 interface Skill {
   skill_id: number;
@@ -22,6 +22,7 @@ interface AreaActivityRecommendationProps {
   skills: Skill[];
   babyAgeMonths: number;
   locale?: 'en' | 'es';
+  kineduToken?: string;
 }
 
 export function AreaActivityRecommendation({
@@ -30,7 +31,8 @@ export function AreaActivityRecommendation({
   areaColor,
   skills,
   babyAgeMonths,
-  locale = 'en'
+  locale = 'en',
+  kineduToken
 }: AreaActivityRecommendationProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -138,7 +140,7 @@ export function AreaActivityRecommendation({
                 backgroundColor: areaColor,
                 color: 'white'
               }}
-              onClick={() => window.open(KINEDU_SUPERWALL_URL, '_blank')}
+              onClick={() => window.open(getKineduRedirectUrl({ token: kineduToken, locale }), '_blank')}
             >
               Go to activity
             </Button>

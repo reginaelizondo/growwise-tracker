@@ -42,11 +42,21 @@ export const KINEDU_SIGNUP_URL = current.signupUrl;
 /** Kinedu Superwall paywall URL (for registered users) */
 export const KINEDU_SUPERWALL_URL = current.superwallUrl;
 
-/** Helper: get the Superwall redirect URL (always Superwall, never leadpages) */
-export const getKineduRedirectUrl = (_kineduRegistered: boolean, email?: string): string => {
+interface KineduRedirectParams {
+  email?: string;
+  token?: string;
+  locale?: string; // 'en' | 'es' | 'pt'
+}
+
+/** Build the Superwall redirect URL with all required params */
+export const getKineduRedirectUrl = (params: KineduRedirectParams = {}): string => {
   const baseUrl = KINEDU_SUPERWALL_URL;
-  if (email) {
-    return `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}email=${encodeURIComponent(email)}`;
-  }
-  return baseUrl;
+  const separator = baseUrl.includes('?') ? '&' : '?';
+  const qp = new URLSearchParams();
+  if (params.token) qp.set('tokenAccess', params.token);
+  if (params.email) qp.set('email', params.email);
+  qp.set('isExternalFlow', 'true');
+  qp.set('LanguageValue', params.locale || 'en');
+  qp.set('premium', 'true');
+  return `${baseUrl}${separator}${qp.toString()}`;
 };

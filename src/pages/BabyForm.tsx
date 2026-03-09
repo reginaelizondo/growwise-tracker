@@ -204,7 +204,11 @@ const BabyForm = () => {
       if (parentEmail && parentName) {
         supabase.functions.invoke('register-kinedu-user', {
           body: { name: parentName, email: parentEmail, baby_id: baby.id, kinedu_api_base_url: KINEDU_API_BASE_URL }
-        }).catch(err => console.warn('Kinedu baby_id update failed:', err));
+        }).then(({ data }) => {
+          if (data?.token) {
+            localStorage.setItem(`kinedu_token_${baby.id}`, data.token);
+          }
+        }).catch(err => console.warn('Kinedu registration failed:', err));
       }
 
       const babyBirthDate = new Date(baby.birthdate);
