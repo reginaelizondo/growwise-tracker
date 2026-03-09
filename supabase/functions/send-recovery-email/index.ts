@@ -19,7 +19,7 @@ const AREA_ICON_URLS: Record<number, string> = {
   4: "https://ogyvfohbhwxwwxlwyjth.supabase.co/storage/v1/object/public/email-assets/Logo_Emotional_HD.png",
 };
 
-let KINEDU_SIGNUP_URL = Deno.env.get('KINEDU_SIGNUP_URL') || 'https://app.kinedu.com/ia-signuppage/?swc=ia-report';
+let KINEDU_SIGNUP_URL = Deno.env.get('KINEDU_CTA_URL') || 'https://kinedu.superwall.app/ia-report';
 
 const AREA_COLORS: Record<number, string> = {
   2: "#34A853", // Cognitive - green

@@ -139,7 +139,7 @@ function getSkillContext(skillName: string): string {
 }
 
 const LOGO_URL = 'https://ogyvfohbhwxwwxlwyjth.supabase.co/storage/v1/object/public/email-assets/logo-kinedu-blue.png'
-let CTA_URL = Deno.env.get('KINEDU_SIGNUP_URL') || 'https://app.kinedu.com/ia-signuppage/?swc=ia-report'
+let CTA_URL = Deno.env.get('KINEDU_CTA_URL') || 'https://kinedu.superwall.app/ia-report'
 
 function buildEmailHtml(babyName: string, ageMonths: number, areas: AreaResult[], overallPace: number): string {
   // Find weakest skills (up to 4)
