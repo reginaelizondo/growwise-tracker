@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { name, email, baby_id } = await req.json();
+    const { name, email, baby_id, kinedu_api_base_url } = await req.json();
 
     if (!email || !name) {
       return new Response(
@@ -22,7 +22,9 @@ Deno.serve(async (req) => {
     }
 
     const staticToken = Deno.env.get("KINEDU_STATIC_TOKEN");
-    const baseUrl = Deno.env.get("KINEDU_API_BASE_URL") || "https://qa.kinedu.com/api/v6";
+    // Prefer URL passed from frontend (env-aware), fall back to Supabase secret, then QA default
+    const baseUrl = kinedu_api_base_url || Deno.env.get("KINEDU_API_BASE_URL") || "https://qa.kinedu.com/api/v6";
+    console.log("Using Kinedu API base URL:", baseUrl);
 
     if (!staticToken) {
       console.error("KINEDU_STATIC_TOKEN not configured");

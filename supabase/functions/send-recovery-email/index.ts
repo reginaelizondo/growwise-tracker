@@ -19,7 +19,7 @@ const AREA_ICON_URLS: Record<number, string> = {
   4: "https://ogyvfohbhwxwwxlwyjth.supabase.co/storage/v1/object/public/email-assets/Logo_Emotional_HD.png",
 };
 
-const KINEDU_SIGNUP_URL = Deno.env.get('KINEDU_SIGNUP_URL') || 'https://app.kinedu.com/ia-signuppage/?swc=ia-report';
+let KINEDU_SIGNUP_URL = Deno.env.get('KINEDU_SIGNUP_URL') || 'https://app.kinedu.com/ia-signuppage/?swc=ia-report';
 
 const AREA_COLORS: Record<number, string> = {
   2: "#34A853", // Cognitive - green
@@ -251,7 +251,11 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { session_id, is_second_email } = await req.json();
+    const { session_id, is_second_email, kinedu_signup_url } = await req.json();
+    // Override signup URL if passed (env-aware)
+    if (kinedu_signup_url) {
+      KINEDU_SIGNUP_URL = kinedu_signup_url;
+    }
     if (!session_id) {
       return new Response(JSON.stringify({ error: "session_id required" }), {
         status: 400,

@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { getSessionId } from "@/hooks/useSessionId";
 import { Progress } from "@/components/ui/progress";
 import kineduLogo from "@/assets/logo-kinedu-blue.png";
+import { KINEDU_API_BASE_URL } from "@/config/kinedu";
 import logoCognitive from "@/assets/Logo_Cognitive_HD.png";
 import logoPhysical from "@/assets/Logo_Physical_HD.png";
 import logoLinguistic from "@/assets/Logo_Linguistic_HD.png";
@@ -202,7 +203,7 @@ const BabyForm = () => {
       // If Kinedu registration was initiated, update baby_id for tracking
       if (parentEmail && parentName) {
         supabase.functions.invoke('register-kinedu-user', {
-          body: { name: parentName, email: parentEmail, baby_id: baby.id }
+          body: { name: parentName, email: parentEmail, baby_id: baby.id, kinedu_api_base_url: KINEDU_API_BASE_URL }
         }).catch(err => console.warn('Kinedu baby_id update failed:', err));
       }
 
