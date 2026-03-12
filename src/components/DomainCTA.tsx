@@ -23,6 +23,7 @@ interface DomainCTAProps {
   babyId?: string;
   domainColor: string;
   kineduToken?: string;
+  email?: string;
   locale?: string;
 }
 
@@ -34,6 +35,7 @@ export const DomainCTA = ({
   babyId,
   domainColor,
   kineduToken,
+  email,
   locale
 }: DomainCTAProps) => {
   if (domainSkills.length === 0) return null;
@@ -55,7 +57,7 @@ export const DomainCTA = ({
 
   const handleClick = () => {
     // Open URL immediately to avoid popup blocker on mobile
-    window.location.href = getKineduRedirectUrl({ token: kineduToken, locale });
+    window.location.href = getKineduRedirectUrl({ token: kineduToken, email, locale });
     
     // Track event in background
     if (assessmentId && babyId) {

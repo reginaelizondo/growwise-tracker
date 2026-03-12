@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { externalSupabase } from '@/integrations/supabase/external-client';
+import { supabase } from '@/integrations/supabase/client';
 
 interface UsePercentileCalculationParams {
   skillId: number;
@@ -44,7 +44,7 @@ export function usePercentileCalculation({
 
         // Fetch percentile curve data for this skill and ages
         // Using skill_percentile_curves table with baby_age column
-        const { data: curveData, error: queryError } = await externalSupabase
+        const { data: curveData, error: queryError } = await supabase
           .from('skill_percentile_curves')
           .select('baby_age, probability, percentile')
           .eq('skill_id', skillId)

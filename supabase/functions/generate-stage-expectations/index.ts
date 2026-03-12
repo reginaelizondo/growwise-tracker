@@ -1,4 +1,3 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -22,13 +21,13 @@ serve(async (req) => {
       areasData
     });
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY is not configured');
+    const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
+    if (!ANTHROPIC_API_KEY) {
+      throw new Error('ANTHROPIC_API_KEY is not configured');
     }
 
     // Build context about development areas
-    const areasContext = areasData.map((area: { area: string; pace: number; percentile: number }) => 
+    const areasContext = areasData.map((area: { area: string; pace: number; percentile: number }) =>
       `${area.area}: pace ${area.pace}x (percentile ${area.percentile})`
     ).join(', ');
 
@@ -64,21 +63,23 @@ Format your response EXACTLY like this JSON (no markdown, no code blocks):
   }
 }`;
 
-    console.log('[generate-stage-expectations] Calling Lovable AI...');
+    console.log('[generate-stage-expectations] Calling Anthropic API...');
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: 'claude-3-5-haiku-20241022',
+        max_tokens: 1024,
+        temperature: 0.7,
+        system: systemPrompt,
         messages: [
-          { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
-        temperature: 0.7,
       }),
     });
 
@@ -91,18 +92,18 @@ Format your response EXACTLY like this JSON (no markdown, no code blocks):
     const data = await response.json();
     console.log('[generate-stage-expectations] AI response received');
 
-    let content = data.choices[0].message.content.trim();
-    
+    let content = data.content?.[0]?.text?.trim() || '';
+
     // Remove markdown code blocks if present
     content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    
+
     const result = JSON.parse(content);
 
     console.log('[generate-stage-expectations] Parsed result:', result);
 
     return new Response(
       JSON.stringify(result),
-      { 
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200
       }
@@ -112,13 +113,13 @@ Format your response EXACTLY like this JSON (no markdown, no code blocks):
     console.error('[generate-stage-expectations] Error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         error: errorMessage,
         stageDescription: '',
         behaviors: [],
         emergingSkills: {}
       }),
-      { 
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500
       }

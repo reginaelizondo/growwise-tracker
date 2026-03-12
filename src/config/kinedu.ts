@@ -22,7 +22,7 @@ const config = {
     superwallUrl: 'https://kinedu.superwall.app/ia-report-test',
   },
   production: {
-    apiBaseUrl: 'https://kinedu.com/api/v6',
+    apiBaseUrl: 'https://api.kinedu.com/api/v6',
     signupUrl: 'https://app.kinedu.com/ia-signuppage/?swc=ia-report',
     superwallUrl: 'https://kinedu.superwall.app/ia-report',
   },

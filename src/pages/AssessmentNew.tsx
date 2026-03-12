@@ -5,7 +5,6 @@ import { Card } from "@/components/ui/card";
 import { ArrowLeft, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { externalSupabase } from "@/integrations/supabase/external-client";
 import { SkillMilestoneList } from "@/components/assessment/SkillMilestoneList";
 import { AreaSummary } from "@/components/assessment/AreaSummary";
 import { useAbandonedSessionSave } from "@/hooks/useAbandonedSessionSave";
@@ -153,7 +152,7 @@ const AssessmentNew = () => {
         setResponses(responsesMap);
 
         // Find milestones in age range
-        const { data: milestonesInRange, error: milestonesError } = await externalSupabase
+        const { data: milestonesInRange, error: milestonesError } = await supabase
           .from('skill_milestone')
           .select('milestone_id, age, skill_id')
           .gte('age', minAge)
@@ -172,7 +171,7 @@ const AssessmentNew = () => {
         const skillIdsInCoreRange = [...new Set(coreRangeMilestones.map(m => m.skill_id))];
 
         // Get all milestones for these skills
-        const { data: allSkillMilestones } = await externalSupabase
+        const { data: allSkillMilestones } = await supabase
           .from('skill_milestone')
           .select('milestone_id, age, skill_id')
           .in('skill_id', skillIdsInCoreRange);
@@ -185,14 +184,14 @@ const AssessmentNew = () => {
         const milestoneIds = allSkillMilestones.map(m => m.milestone_id);
 
         // Load milestone texts
-        let { data: milestoneTexts } = await externalSupabase
+        let { data: milestoneTexts } = await supabase
           .from('milestones_locale')
           .select('milestone_id, title, description, science_fact, locale')
           .in('milestone_id', milestoneIds)
           .eq('locale', userLocale);
 
         if (!milestoneTexts?.length) {
-          const { data: englishTexts } = await externalSupabase
+          const { data: englishTexts } = await supabase
             .from('milestones_locale')
             .select('milestone_id, title, description, science_fact, locale')
             .in('milestone_id', milestoneIds)
@@ -201,7 +200,7 @@ const AssessmentNew = () => {
         }
 
         // Load skill names
-        const { data: skillsData } = await externalSupabase
+        const { data: skillsData } = await supabase
           .from('skills_locales')
           .select('skill_id, title, locale')
           .in('skill_id', skillIdsInCoreRange);
@@ -214,7 +213,7 @@ const AssessmentNew = () => {
         });
 
         // Load skill area mapping
-        const { data: skillAreaData } = await externalSupabase
+        const { data: skillAreaData } = await supabase
           .from('skills_area')
           .select('skill_id, area_id')
           .in('skill_id', skillIdsInCoreRange);
@@ -402,7 +401,7 @@ const AssessmentNew = () => {
       try {
         let curves: any[] | null = null;
         for (const tryAge of tryAges) {
-          const { data } = await externalSupabase
+          const { data } = await supabase
             .from('percentile_skills')
             .select('percentile, completion_percentage')
             .eq('skill_id', skill.skill_id)
@@ -769,6 +768,7 @@ const AssessmentNew = () => {
         babyAgeMonths={assessment?.reference_age_months ?? 0}
         babyName={baby?.name}
         kineduToken={baby?.kinedu_token || undefined}
+        email={baby?.email || undefined}
         locale={assessment?.locale || 'en'}
       />
     );

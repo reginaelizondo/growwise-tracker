@@ -1,4 +1,4 @@
-import { externalSupabase } from '@/integrations/supabase/external-client';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Calculate percentile for a skill based on completion percentage and age.
@@ -29,7 +29,7 @@ export async function calculatePercentile(
     // Query percentile_skills table (the correct table name)
     let allCurves: any[] = [];
     for (const tryAge of tryAges) {
-      const { data, error } = await externalSupabase
+      const { data, error } = await supabase
         .from('percentile_skills')
         .select('percentile, completion_percentage')
         .eq('skill_id', skillId)

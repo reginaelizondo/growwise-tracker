@@ -13,10 +13,10 @@ const AREA_NAMES: Record<number, string> = {
 };
 
 const AREA_ICON_URLS: Record<number, string> = {
-  2: "https://ogyvfohbhwxwwxlwyjth.supabase.co/storage/v1/object/public/email-assets/Logo_Cognitive_HD.png",
-  1: "https://ogyvfohbhwxwwxlwyjth.supabase.co/storage/v1/object/public/email-assets/Logo_Physical_HD.png",
-  3: "https://ogyvfohbhwxwwxlwyjth.supabase.co/storage/v1/object/public/email-assets/Logo_Linguistic_HD.png",
-  4: "https://ogyvfohbhwxwwxlwyjth.supabase.co/storage/v1/object/public/email-assets/Logo_Emotional_HD.png",
+  2: "https://uslivvopgsrajcxxjftw.supabase.co/storage/v1/object/public/email-assets/Logo_Cognitive_HD.png",
+  1: "https://uslivvopgsrajcxxjftw.supabase.co/storage/v1/object/public/email-assets/Logo_Physical_HD.png",
+  3: "https://uslivvopgsrajcxxjftw.supabase.co/storage/v1/object/public/email-assets/Logo_Linguistic_HD.png",
+  4: "https://uslivvopgsrajcxxjftw.supabase.co/storage/v1/object/public/email-assets/Logo_Emotional_HD.png",
 };
 
 let KINEDU_SIGNUP_URL = Deno.env.get('KINEDU_CTA_URL') || 'https://kinedu.superwall.app/ia-report';
@@ -81,7 +81,7 @@ function buildEmailHtml(params: {
   resumeLink: string;
 }): string {
   const { subject, babyName, headline, subText, progress, stepTrackerHtml, resumeLink } = params;
-  const storageBase = "https://ogyvfohbhwxwwxlwyjth.supabase.co/storage/v1/object/public/email-assets";
+  const storageBase = "https://uslivvopgsrajcxxjftw.supabase.co/storage/v1/object/public/email-assets";
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -329,7 +329,8 @@ Deno.serve(async (req) => {
         progress = Math.round(22 + areaProgress * 78);
       }
     }
-    const resumeLink = `https://growwise-tracker.lovable.app/resume?session=${session_id}`;
+    const siteUrl = Deno.env.get("SITE_URL") || "https://growwise-tracker.lovable.app";
+    const resumeLink = `${siteUrl}/resume?session=${session_id}`;
 
     const stepTrackerHtml = buildStepTracker(selectedAreas, completedAreas, currentAreaId);
 

@@ -17,6 +17,8 @@ export const MobileStickyCta = ({ babyName, assessmentId, babyId, kineduRegister
 
   const handleClick = async () => {
     console.log('🔵 Mobile sticky CTA clicked', { assessmentId, babyId, kineduRegistered });
+    console.log('🔵 CTA URL:', ctaUrl);
+    console.log('🔵 Token:', kineduToken ? kineduToken.substring(0, 20) + '...' : 'NULL');
 
     // Track event BEFORE navigating (use sendBeacon as fallback)
     if (assessmentId && babyId) {

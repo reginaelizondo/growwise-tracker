@@ -27,6 +27,7 @@ interface AreaSummaryProps {
   babyAgeMonths: number;
   babyName?: string;
   kineduToken?: string;
+  email?: string;
   locale?: string;
 }
 
@@ -41,6 +42,7 @@ export const AreaSummary = ({
   babyAgeMonths,
   babyName,
   kineduToken,
+  email,
   locale,
 }: AreaSummaryProps) => {
   const isMobile = useIsMobile();
@@ -274,6 +276,7 @@ export const AreaSummary = ({
             }))}
             babyAgeMonths={babyAgeMonths}
             kineduToken={kineduToken}
+            email={email}
           />
         </div>
 

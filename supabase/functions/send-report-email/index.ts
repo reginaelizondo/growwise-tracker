@@ -5,9 +5,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 }
 
-// External Supabase for skill names (read-only, public anon key)
-const EXTERNAL_SUPABASE_URL = 'https://uslivvopgsrajcxxjftw.supabase.co'
-const EXTERNAL_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzbGl2dm9wZ3NyYWpjeHhqZnR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEyNDcyMjksImV4cCI6MjA3NjgyMzIyOX0.d2E9PPtC0j5V3qDxHHw_y9Z9cQXOi2t5LWwIe9RqJhE'
 
 interface AreaResult {
   area_name: string
@@ -36,7 +33,7 @@ const areaColors: Record<number, string> = {
   4: '#F06292',
 }
 
-const STORAGE_URL = 'https://ogyvfohbhwxwwxlwyjth.supabase.co/storage/v1/object/public/email-assets'
+const STORAGE_URL = 'https://uslivvopgsrajcxxjftw.supabase.co/storage/v1/object/public/email-assets'
 
 const areaIcons: Record<number, string> = {
   1: `${STORAGE_URL}/Logo_Physical_HD.png`,
@@ -138,7 +135,7 @@ function getSkillContext(skillName: string): string {
   return 'Important for overall development'
 }
 
-const LOGO_URL = 'https://ogyvfohbhwxwwxlwyjth.supabase.co/storage/v1/object/public/email-assets/logo-kinedu-blue.png'
+const LOGO_URL = 'https://uslivvopgsrajcxxjftw.supabase.co/storage/v1/object/public/email-assets/logo-kinedu-blue.png'
 let CTA_URL = Deno.env.get('KINEDU_CTA_URL') || 'https://kinedu.superwall.app/ia-report'
 
 function buildEmailHtml(babyName: string, ageMonths: number, areas: AreaResult[], overallPace: number, ctaUrl?: string): string {
@@ -487,7 +484,6 @@ Deno.serve(async (req) => {
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey)
-    const externalSupabase = createClient(EXTERNAL_SUPABASE_URL, EXTERNAL_SUPABASE_ANON_KEY)
 
     // Fetch baby, assessment, and responses in parallel
     const [babyResult, assessmentResult, responsesResult] = await Promise.all([
@@ -536,19 +532,19 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Get unique skill IDs and fetch skill names from external DB
+    // Get unique skill IDs and fetch skill names
     const skillIds = [...new Set(responses.map(r => r.skill_id).filter(Boolean))] as number[]
     
     const skillNameMap = new Map<number, string>()
     if (skillIds.length > 0) {
-      // Query external Supabase - skills_locales has skill_id + title
-      const { data: skillsData, error: skillsError } = await externalSupabase
+      // Query skills_locales for skill_id + title
+      const { data: skillsData, error: skillsError } = await supabase
         .from('skills_locales')
         .select('skill_id, title')
         .in('skill_id', skillIds)
         .eq('locale', 'en')
       
-      console.log('External skills query result:', JSON.stringify({ skillIds, count: skillsData?.length, error: skillsError?.message }))
+      console.log('Skills query result:', JSON.stringify({ skillIds, count: skillsData?.length, error: skillsError?.message }))
       
       if (skillsData) {
         for (const s of skillsData) {
@@ -560,12 +556,12 @@ Deno.serve(async (req) => {
 
       // Fallback: if skills_locales didn't work, try milestones table
       if (skillNameMap.size === 0) {
-        const { data: milestonesData } = await externalSupabase
+        const { data: milestonesData } = await supabase
           .from('milestones')
           .select('skill_id, skill_name')
           .in('skill_id', skillIds)
         
-        console.log('External milestones fallback:', JSON.stringify({ count: milestonesData?.length }))
+        console.log('Milestones fallback:', JSON.stringify({ count: milestonesData?.length }))
         
         if (milestonesData) {
           for (const s of milestonesData) {

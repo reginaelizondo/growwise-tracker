@@ -23,6 +23,7 @@ interface AreaActivityRecommendationProps {
   babyAgeMonths: number;
   locale?: 'en' | 'es';
   kineduToken?: string;
+  email?: string;
 }
 
 export function AreaActivityRecommendation({
@@ -32,7 +33,8 @@ export function AreaActivityRecommendation({
   skills,
   babyAgeMonths,
   locale = 'en',
-  kineduToken
+  kineduToken,
+  email
 }: AreaActivityRecommendationProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -140,7 +142,7 @@ export function AreaActivityRecommendation({
                 backgroundColor: areaColor,
                 color: 'white'
               }}
-              onClick={() => window.open(getKineduRedirectUrl({ token: kineduToken, locale }), '_blank')}
+              onClick={() => window.open(getKineduRedirectUrl({ token: kineduToken, email, locale }), '_blank')}
             >
               Go to activity
             </Button>

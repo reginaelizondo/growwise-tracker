@@ -5,15 +5,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-// External Supabase client for skill metadata
-const EXTERNAL_SUPABASE_URL = 'https://uslivvopgsrajcxxjftw.supabase.co';
-const EXTERNAL_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzbGl2dm9wZ3NyYWpjeHhqZnR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEyNDcyMjksImV4cCI6MjA3NjgyMzIyOX0.d2E9PPtC0j5V3qDxHHw_y9Z9cQXOi2t5LWwIe9RqJhE';
-
-const externalSupabase = createClient(
-  EXTERNAL_SUPABASE_URL,
-  EXTERNAL_SUPABASE_ANON_KEY,
-  { auth: { persistSession: false } }
-);
 
 interface ReportFilters {
   startDate?: string;
@@ -375,12 +366,12 @@ async function getSkillPerformance(supabase: any, filters: ReportFilters) {
     else stats.no++;
   });
 
-  // Fetch skill names from external DB
+  // Fetch skill names
   const skillIds = Array.from(skillStats.keys());
   let skillNames: Record<number, string> = {};
   if (skillIds.length > 0) {
     try {
-      const { data: skillLocales } = await externalSupabase
+      const { data: skillLocales } = await supabase
         .from('skills_locales')
         .select('skill_id, name')
         .in('skill_id', skillIds)
@@ -420,10 +411,10 @@ async function getIndividualAssessments(supabase: any, filters: ReportFilters) {
     1: 'Physical', 2: 'Cognitive', 3: 'Linguistic', 4: 'Socio-emotional'
   };
 
-  // Get skill names from external DB
+  // Get skill names
   let skillNamesMap: Record<number, string> = {};
   try {
-    const { data: skillLocales } = await externalSupabase
+    const { data: skillLocales } = await supabase
       .from('skills_locales')
       .select('skill_id, name')
       .eq('locale', 'en');
@@ -596,7 +587,7 @@ async function getPageEvents(supabase: any, filters: ReportFilters) {
 // ============================================================
 async function getSkillsCountByAgeRange(referenceAge: number): Promise<number> {
   try {
-    const { data, error } = await externalSupabase
+    const { data, error } = await supabase
       .from('skill_milestone')
       .select('skill_id, age')
       .gte('age', referenceAge)

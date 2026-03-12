@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { externalSupabase } from "@/integrations/supabase/external-client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft, TrendingUp, Calendar, Brain, Dumbbell, MessageCircle, Heart, ChevronDown } from "lucide-react";
@@ -80,7 +79,7 @@ const History = () => {
       }
 
       // Get all milestones
-      const { data: milestones, error: milestonesError } = await externalSupabase
+      const { data: milestones, error: milestonesError } = await supabase
         .from("milestones")
         .select("*");
 

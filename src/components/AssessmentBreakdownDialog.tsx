@@ -13,7 +13,6 @@ import {
   Play, BarChart3, Timer, Target, FileText, Zap, Mail
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { externalSupabase } from '@/integrations/supabase/external-client';
 import { format } from 'date-fns';
 
 interface AssessmentBreakdownDialogProps {
@@ -222,7 +221,7 @@ export function AssessmentBreakdownDialog({
         const maxAge = ageMonths + 5;
 
         // Step 1: Find milestones in age range to discover relevant skills
-        const { data: milestonesInRange } = await externalSupabase
+        const { data: milestonesInRange } = await supabase
           .from('skill_milestone')
           .select('milestone_id, age, skill_id')
           .gte('age', minAge)
@@ -238,7 +237,7 @@ export function AssessmentBreakdownDialog({
           // When abandoned_session exists, filter to selected areas; otherwise use all core skills
           let filteredSkillIds: number[];
           if (hasAbandonedSession) {
-            const { data: skillAreas } = await externalSupabase
+            const { data: skillAreas } = await supabase
               .from('skills_area')
               .select('skill_id, area_id')
               .in('skill_id', coreSkillIds);
@@ -253,7 +252,7 @@ export function AssessmentBreakdownDialog({
 
           if (filteredSkillIds.length > 0) {
             // Get ALL milestones for these skills (no age filter, matching assessment logic)
-            const { data: allSkillMilestones } = await externalSupabase
+            const { data: allSkillMilestones } = await supabase
               .from('skill_milestone')
               .select('milestone_id, skill_id')
               .in('skill_id', filteredSkillIds)
@@ -273,9 +272,9 @@ export function AssessmentBreakdownDialog({
       
       // Get milestone texts, skill names, and area mappings in parallel
       const [milestoneTextsRes, skillNamesRes, skillAreasRes] = await Promise.all([
-        externalSupabase.from('milestones_locale').select('milestone_id, title').in('milestone_id', milestoneIds.length > 0 ? milestoneIds : [0]).eq('locale', 'en'),
-        externalSupabase.from('skills_locales').select('skill_id, title').in('skill_id', skillIds.length > 0 ? skillIds : [0]).eq('locale', 'en'),
-        externalSupabase.from('skills_area').select('skill_id, area_id').in('skill_id', skillIds.length > 0 ? skillIds : [0])
+        supabase.from('milestones_locale').select('milestone_id, title').in('milestone_id', milestoneIds.length > 0 ? milestoneIds : [0]).eq('locale', 'en'),
+        supabase.from('skills_locales').select('skill_id, title').in('skill_id', skillIds.length > 0 ? skillIds : [0]).eq('locale', 'en'),
+        supabase.from('skills_area').select('skill_id, area_id').in('skill_id', skillIds.length > 0 ? skillIds : [0])
       ]);
       
       const milestoneTexts = milestoneTextsRes.data || [];

@@ -21,15 +21,21 @@ Deno.serve(async (req) => {
       );
     }
 
-    const staticToken = Deno.env.get("KINEDU_STATIC_TOKEN");
     // Prefer URL passed from frontend (env-aware), fall back to Supabase secret, then QA default
     const baseUrl = kinedu_api_base_url || Deno.env.get("KINEDU_API_BASE_URL") || "https://qa.kinedu.com/api/v6";
     console.log("Using Kinedu API base URL:", baseUrl);
 
+    // Pick the right static token based on the API URL being used
+    const isProduction = baseUrl.includes("api.kinedu.com");
+    const staticToken = isProduction
+      ? (Deno.env.get("KINEDU_STATIC_TOKEN_PROD") || Deno.env.get("KINEDU_STATIC_TOKEN"))
+      : (Deno.env.get("KINEDU_STATIC_TOKEN_QA") || Deno.env.get("KINEDU_STATIC_TOKEN"));
+    console.log("Environment:", isProduction ? "PRODUCTION" : "QA");
+
     if (!staticToken) {
-      console.error("KINEDU_STATIC_TOKEN not configured");
+      console.error("KINEDU_STATIC_TOKEN not configured for", isProduction ? "PROD" : "QA");
       return new Response(
-        JSON.stringify({ success: false, error: "Server configuration error" }),
+        JSON.stringify({ success: false, error: `Server configuration error: missing token for ${isProduction ? "production" : "QA"}` }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -40,7 +46,7 @@ Deno.serve(async (req) => {
       `${baseUrl}/general_projects/create_session/create_auth_token`,
       {
         method: "POST",
-        headers: { Authorization: staticToken },
+        headers: { "Content-Type": "application/json", Authorization: staticToken },
       }
     );
 

@@ -10,7 +10,6 @@ import { Link } from "react-router-dom";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { externalSupabase } from "@/integrations/supabase/external-client";
 import { decodeHtmlText } from "@/lib/sanitizeHtml";
 import { cn } from "@/lib/utils";
 import { CircularProgress } from "@/components/CircularProgress";
@@ -320,14 +319,14 @@ const Assessment = () => {
     let skillsRaw: any[] | null = null;
     let queryError: any = null;
     
-      const { data: firstTry, error: firstError } = await externalSupabase
+      const { data: firstTry, error: firstError } = await supabase
         .from('skills_locales')
         .select('skill_id, title, description, locale')
         .in('skill_id', skillIds);
     
     if (firstError) {
       console.warn('⚠️ [loadSkillsWithLocale] Primer intento con .in falló, probando sin filtro y filtrando en cliente:', firstError);
-      const { data: allRows, error: secondError } = await externalSupabase
+      const { data: allRows, error: secondError } = await supabase
         .from('skills_locales')
         .select('skill_id, title, description, locale');
       if (secondError) {
@@ -406,7 +405,7 @@ const Assessment = () => {
     try {
       console.log('🔎 [fetchSkillDescription] skillId:', skillId, 'locale:', locale);
       // 1) Try exact locale
-      let { data, error } = await externalSupabase
+      let { data, error } = await supabase
         .from('skills_locales')
         .select('description, locale')
         .eq('skill_id', skillId)
@@ -418,7 +417,7 @@ const Assessment = () => {
 
       // 2) Fallback to English if not already tried
       if (locale !== 'en') {
-        const { data: enData, error: enError } = await externalSupabase
+        const { data: enData, error: enError } = await supabase
           .from('skills_locales')
           .select('description, locale')
           .eq('skill_id', skillId)
@@ -430,7 +429,7 @@ const Assessment = () => {
       }
 
       // 3) Try any locale (first row)
-      const { data: anyRows, error: anyError } = await externalSupabase
+      const { data: anyRows, error: anyError } = await supabase
         .from('skills_locales')
         .select('description, locale, skill_id')
         .eq('skill_id', skillId)
@@ -473,7 +472,7 @@ const Assessment = () => {
     try {
       console.log('🔍 [loadSkillsArea] Loading area mapping for skills:', skillIds);
       
-      const { data, error } = await externalSupabase
+      const { data, error } = await supabase
         .from('skills_area')
         .select('skill_id, area_id')
         .in('skill_id', skillIds);
@@ -558,7 +557,7 @@ const Assessment = () => {
     userLocale: string = 'en'
   ): Promise<{ mappings: any[], texts: any[] }> => {
     // 1. Get milestone mappings (skill_id -> milestone_id)
-    const { data: mappings, error: mappingsError } = await externalSupabase
+    const { data: mappings, error: mappingsError } = await supabase
       .from('skill_milestone')
       .select('skill_id, milestone_id')
       .in('skill_id', skillIds);
@@ -571,7 +570,7 @@ const Assessment = () => {
     const milestoneIds = mappings.map(m => m.milestone_id);
 
     // 2. Fetch ages from skill_milestone table (id = milestone_id)
-    const { data: milestonesBase, error: milestonesError } = await externalSupabase
+    const { data: milestonesBase, error: milestonesError } = await supabase
       .from('skill_milestone')
       .select('milestone_id, age')
       .in('milestone_id', milestoneIds);
@@ -586,7 +585,7 @@ const Assessment = () => {
     const mappingsWithAge = mappings.map(m => ({ ...m, age: ageMap.get(m.milestone_id) ?? null }));
     
     // 3. Load milestone texts with locale
-    const { data: texts, error: textsError } = await externalSupabase
+    const { data: texts, error: textsError } = await supabase
       .from('milestones_locale')
       .select('milestone_id, title, description, science_fact, source_data, locale, media_jpg_file_name, media_mp4_file_name')
       .in('milestone_id', milestoneIds);
@@ -693,7 +692,7 @@ const Assessment = () => {
         console.log("🔍 Age range:", { minAge, mandatoryMaxAge, extendedMaxAge, userLocale });
 
         // Step 1: Find milestone IDs in age range -3 to +5 months from skill_milestone
-        const { data: milestonesInRange, error: milestonesRangeError } = await externalSupabase
+        const { data: milestonesInRange, error: milestonesRangeError } = await supabase
           .from('skill_milestone')
           .select('milestone_id, age, skill_id')
           .gte('age', minAge)
@@ -748,7 +747,7 @@ const Assessment = () => {
         }
 
         // Fetch ALL milestone mappings for skills in range (no age filter for Quick Check)
-        const { data: allMappings, error: allMappingsError } = await externalSupabase
+        const { data: allMappings, error: allMappingsError } = await supabase
           .from('skill_milestone')
           .select('skill_id, milestone_id, age')
           .in('skill_id', skillIdsInRange);
@@ -762,7 +761,7 @@ const Assessment = () => {
         const allMilestoneIds = [...new Set((allMappings || []).map((m: any) => m.milestone_id))];
 
         // Step 2a: Get ages from skill_milestone (id = milestone_id)
-        const { data: milestoneAges, error: agesError } = await externalSupabase
+        const { data: milestoneAges, error: agesError } = await supabase
           .from('skill_milestone')
           .select('milestone_id, age, skill_id')
           .in('milestone_id', allMilestoneIds);
@@ -774,7 +773,7 @@ const Assessment = () => {
         }
 
         // Step 2b: Get texts from milestones_locale with fallback to 'en'
-        let { data: milestoneTexts, error: textsError } = await externalSupabase
+        let { data: milestoneTexts, error: textsError } = await supabase
           .from('milestones_locale')
           .select('milestone_id, title, description, science_fact, source_data, locale')
           .in('milestone_id', allMilestoneIds)
@@ -788,7 +787,7 @@ const Assessment = () => {
 
         // Fallback to English if no texts found in requested locale
         if (!milestoneTexts || milestoneTexts.length === 0) {
-          const { data: englishTexts } = await externalSupabase
+          const { data: englishTexts } = await supabase
             .from('milestones_locale')
             .select('milestone_id, title, description, science_fact, source_data, locale')
             .in('milestone_id', allMilestoneIds)
@@ -1064,7 +1063,7 @@ const Assessment = () => {
     
     // Fetch milestones for this skill
     // A) In-range (±3 months)
-    const { data: inRangeMilestones, error: inRangeError } = await externalSupabase
+    const { data: inRangeMilestones, error: inRangeError } = await supabase
       .from('skill_milestone')
       .select('milestone_id, age')
       .eq('skill_id', skill.skill_id)
@@ -1072,7 +1071,7 @@ const Assessment = () => {
       .lte('age', maxAge);
 
     // B) ALL milestones for the skill (true total)
-    const { data: allSkillMilestonesAll, error: allSkillError } = await externalSupabase
+    const { data: allSkillMilestonesAll, error: allSkillError } = await supabase
       .from('skill_milestone')
       .select('milestone_id, age')
       .eq('skill_id', skill.skill_id);
@@ -1198,7 +1197,7 @@ const Assessment = () => {
       let allCurves: any[] = [];
       
       for (const tryAge of tryAges) {
-        const { data, error } = await externalSupabase
+        const { data, error } = await supabase
           .from('percentile_skills')
           .select('percentile, completion_percentage')
           .eq('skill_id', skill.skill_id)
@@ -1284,7 +1283,7 @@ const Assessment = () => {
         });
         
         // Check if we need to use a different age (fallback to closest available age)
-        const { data: availableAges } = await externalSupabase
+        const { data: availableAges } = await supabase
           .from('percentile_skills')
           .select('age')
           .eq('skill_id', skill.skill_id)
@@ -1305,7 +1304,7 @@ const Assessment = () => {
           console.log(`📊 Falling back to age ${closestAge} (requested age ${ageForLookup} not found)`);
           
           // Retry with closest age
-          const { data: fallbackCurves } = await externalSupabase
+          const { data: fallbackCurves } = await supabase
             .from('percentile_skills')
             .select('percentile, completion_percentage')
             .eq('skill_id', skill.skill_id)
@@ -3158,6 +3157,7 @@ const Assessment = () => {
                     assessmentId={id}
                     babyId={baby?.id}
                     kineduToken={baby?.kinedu_token || undefined}
+                    email={baby?.email || undefined}
                   />
                 </CollapsibleContent>
               </Collapsible>

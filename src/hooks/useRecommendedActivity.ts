@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { externalSupabase } from '@/integrations/supabase/external-client';
+import { supabase } from '@/integrations/supabase/client';
 
 interface UseRecommendedActivityParams {
   areaId: number; // 1=Physical, 2=Cognitive, 3=Linguistic, 4=Social & Emotional
@@ -60,7 +60,7 @@ export function useRecommendedActivity({
         });
 
         // First attempt: filter by area_id + (optional) skill_id with optional columns
-        let baseQuery = externalSupabase
+        let baseQuery = supabase
           .from('activities_database')
           .select(FIELDS_WITH_OPTIONALS)
           .eq('area_id', areaId);
@@ -74,7 +74,7 @@ export function useRecommendedActivity({
         // Handle missing columns (42703): retry without material/image_url
         if (queryError && (queryError as any).code === '42703') {
           console.warn('[useRecommendedActivity] Optional columns missing, retrying with base fields');
-          let retryQuery = externalSupabase
+          let retryQuery = supabase
             .from('activities_database')
             .select(FIELDS_BASE)
             .eq('area_id', areaId);
@@ -90,14 +90,14 @@ export function useRecommendedActivity({
 
         // Fallback: retry with only area_id if no results (with optional -> base fallback)
         if (!queryError && (!data || data.length === 0)) {
-          let fbRes: any = await externalSupabase
+          let fbRes: any = await supabase
             .from('activities_database')
             .select(FIELDS_WITH_OPTIONALS)
             .eq('area_id', areaId);
 
           if (fbRes.error && (fbRes.error as any).code === '42703') {
             console.warn('[useRecommendedActivity] Optional columns missing (fallback), retrying with base fields');
-            fbRes = await externalSupabase
+            fbRes = await supabase
               .from('activities_database')
               .select(FIELDS_BASE)
               .eq('area_id', areaId);

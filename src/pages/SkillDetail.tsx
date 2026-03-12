@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { externalSupabase } from "@/integrations/supabase/external-client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -81,7 +80,7 @@ const SkillDetail = () => {
       }
 
       // Get milestones that were actually assessed for this skill
-      const { data: milestonesData, error: milestonesError } = await externalSupabase
+      const { data: milestonesData, error: milestonesError } = await supabase
         .from("milestones")
         .select("*")
         .eq("skill_id", Number(skillId))

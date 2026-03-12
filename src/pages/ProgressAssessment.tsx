@@ -9,7 +9,6 @@ import { Link } from "react-router-dom";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { externalSupabase } from "@/integrations/supabase/external-client";
 import { cn } from "@/lib/utils";
 import { CircularProgress } from "@/components/CircularProgress";
 import { PaceGauge } from "@/components/PaceGauge";
@@ -207,7 +206,7 @@ const ProgressAssessment = () => {
           const lastAssessmentMilestoneIds = lastAssessment.assessment_responses.map((r: any) => r.milestone_id);
           
           // Get those milestones' details
-          const { data: lastAssessmentMilestones } = await externalSupabase
+          const { data: lastAssessmentMilestones } = await supabase
             .from("milestones")
             .select("*")
             .in("milestone_id", lastAssessmentMilestoneIds)
@@ -222,7 +221,7 @@ const ProgressAssessment = () => {
           setPreviousResponses(previousResponsesMap);
 
           // Find NEW skills (in current age range but NOT in last assessment)
-          const { data: skillsInRange } = await externalSupabase
+          const { data: skillsInRange } = await supabase
             .from("milestones")
             .select("skill_id")
             .eq("locale", "en")
@@ -294,7 +293,7 @@ const ProgressAssessment = () => {
           });
         } else {
           // No previous assessment, all skills in range are NEW
-          const { data: skillsInRange } = await externalSupabase
+          const { data: skillsInRange } = await supabase
             .from("milestones")
             .select("skill_id")
             .eq("locale", "en")
@@ -307,7 +306,7 @@ const ProgressAssessment = () => {
         // Fetch milestones for NEW skills (all milestones)
         let newMilestones: Milestone[] = [];
         if (newSkillIds.length > 0) {
-          const { data } = await externalSupabase
+          const { data } = await supabase
             .from("milestones")
             .select("*")
             .eq("locale", "en")
@@ -324,7 +323,7 @@ const ProgressAssessment = () => {
         if (incompleteSkillIds.length > 0) {
           // Fetch ALL milestones for incomplete skills, not just the incomplete ones
           // This ensures that quick check milestones are included
-          const { data } = await externalSupabase
+          const { data } = await supabase
             .from("milestones")
             .select("*")
             .eq("locale", "en")
@@ -451,7 +450,7 @@ const ProgressAssessment = () => {
         
         // Get all milestones for all skills (including already answered ones) for proper grouping
         const allSkillIds = [...new Set(allMilestones.map(m => m.skill_id))];
-        const { data: allSkillMilestones } = await externalSupabase
+        const { data: allSkillMilestones } = await supabase
           .from("milestones")
           .select("*")
           .eq("locale", "en")
@@ -594,7 +593,7 @@ const ProgressAssessment = () => {
     const maxAge = referenceAge + 1;
     
     // Get ALL milestones for this skill (not just the ones in progress assessment)
-    const { data: allSkillMilestones } = await externalSupabase
+    const { data: allSkillMilestones } = await supabase
       .from("milestones")
       .select("*")
       .eq("skill_id", skill.skill_id)
@@ -659,7 +658,7 @@ const ProgressAssessment = () => {
         bucket = 0.99;
       }
       
-      let { data: probabilities } = await externalSupabase
+      let { data: probabilities } = await supabase
         .from('skill_probability_curves')
         .select('probability, mark_key, age_months')
         .eq('skill_id', skill.skill_id)
@@ -668,7 +667,7 @@ const ProgressAssessment = () => {
         .eq('mark_key', bucket.toFixed(2));
 
       if (!probabilities || probabilities.length === 0) {
-        const { data: availableAges } = await externalSupabase
+        const { data: availableAges } = await supabase
           .from('skill_probability_curves')
           .select('age_months')
           .eq('skill_id', skill.skill_id)
@@ -688,7 +687,7 @@ const ProgressAssessment = () => {
             return currentDiff < closestDiff ? age : closest;
           }, uniqueAges[0]);
           
-          const { data: fallbackData } = await externalSupabase
+          const { data: fallbackData } = await supabase
             .from('skill_probability_curves')
             .select('probability, mark_key, age_months')
             .eq('skill_id', skill.skill_id)
@@ -726,7 +725,7 @@ const ProgressAssessment = () => {
     let monthsOffset: number | null = null;
     if (probability !== null) {
       try {
-        const { data: medianCurve, error: medianError } = await externalSupabase
+        const { data: medianCurve, error: medianError } = await supabase
           .from('skill_percentile_curves')
           .select('age_months, probability')
           .eq('skill_id', skill.skill_id)

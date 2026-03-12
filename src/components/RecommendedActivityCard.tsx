@@ -26,6 +26,7 @@ interface RecommendedActivityCardProps {
   assessmentId?: string;
   babyId?: string;
   kineduToken?: string;
+  email?: string;
 }
 
 // Helper function to remove "When should I seek help?" section from HTML
@@ -115,7 +116,8 @@ export const RecommendedActivityCard = ({
   locale = 'en',
   assessmentId,
   babyId,
-  kineduToken
+  kineduToken,
+  email
 }: RecommendedActivityCardProps) => {
   // Prioritize skills that need practice (7%-49% progress = "Reinforce" or "On Track")
   const skillsNeedingPractice = skills.filter(s => s.progress >= 7 && s.progress < 50);
@@ -217,7 +219,7 @@ export const RecommendedActivityCard = ({
                     event_data: { source: 'recommended_activity', area: areaName }
                   });
                 }
-                window.open(getKineduRedirectUrl({ token: kineduToken, locale }), '_blank');
+                window.open(getKineduRedirectUrl({ token: kineduToken, email, locale }), '_blank');
               }}
             >
               {ctaText}

@@ -7,10 +7,9 @@ import { Progress } from "@/components/ui/progress";
 import { Lock, Check, ArrowRight, Mail, Star, Target, PartyPopper } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { externalSupabase } from "@/integrations/supabase/external-client";
 import { MobileStickyCta } from "@/components/MobileStickyCta";
 import { PaceGauge, calculatePace } from "@/components/PaceGauge";
-import { KINEDU_SUPERWALL_URL } from "@/config/kinedu";
+import { KINEDU_SUPERWALL_URL, KINEDU_API_BASE_URL } from "@/config/kinedu";
 
 import logoPhysical from "@/assets/Logo_Physical_HD.png";
 import logoCognitive from "@/assets/Logo_Cognitive_HD.png";
@@ -115,8 +114,18 @@ const Report = () => {
         }
 
         setAssessment(assessmentData);
-        setBaby(assessmentData.babies);
-        setHasEmail(!!assessmentData.babies?.email);
+
+        // Hydrate baby — prefer DB kinedu_token, fall back to localStorage (set by BabyForm Path A)
+        const babyData = assessmentData.babies;
+        if (babyData && !babyData.kinedu_token) {
+          const storedToken = localStorage.getItem(`kinedu_token_${babyData.id}`);
+          if (storedToken) {
+            babyData.kinedu_token = storedToken;
+            babyData.kinedu_registered = true;
+          }
+        }
+        setBaby(babyData);
+        setHasEmail(!!babyData?.email);
 
         // Track report view
         supabase.from('assessment_events').insert({
@@ -168,7 +177,7 @@ const Report = () => {
         const milestoneIds = responsesData.map(r => r.milestone_id);
 
         // Fetch skill names
-        const { data: skillsRows } = await externalSupabase
+        const { data: skillsRows } = await supabase
           .from('skills_locales')
           .select('skill_id, title, locale')
           .in('skill_id', skillIds);
@@ -186,7 +195,7 @@ const Report = () => {
         });
 
         // Fetch ages for milestones
-        const { data: ageData } = await externalSupabase
+        const { data: ageData } = await supabase
           .from('skill_milestone')
           .select('milestone_id, age')
           .in('milestone_id', milestoneIds);
@@ -280,9 +289,41 @@ const Report = () => {
 
     setSubmittingEmail(true);
     try {
-      await supabase.from('babies').update({ email: userEmail.trim() }).eq('id', baby.id);
+      const trimmedEmail = userEmail.trim();
+      await supabase.from('babies').update({ email: trimmedEmail }).eq('id', baby.id);
 
-      // Fire email with delay + retry (Path B)
+      // Register with Kinedu to get tokenAccess (AWAIT so CTA has token immediately)
+      let kineduToken: string | null = null;
+      try {
+        const { data: kineduData } = await supabase.functions.invoke('register-kinedu-user', {
+          body: {
+            name: trimmedEmail.split('@')[0],
+            email: trimmedEmail,
+            baby_id: baby.id,
+            kinedu_api_base_url: KINEDU_API_BASE_URL,
+          }
+        });
+        console.log('🔵 Kinedu registration result (Path B):', kineduData);
+        kineduToken = kineduData?.token || null;
+        if (kineduToken) {
+          localStorage.setItem(`kinedu_token_${baby.id}`, kineduToken);
+        }
+      } catch (err) {
+        console.warn('Kinedu registration failed (Path B):', err);
+      }
+
+      // Update local state with email AND token together (no race condition)
+      setBaby((prev: any) => ({
+        ...prev,
+        email: trimmedEmail,
+        kinedu_registered: !!kineduToken,
+        kinedu_token: kineduToken || prev?.kinedu_token || null,
+      }));
+      setEmailUnlocked(true);
+      setHasEmail(true);
+      toast.success("Report unlocked! Check your email.");
+
+      // Fire email in background (Path B) — after UI is unlocked
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
       const sendEmail = async (retryCount = 0) => {
@@ -313,10 +354,6 @@ const Report = () => {
         event_type: 'email_captured_post_assessment',
         event_data: { timestamp: new Date().toISOString() }
       });
-
-      setEmailUnlocked(true);
-      setHasEmail(true);
-      toast.success("Report unlocked! Check your email.");
     } catch (error) {
       console.error('Error submitting email:', error);
       toast.error("Something went wrong. Please try again.");

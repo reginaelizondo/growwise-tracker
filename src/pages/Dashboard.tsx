@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { externalSupabase } from "@/integrations/supabase/external-client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -177,7 +176,7 @@ const Dashboard = () => {
       const maxAge = referenceAge + 1;
 
       // Get all milestones in broad age window
-      const { data: milestones, error: milestonesError } = await externalSupabase
+      const { data: milestones, error: milestonesError } = await supabase
         .from("milestones")
         .select("*")
         .gte("age", minAge)
