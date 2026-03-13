@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { MobileStickyCta } from "@/components/MobileStickyCta";
 import { PaceGauge, calculatePace } from "@/components/PaceGauge";
 import { KINEDU_SUPERWALL_URL, KINEDU_API_BASE_URL } from "@/config/kinedu";
+import { getMetaPixelData, sendKineduEvent, trackPixelEvent } from "@/utils/metaPixel";
 
 import logoPhysical from "@/assets/Logo_Physical_HD.png";
 import logoCognitive from "@/assets/Logo_Cognitive_HD.png";
@@ -134,6 +135,10 @@ const Report = () => {
           event_type: 'report_view',
           event_data: { source: 'report_page' }
         }).then(() => {}).catch((err: any) => console.error('Report view tracking error:', err));
+
+        // Meta Pixel: track report viewed + Lead event
+        sendKineduEvent("report_viewed", { assessment_id: id, baby_id: assessmentData.babies?.id });
+        trackPixelEvent("Lead");
 
         // Fetch responses
         const { data: responsesData } = await supabase
@@ -295,12 +300,14 @@ const Report = () => {
       // Register with Kinedu to get tokenAccess (AWAIT so CTA has token immediately)
       let kineduToken: string | null = null;
       try {
+        const metaData = getMetaPixelData();
         const { data: kineduData } = await supabase.functions.invoke('register-kinedu-user', {
           body: {
             name: trimmedEmail.split('@')[0],
             email: trimmedEmail,
             baby_id: baby.id,
             kinedu_api_base_url: KINEDU_API_BASE_URL,
+            ...metaData,
           }
         });
         console.log('🔵 Kinedu registration result (Path B):', kineduData);

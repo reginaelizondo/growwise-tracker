@@ -14,6 +14,7 @@ import { getSessionId } from "@/hooks/useSessionId";
 import { Progress } from "@/components/ui/progress";
 import kineduLogo from "@/assets/logo-kinedu-blue.png";
 import { KINEDU_API_BASE_URL } from "@/config/kinedu";
+import { getMetaPixelData, sendKineduEvent, trackPixelPageView } from "@/utils/metaPixel";
 import logoCognitive from "@/assets/Logo_Cognitive_HD.png";
 import logoPhysical from "@/assets/Logo_Physical_HD.png";
 import logoLinguistic from "@/assets/Logo_Linguistic_HD.png";
@@ -70,6 +71,12 @@ const BabyForm = () => {
       if (session) setUserId(session.user.id);
     };
     checkAuth();
+  }, []);
+
+  // Meta Pixel: track quiz start
+  useEffect(() => {
+    trackPixelPageView();
+    sendKineduEvent("quiz_start", { source: "baby_form" });
   }, []);
 
   // Clamp day when month/year changes to avoid invalid dates (e.g., Feb 31)
@@ -200,10 +207,14 @@ const BabyForm = () => {
         .single();
       if (babyError) throw babyError;
 
+      // Meta Pixel: track baby created
+      sendKineduEvent("baby_created", { baby_id: baby.id, source: "baby_form" });
+
       // If Kinedu registration was initiated, update baby_id for tracking
       if (parentEmail && parentName) {
+        const metaData = getMetaPixelData();
         supabase.functions.invoke('register-kinedu-user', {
-          body: { name: parentName, email: parentEmail, baby_id: baby.id, kinedu_api_base_url: KINEDU_API_BASE_URL }
+          body: { name: parentName, email: parentEmail, baby_id: baby.id, kinedu_api_base_url: KINEDU_API_BASE_URL, ...metaData }
         }).then(({ data }) => {
           if (data?.token) {
             localStorage.setItem(`kinedu_token_${baby.id}`, data.token);

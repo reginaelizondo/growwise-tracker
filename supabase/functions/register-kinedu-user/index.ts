@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { name, email, baby_id, kinedu_api_base_url } = await req.json();
+    const { name, email, baby_id, kinedu_api_base_url, fbp, fbc, fb_event_id } = await req.json();
 
     if (!email || !name) {
       return new Response(
@@ -83,13 +83,18 @@ Deno.serve(async (req) => {
     }
 
     // Step 2: user_validation - try 3 strategies
-    const baseBody = {
+    const baseBody: Record<string, any> = {
       name,
       lastname: "",
       email,
       access_code: "",
       entry_name: "Lovable_Assessment",
     };
+
+    // Add FB tracking data for server-side event matching (CAPI)
+    if (fbp) baseBody.fbp = fbp;
+    if (fbc) baseBody.fbc = fbc;
+    if (fb_event_id) baseBody.fb_event_id = fb_event_id;
 
     const strategies = [
       {

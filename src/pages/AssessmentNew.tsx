@@ -9,6 +9,7 @@ import { SkillMilestoneList } from "@/components/assessment/SkillMilestoneList";
 import { AreaSummary } from "@/components/assessment/AreaSummary";
 import { useAbandonedSessionSave } from "@/hooks/useAbandonedSessionSave";
 import { getSessionId } from "@/hooks/useSessionId";
+import { sendKineduEvent, trackPixelPageView } from "@/utils/metaPixel";
 
 import physicalIcon from "@/assets/Physical.png";
 import linguisticWithText from "@/assets/Linguistic-with-text.png";
@@ -345,6 +346,14 @@ const AssessmentNew = () => {
         }
         setLoading(false);
 
+        // Meta Pixel: track assessment started
+        trackPixelPageView();
+        sendKineduEvent("assessment_started", {
+          assessment_id: id,
+          baby_id: assessmentData?.babies?.id,
+          reference_age_months: assessmentData?.reference_age_months,
+        });
+
       } catch (error) {
         console.error("Error fetching assessment data:", error);
         toast.error("Failed to load assessment");
@@ -586,6 +595,7 @@ const AssessmentNew = () => {
           }));
 
           toast.success("Assessment completed!");
+          sendKineduEvent("assessment_completed", { assessment_id: id, baby_id: baby?.id });
           // Mark abandoned session as completed
           try {
             await (supabase.from('abandoned_sessions' as any) as any)
@@ -641,6 +651,7 @@ const AssessmentNew = () => {
         }));
 
         toast.success("Assessment completed!");
+        sendKineduEvent("assessment_completed", { assessment_id: id, baby_id: baby?.id });
         // Mark abandoned session as completed
         try {
           await (supabase.from('abandoned_sessions' as any) as any)
