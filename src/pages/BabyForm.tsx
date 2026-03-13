@@ -14,7 +14,7 @@ import { getSessionId } from "@/hooks/useSessionId";
 import { Progress } from "@/components/ui/progress";
 import kineduLogo from "@/assets/logo-kinedu-blue.png";
 import { KINEDU_API_BASE_URL } from "@/config/kinedu";
-import { getMetaPixelData, sendKineduEvent, trackPixelPageView } from "@/utils/metaPixel";
+import { getMetaPixelData, sendKineduEvent, trackPixelPageView, initKineduSession } from "@/utils/metaPixel";
 import logoCognitive from "@/assets/Logo_Cognitive_HD.png";
 import logoPhysical from "@/assets/Logo_Physical_HD.png";
 import logoLinguistic from "@/assets/Logo_Linguistic_HD.png";
@@ -73,10 +73,10 @@ const BabyForm = () => {
     checkAuth();
   }, []);
 
-  // Meta Pixel: track quiz start
+  // Meta Pixel: track quiz start + initialize Kinedu auth token singleton
   useEffect(() => {
     trackPixelPageView();
-    sendKineduEvent("quiz_start", { source: "baby_form" });
+    initKineduSession({ source: "baby_form" }); // creates token once, caches for all subsequent calls
   }, []);
 
   // Clamp day when month/year changes to avoid invalid dates (e.g., Feb 31)

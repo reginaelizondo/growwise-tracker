@@ -17,6 +17,7 @@ Deno.serve(async (req) => {
       fbc,
       fb_event_id,
       kinedu_api_base_url,
+      auth_token: providedAuthToken,
     } = await req.json();
 
     if (!event_name) {
@@ -45,41 +46,50 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Step 1: Get auth token (same as register-kinedu-user)
-    const tokenRes = await fetch(
-      `${baseUrl}/general_projects/create_session/create_auth_token`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: staticToken },
-      }
-    );
-
-    const tokenText = await tokenRes.text();
-    console.log("create_auth_token status:", tokenRes.status);
-
-    let tokenData: any;
-    try {
-      tokenData = JSON.parse(tokenText);
-    } catch {
-      return new Response(
-        JSON.stringify({ success: false, error: "Invalid JSON from create_auth_token", raw: tokenText }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const authToken =
-      tokenData.token ||
-      tokenData.auth_token ||
-      tokenData.data?.token ||
-      tokenData.data?.auth_token ||
-      tokenData.session?.token ||
-      null;
+    // Step 1: Get auth token — reuse if provided (singleton), otherwise create new
+    let authToken = providedAuthToken || null;
+    let tokenCreated = false;
 
     if (!authToken) {
-      return new Response(
-        JSON.stringify({ success: false, error: "No auth token found", keys: Object.keys(tokenData) }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      console.log("No auth_token provided, calling create_auth_token...");
+      const tokenRes = await fetch(
+        `${baseUrl}/general_projects/create_session/create_auth_token`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: staticToken },
+        }
       );
+
+      const tokenText = await tokenRes.text();
+      console.log("create_auth_token status:", tokenRes.status);
+
+      let tokenData: any;
+      try {
+        tokenData = JSON.parse(tokenText);
+      } catch {
+        return new Response(
+          JSON.stringify({ success: false, error: "Invalid JSON from create_auth_token", raw: tokenText }),
+          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      authToken =
+        tokenData.token ||
+        tokenData.auth_token ||
+        tokenData.data?.token ||
+        tokenData.data?.auth_token ||
+        tokenData.session?.token ||
+        null;
+
+      if (!authToken) {
+        return new Response(
+          JSON.stringify({ success: false, error: "No auth token found", keys: Object.keys(tokenData) }),
+          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      tokenCreated = true;
+    } else {
+      console.log("Reusing provided auth_token (singleton)");
     }
 
     // Step 2: Call send_event endpoint
@@ -125,6 +135,8 @@ Deno.serve(async (req) => {
         success: eventRes.status >= 200 && eventRes.status < 300,
         status: eventRes.status,
         data: eventData_parsed,
+        auth_token: authToken,
+        token_created: tokenCreated,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

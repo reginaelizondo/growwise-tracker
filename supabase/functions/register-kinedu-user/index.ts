@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { name, email, baby_id, kinedu_api_base_url, fbp, fbc, fb_event_id } = await req.json();
+    const { name, email, baby_id, kinedu_api_base_url, fbp, fbc, fb_event_id, auth_token: providedAuthToken } = await req.json();
 
     if (!email || !name) {
       return new Response(
@@ -40,46 +40,52 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Step 1: Get auth token
-    console.log("=== STEP 1: create_auth_token ===");
-    const tokenRes = await fetch(
-      `${baseUrl}/general_projects/create_session/create_auth_token`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: staticToken },
-      }
-    );
-
-    const tokenText = await tokenRes.text();
-    console.log("create_auth_token status:", tokenRes.status);
-    console.log("create_auth_token FULL response:", tokenText);
-
-    let tokenData: any;
-    try {
-      tokenData = JSON.parse(tokenText);
-    } catch {
-      return new Response(
-        JSON.stringify({ success: false, error: "Invalid JSON from create_auth_token", raw: tokenText }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Extract token - try multiple paths
-    const authToken =
-      tokenData.token ||
-      tokenData.auth_token ||
-      tokenData.data?.token ||
-      tokenData.data?.auth_token ||
-      tokenData.session?.token ||
-      null;
-
-    console.log("Extracted authToken:", authToken ? `${authToken.substring(0, 20)}...` : "NULL");
+    // Step 1: Get auth token — reuse if provided (singleton), otherwise create new
+    let authToken = providedAuthToken || null;
 
     if (!authToken) {
-      return new Response(
-        JSON.stringify({ success: false, error: "No auth token found in response", keys: Object.keys(tokenData) }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      console.log("=== STEP 1: create_auth_token (no cached token) ===");
+      const tokenRes = await fetch(
+        `${baseUrl}/general_projects/create_session/create_auth_token`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: staticToken },
+        }
       );
+
+      const tokenText = await tokenRes.text();
+      console.log("create_auth_token status:", tokenRes.status);
+      console.log("create_auth_token FULL response:", tokenText);
+
+      let tokenData: any;
+      try {
+        tokenData = JSON.parse(tokenText);
+      } catch {
+        return new Response(
+          JSON.stringify({ success: false, error: "Invalid JSON from create_auth_token", raw: tokenText }),
+          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Extract token - try multiple paths
+      authToken =
+        tokenData.token ||
+        tokenData.auth_token ||
+        tokenData.data?.token ||
+        tokenData.data?.auth_token ||
+        tokenData.session?.token ||
+        null;
+
+      console.log("Extracted authToken:", authToken ? `${authToken.substring(0, 20)}...` : "NULL");
+
+      if (!authToken) {
+        return new Response(
+          JSON.stringify({ success: false, error: "No auth token found in response", keys: Object.keys(tokenData) }),
+          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    } else {
+      console.log("=== STEP 1: Reusing provided auth_token (singleton) ===");
     }
 
     // Step 2: user_validation - try 3 strategies
