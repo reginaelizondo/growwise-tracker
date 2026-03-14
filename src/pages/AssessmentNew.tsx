@@ -594,7 +594,6 @@ const AssessmentNew = () => {
             timestamp: new Date().toISOString()
           }));
 
-          toast.success("Assessment completed!");
           sendKineduEvent("assessment_completed", { assessment_id: id, baby_id: baby?.id });
           // Mark abandoned session as completed
           try {
@@ -650,7 +649,6 @@ const AssessmentNew = () => {
           timestamp: new Date().toISOString()
         }));
 
-        toast.success("Assessment completed!");
         sendKineduEvent("assessment_completed", { assessment_id: id, baby_id: baby?.id });
         // Mark abandoned session as completed
         try {
