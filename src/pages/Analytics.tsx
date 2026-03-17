@@ -17,7 +17,7 @@ import {
   Loader2, RefreshCw, TrendingDown, Users, Clock, Target, CalendarIcon, X,
   Trash2, Baby, ChevronDown, ChevronLeft, ChevronRight, BarChart3, Eye,
   MousePointerClick, ArrowDown, CheckCircle2, XCircle, AlertTriangle,
-  MoreVertical, Download, Lock,
+  MoreVertical, Download, Lock, DollarSign,
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { format, subDays, startOfDay } from 'date-fns';
@@ -167,6 +167,16 @@ export default function Analytics() {
   const [deletingAll, setDeletingAll] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+
+  // Meta Ads manual inputs (persisted in localStorage)
+  const [metaSpend, setMetaSpend] = useState<string>(() => localStorage.getItem('analytics_meta_spend') || '');
+  const [ftStarts, setFtStarts] = useState<string>(() => localStorage.getItem('analytics_ft_starts') || '');
+  const [ftConversion, setFtConversion] = useState<string>(() => localStorage.getItem('analytics_ft_conversion') || '');
+
+  // Persist manual inputs
+  useEffect(() => { localStorage.setItem('analytics_meta_spend', metaSpend); }, [metaSpend]);
+  useEffect(() => { localStorage.setItem('analytics_ft_starts', ftStarts); }, [ftStarts]);
+  useEffect(() => { localStorage.setItem('analytics_ft_conversion', ftConversion); }, [ftConversion]);
 
   // Load data when authenticated or date filters change
   useEffect(() => {
@@ -406,6 +416,17 @@ export default function Analytics() {
   const reportViews = fullFunnel?.report_views || 0;
   const ctaRate = reportViews > 0 ? ((ctaClicks / reportViews) * 100) : 0;
 
+  // Meta Ads computed values
+  const metaSpendNum = parseFloat(metaSpend) || 0;
+  const ftStartsNum = parseFloat(ftStarts) || 0;
+  const ftConversionNum = parseFloat(ftConversion) || 0;
+  const costPerFt = ftStartsNum > 0 ? metaSpendNum / ftStartsNum : 0;
+  const ftConverted = Math.round(ftStartsNum * (ftConversionNum / 100));
+  // Revenue estimate: converted users * $9.99 avg (adjustable)
+  const revenuePerConversion = 9.99;
+  const estimatedRevenue = ftConverted * revenuePerConversion;
+  const contributionMargin = estimatedRevenue - metaSpendNum;
+
   // ============================================================
   // RENDER
   // ============================================================
@@ -541,6 +562,110 @@ export default function Analytics() {
             </div>
           </div>
         )}
+
+        {/* ============================================================ */}
+        {/* META ADS & UNIT ECONOMICS */}
+        {/* ============================================================ */}
+        <Card className="shadow-sm border-2 border-blue-100">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <DollarSign className="w-5 h-5" />
+              Meta Ads & Unit Economics
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Left: Manual Inputs */}
+              <div className="space-y-4">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Inputs Manuales</p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">Meta Spend (USD)</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder="0.00"
+                        value={metaSpend}
+                        onChange={(e) => setMetaSpend(e.target.value)}
+                        className="pl-7 h-10 text-sm tabular-nums"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">Free Trial Starts</label>
+                    <Input
+                      type="number"
+                      step="1"
+                      min="0"
+                      placeholder="0"
+                      value={ftStarts}
+                      onChange={(e) => setFtStarts(e.target.value)}
+                      className="h-10 text-sm tabular-nums"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">FT Conversion (%)</label>
+                    <div className="relative">
+                      <Input
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        max="100"
+                        placeholder="0"
+                        value={ftConversion}
+                        onChange={(e) => setFtConversion(e.target.value)}
+                        className="pr-7 h-10 text-sm tabular-nums"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right: Calculated Metrics */}
+              <div className="space-y-4">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Calculados</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-xl bg-orange-50 border border-orange-100 p-4 text-center space-y-1">
+                    <p className={`text-2xl font-bold ${costPerFt > 0 ? 'text-orange-600' : 'text-muted-foreground/30'}`}>
+                      {costPerFt > 0 ? `$${costPerFt.toFixed(2)}` : '—'}
+                    </p>
+                    <p className="text-xs font-medium text-foreground">Cost per Free Trial</p>
+                    <p className="text-[10px] text-muted-foreground">Spend / FT Starts</p>
+                  </div>
+                  <div className={`rounded-xl border p-4 text-center space-y-1 ${
+                    contributionMargin > 0
+                      ? 'bg-green-50 border-green-100'
+                      : contributionMargin < 0
+                        ? 'bg-red-50 border-red-100'
+                        : 'bg-slate-50 border-slate-100'
+                  }`}>
+                    <p className={`text-2xl font-bold ${
+                      contributionMargin > 0
+                        ? 'text-green-600'
+                        : contributionMargin < 0
+                          ? 'text-red-600'
+                          : 'text-muted-foreground/30'
+                    }`}>
+                      {metaSpendNum > 0 || ftStartsNum > 0
+                        ? `${contributionMargin >= 0 ? '' : '-'}$${Math.abs(contributionMargin).toFixed(2)}`
+                        : '—'}
+                    </p>
+                    <p className="text-xs font-medium text-foreground">Contribution Margin</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {ftConverted > 0
+                        ? `${ftConverted} converted × $${revenuePerConversion} − $${metaSpendNum.toFixed(0)} spend`
+                        : 'Revenue − Spend'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* ============================================================ */}
         {/* KPI CARDS */}
