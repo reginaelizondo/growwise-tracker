@@ -81,6 +81,9 @@ interface FullFunnelData {
   completed: number;
   report_views: number;
   cta_clicks: number;
+  emails_sent: number;
+  emails_opened: number;
+  email_open_rate: number;
   completion_rate: number;
 }
 
@@ -1132,7 +1135,7 @@ export default function Analytics() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 <div className="rounded-lg bg-blue-50 border border-blue-100 p-4 text-center space-y-1">
                   <p className="text-3xl font-bold text-blue-600">{fullFunnel.emails_at_profile || 0}</p>
                   <p className="text-sm font-medium text-foreground">Emails en perfil</p>
@@ -1147,6 +1150,21 @@ export default function Analytics() {
                   <p className="text-3xl font-bold text-green-600">{fullFunnel.babies_with_email || 0}</p>
                   <p className="text-sm font-medium text-foreground">Total con email</p>
                   <p className="text-xs text-muted-foreground">Bebés con email registrado</p>
+                </div>
+                <div className="rounded-lg bg-indigo-50 border border-indigo-100 p-4 text-center space-y-1">
+                  <p className="text-3xl font-bold text-indigo-600">{fullFunnel.emails_sent || 0}</p>
+                  <p className="text-sm font-medium text-foreground">Emails enviados</p>
+                  <p className="text-xs text-muted-foreground">Report emails via Resend</p>
+                </div>
+                <div className="rounded-lg bg-teal-50 border border-teal-100 p-4 text-center space-y-1">
+                  <p className="text-3xl font-bold text-teal-600">{fullFunnel.emails_opened || 0}</p>
+                  <p className="text-sm font-medium text-foreground">Emails abiertos</p>
+                  <p className="text-xs text-muted-foreground">Tracking pixel</p>
+                </div>
+                <div className="rounded-lg bg-amber-50 border border-amber-100 p-4 text-center space-y-1">
+                  <p className="text-3xl font-bold text-amber-600">{(fullFunnel.email_open_rate || 0).toFixed(1)}%</p>
+                  <p className="text-sm font-medium text-foreground">Open rate</p>
+                  <p className="text-xs text-muted-foreground">Abiertos / Enviados</p>
                 </div>
               </div>
             </CardContent>

@@ -138,7 +138,7 @@ function getSkillContext(skillName: string): string {
 const LOGO_URL = 'https://uslivvopgsrajcxxjftw.supabase.co/storage/v1/object/public/email-assets/logo-kinedu-blue.png'
 let CTA_URL = Deno.env.get('KINEDU_CTA_URL') || 'https://kinedu.superwall.app/ia-report'
 
-function buildEmailHtml(babyName: string, ageMonths: number, areas: AreaResult[], overallPace: number, ctaUrl?: string): string {
+function buildEmailHtml(babyName: string, ageMonths: number, areas: AreaResult[], overallPace: number, ctaUrl?: string, assessmentId?: string): string {
   const finalCtaUrl = ctaUrl || CTA_URL
   // Find weakest skills (up to 4)
   const allSkills = areas.flatMap(a => a.skills)
@@ -448,6 +448,7 @@ function buildEmailHtml(babyName: string, ageMonths: number, areas: AreaResult[]
       </table>
     </td></tr>
   </table>
+  ${assessmentId ? `<img src="${Deno.env.get('SUPABASE_URL')}/functions/v1/track-email-open?aid=${assessmentId}" width="1" height="1" alt="" style="display:none;width:1px;height:1px;border:0;" />` : ''}
 </body>
 </html>`
 }
@@ -645,7 +646,7 @@ Deno.serve(async (req) => {
     ctaParams.set('premium', 'true')
     const fullCtaUrl = `${CTA_URL}${CTA_URL.includes('?') ? '&' : '?'}${ctaParams.toString()}`
 
-    const html = buildEmailHtml(baby.name || 'Your baby', assessment.reference_age_months, areas, overallPace, fullCtaUrl)
+    const html = buildEmailHtml(baby.name || 'Your baby', assessment.reference_age_months, areas, overallPace, fullCtaUrl, assessment_id)
 
     // Send via Resend
     const resendResponse = await fetch('https://api.resend.com/emails', {

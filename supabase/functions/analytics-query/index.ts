@@ -110,13 +110,15 @@ async function getFullFunnel(supabase: any, filters: ReportFilters) {
   const profileClicks = (pageEvents || []).filter((e: any) => e.event_type === 'profile_continue_clicked').length;
 
   // 2. Assessments
-  let aQuery = supabase.from('assessments').select('id, completed_at, reference_age_months');
+  let aQuery = supabase.from('assessments').select('id, completed_at, reference_age_months, email_sent_at, email_opened_at');
   if (filters.startDate) aQuery = aQuery.gte('created_at', filters.startDate);
   if (filters.endDate) aQuery = aQuery.lte('created_at', filters.endDate);
   const { data: assessments } = await aQuery;
 
   const totalCreated = assessments?.length || 0;
   const completed = assessments?.filter((a: any) => a.completed_at).length || 0;
+  const emailsSent = assessments?.filter((a: any) => a.email_sent_at).length || 0;
+  const emailsOpened = assessments?.filter((a: any) => a.email_opened_at).length || 0;
 
   // 3. Responses per assessment
   const assessmentIds = assessments?.map((a: any) => a.id) || [];
@@ -206,6 +208,9 @@ async function getFullFunnel(supabase: any, filters: ReportFilters) {
     completed,
     report_views: reportViewAssessments.size,
     cta_clicks: ctaClickAssessments.size,
+    emails_sent: emailsSent,
+    emails_opened: emailsOpened,
+    email_open_rate: emailsSent > 0 ? (emailsOpened / emailsSent) * 100 : 0,
     completion_rate: totalCreated > 0 ? (completed / totalCreated) * 100 : 0,
   };
 }

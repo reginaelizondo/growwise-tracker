@@ -79,8 +79,9 @@ function buildEmailHtml(params: {
   progress: number;
   stepTrackerHtml: string;
   resumeLink: string;
+  assessmentId?: string;
 }): string {
-  const { subject, babyName, headline, subText, progress, stepTrackerHtml, resumeLink } = params;
+  const { subject, babyName, headline, subText, progress, stepTrackerHtml, resumeLink, assessmentId } = params;
   const storageBase = "https://uslivvopgsrajcxxjftw.supabase.co/storage/v1/object/public/email-assets";
 
   return `<!DOCTYPE html>
@@ -241,6 +242,7 @@ function buildEmailHtml(params: {
 </table>
 </td></tr>
 </table>
+${assessmentId ? `<img src="https://uslivvopgsrajcxxjftw.supabase.co/functions/v1/track-email-open?aid=${assessmentId}" width="1" height="1" alt="" style="display:none;width:1px;height:1px;border:0;" />` : ''}
 </body>
 </html>`;
 }
@@ -354,6 +356,7 @@ Deno.serve(async (req) => {
       progress,
       stepTrackerHtml,
       resumeLink,
+      assessmentId: session.assessment_id || undefined,
     });
 
     const resendResp = await fetch("https://api.resend.com/emails", {

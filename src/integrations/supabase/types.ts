@@ -226,6 +226,7 @@ export type Database = {
           completed_at: string | null
           created_at: string | null
           email_sent_at: string | null
+          email_opened_at: string | null
           id: string
           locale: string | null
           reference_age_months: number
@@ -236,6 +237,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string | null
           email_sent_at?: string | null
+          email_opened_at?: string | null
           id?: string
           locale?: string | null
           reference_age_months: number
@@ -246,6 +248,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string | null
           email_sent_at?: string | null
+          email_opened_at?: string | null
           id?: string
           locale?: string | null
           reference_age_months?: number
