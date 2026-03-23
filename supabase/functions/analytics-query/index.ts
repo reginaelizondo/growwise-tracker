@@ -61,6 +61,9 @@ Deno.serve(async (req) => {
       case 'page_events':
         data = await getPageEvents(supabase, filters);
         break;
+      case 'meta_ads':
+        data = await getMetaAdsData(filters);
+        break;
       // Legacy - keep for backward compat
       case 'conversion_funnel':
         data = await getFullFunnel(supabase, filters);
@@ -148,8 +151,13 @@ async function getFullFunnel(supabase: any, filters: ReportFilters) {
   assessments?.forEach((a: any) => {
     const uniqueAnswers = responsesPerAssessment.get(a.id)?.size || 0;
     if (uniqueAnswers >= 1) engaged++;
-    const estimatedTotal = getEstimatedTotalForAge(a.reference_age_months || 0);
-    if (uniqueAnswers >= estimatedTotal * 0.5) halfway++;
+    // If assessment is completed, it's always 50%+
+    if (a.completed_at) {
+      halfway++;
+    } else {
+      const estimatedTotal = getEstimatedTotalForAge(a.reference_age_months || 0);
+      if (uniqueAnswers >= estimatedTotal * 0.5) halfway++;
+    }
   });
 
   // 4. Report views and CTA clicks from assessment_events
@@ -485,9 +493,14 @@ async function getIndividualAssessments(supabase: any, filters: ReportFilters) {
         ), MAX_GAP_MS);
       }
 
-      // Status
+      // Status — use last response timestamp as fallback when no events exist
       const now = new Date();
-      const lastActivity = lastEvent ? new Date(lastEvent.created_at) : new Date(assessment.started_at);
+      const lastResponseTime = responseTimestamps && responseTimestamps.length > 0
+        ? new Date(responseTimestamps[responseTimestamps.length - 1].created_at)
+        : null;
+      const lastActivity = lastEvent
+        ? new Date(lastEvent.created_at)
+        : (lastResponseTime || new Date(assessment.started_at));
       const minutesSince = (now.getTime() - lastActivity.getTime()) / 60000;
       let status = 'abandoned';
       if (assessment.completed_at) status = 'completed';
@@ -495,11 +508,16 @@ async function getIndividualAssessments(supabase: any, filters: ReportFilters) {
 
       // Skills answered
       const skillsAnswered = new Set((responses || []).filter((r: any) => r.skill_id).map((r: any) => r.skill_id)).size;
-      const totalSkills = await getSkillsCountByAgeRange(assessment.reference_age_months);
+      const totalSkills = await getSkillsCountByAgeRange(supabase, assessment.reference_age_months);
 
-      // Resolve drop-off point names
-      const lastAreaId = lastEvent?.area_id || null;
-      const lastSkillId = lastEvent?.skill_id || null;
+      // Resolve drop-off point: prefer events, fall back to last response
+      let lastAreaId = lastEvent?.area_id || null;
+      let lastSkillId = lastEvent?.skill_id || null;
+      if (!lastAreaId && responses && responses.length > 0) {
+        const lastResponse = responses[responses.length - 1];
+        lastAreaId = lastResponse.area_id || null;
+        lastSkillId = lastResponse.skill_id || null;
+      }
       const dropOffAreaName = lastAreaId ? (areaNames[lastAreaId] || `Area ${lastAreaId}`) : null;
       const dropOffSkillName = lastSkillId ? (skillNamesMap[lastSkillId] || `Skill ${lastSkillId}`) : null;
 
@@ -590,9 +608,9 @@ async function getPageEvents(supabase: any, filters: ReportFilters) {
 // ============================================================
 // HELPER FUNCTIONS
 // ============================================================
-async function getSkillsCountByAgeRange(referenceAge: number): Promise<number> {
+async function getSkillsCountByAgeRange(sb: any, referenceAge: number): Promise<number> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await sb
       .from('skill_milestone')
       .select('skill_id, age')
       .gte('age', referenceAge)
@@ -612,4 +630,73 @@ function getEstimatedTotalForAge(ageMonths: number): number {
   if (ageMonths <= 12) return 180;
   if (ageMonths <= 24) return 250;
   return 300;
+}
+
+// ============================================================
+// META ADS DATA
+// ============================================================
+async function getMetaAdsData(filters: ReportFilters) {
+  const token = Deno.env.get('META_ACCESS_TOKEN');
+  const adAccountId = Deno.env.get('META_AD_ACCOUNT_ID');
+  const adsetId = Deno.env.get('META_ADSET_ID');
+
+  if (!token || !adAccountId) {
+    return { error: 'Meta API not configured', configured: false };
+  }
+
+  try {
+    // Build time range
+    let timeRange = '';
+    if (filters.startDate && filters.endDate) {
+      const start = filters.startDate.split(' ')[0];
+      const end = filters.endDate.split(' ')[0];
+      timeRange = `&time_range={"since":"${start}","until":"${end}"}`;
+    } else {
+      timeRange = '&date_preset=last_30d';
+    }
+
+    // Query ad account insights filtered by adset
+    const fields = 'campaign_name,adset_name,impressions,clicks,spend,cpc,cpm,ctr,reach,frequency,actions,cost_per_action_type';
+    let url = `https://graph.facebook.com/v21.0/${adAccountId}/insights?fields=${fields}${timeRange}&access_token=${token}`;
+    if (adsetId) {
+      url += `&filtering=[{"field":"adset.id","operator":"EQUAL","value":"${adsetId}"}]`;
+    }
+
+    const response = await fetch(url);
+    const result = await response.json();
+
+    if (result.error) {
+      console.error('Meta API error:', result.error);
+      return { error: result.error.message, configured: true };
+    }
+
+    const data = result.data?.[0] || {};
+
+    // Parse actions to find link_clicks, landing_page_views
+    const actions = data.actions || [];
+    const costPerActions = data.cost_per_action_type || [];
+    const linkClicks = actions.find((a: any) => a.action_type === 'link_click')?.value || 0;
+    const landingViews = actions.find((a: any) => a.action_type === 'landing_page_view')?.value || 0;
+    const costPerLinkClick = costPerActions.find((a: any) => a.action_type === 'link_click')?.value || 0;
+
+    return {
+      configured: true,
+      campaign_name: data.campaign_name || '',
+      adset_name: data.adset_name || '',
+      impressions: parseInt(data.impressions || '0'),
+      clicks: parseInt(data.clicks || '0'),
+      link_clicks: parseInt(linkClicks),
+      landing_page_views: parseInt(landingViews),
+      reach: parseInt(data.reach || '0'),
+      frequency: parseFloat(data.frequency || '0'),
+      spend: parseFloat(data.spend || '0'),
+      cpc: parseFloat(data.cpc || '0'),
+      cpm: parseFloat(data.cpm || '0'),
+      ctr: parseFloat(data.ctr || '0'),
+      cost_per_link_click: parseFloat(costPerLinkClick),
+    };
+  } catch (err) {
+    console.error('Meta API fetch error:', err);
+    return { error: err instanceof Error ? err.message : 'Unknown error', configured: true };
+  }
 }

@@ -87,6 +87,24 @@ interface FullFunnelData {
   completion_rate: number;
 }
 
+interface MetaAdsData {
+  configured: boolean;
+  error?: string;
+  campaign_name: string;
+  adset_name: string;
+  impressions: number;
+  clicks: number;
+  link_clicks: number;
+  landing_page_views: number;
+  reach: number;
+  frequency: number;
+  spend: number;
+  cpc: number;
+  cpm: number;
+  ctr: number;
+  cost_per_link_click: number;
+}
+
 interface DailyStatData {
   date: string;
   started: number;
@@ -151,6 +169,7 @@ export default function Analytics() {
   const [dropOffByArea, setDropOffByArea] = useState<DropOffByAreaData[]>([]);
   const [individualAssessments, setIndividualAssessments] = useState<IndividualAssessmentData[]>([]);
   const [ageDistribution, setAgeDistribution] = useState<AgeDistributionData | null>(null);
+  const [metaAds, setMetaAds] = useState<MetaAdsData | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Date filters
@@ -218,12 +237,13 @@ export default function Analytics() {
       if (startDate) filters.startDate = format(startDate, 'yyyy-MM-dd');
       if (endDate) filters.endDate = format(endDate, 'yyyy-MM-dd');
 
-      const [funnelResult, dailyResult, dropOffResult, individualResult, ageResult] = await Promise.all([
+      const [funnelResult, dailyResult, dropOffResult, individualResult, ageResult, metaResult] = await Promise.all([
         supabase.functions.invoke('analytics-query', { body: { reportType: 'full_funnel', filters } }),
         supabase.functions.invoke('analytics-query', { body: { reportType: 'daily_stats', filters } }),
         supabase.functions.invoke('analytics-query', { body: { reportType: 'drop_off_by_area', filters } }),
         supabase.functions.invoke('analytics-query', { body: { reportType: 'individual_assessments', filters } }),
         supabase.functions.invoke('analytics-query', { body: { reportType: 'age_distribution', filters } }),
+        supabase.functions.invoke('analytics-query', { body: { reportType: 'meta_ads', filters } }),
       ]);
 
       if (funnelResult.data) setFullFunnel(funnelResult.data);
@@ -231,6 +251,7 @@ export default function Analytics() {
       if (dropOffResult.data) setDropOffByArea(dropOffResult.data);
       if (individualResult.data) setIndividualAssessments(individualResult.data);
       if (ageResult.data) setAgeDistribution(ageResult.data);
+      if (metaResult.data) setMetaAds(metaResult.data);
     } catch (error) {
       console.error('Error loading analytics:', error);
     } finally {
@@ -715,6 +736,64 @@ export default function Analytics() {
             iconBg="bg-purple-100 text-purple-600"
           />
         </div>
+
+        {/* ============================================================ */}
+        {/* META ADS */}
+        {/* ============================================================ */}
+        {metaAds && metaAds.configured && !metaAds.error && (
+          <Card className="shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Target className="w-5 h-5" />
+                Meta Ads — {metaAds.adset_name || 'Ad Set'}
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">{metaAds.campaign_name}</p>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="rounded-lg bg-blue-50 border border-blue-100 p-4 text-center space-y-1">
+                  <p className="text-2xl font-bold text-blue-600">${metaAds.spend.toFixed(2)}</p>
+                  <p className="text-sm font-medium text-foreground">Spend</p>
+                </div>
+                <div className="rounded-lg bg-indigo-50 border border-indigo-100 p-4 text-center space-y-1">
+                  <p className="text-2xl font-bold text-indigo-600">{metaAds.impressions.toLocaleString()}</p>
+                  <p className="text-sm font-medium text-foreground">Impresiones</p>
+                </div>
+                <div className="rounded-lg bg-purple-50 border border-purple-100 p-4 text-center space-y-1">
+                  <p className="text-2xl font-bold text-purple-600">{metaAds.reach.toLocaleString()}</p>
+                  <p className="text-sm font-medium text-foreground">Alcance</p>
+                </div>
+                <div className="rounded-lg bg-teal-50 border border-teal-100 p-4 text-center space-y-1">
+                  <p className="text-2xl font-bold text-teal-600">{metaAds.link_clicks}</p>
+                  <p className="text-sm font-medium text-foreground">Link Clicks</p>
+                </div>
+                <div className="rounded-lg bg-green-50 border border-green-100 p-4 text-center space-y-1">
+                  <p className="text-2xl font-bold text-green-600">{metaAds.landing_page_views}</p>
+                  <p className="text-sm font-medium text-foreground">Landing Views</p>
+                </div>
+                <div className="rounded-lg bg-amber-50 border border-amber-100 p-4 text-center space-y-1">
+                  <p className="text-2xl font-bold text-amber-600">${metaAds.cpc.toFixed(2)}</p>
+                  <p className="text-sm font-medium text-foreground">CPC</p>
+                </div>
+                <div className="rounded-lg bg-rose-50 border border-rose-100 p-4 text-center space-y-1">
+                  <p className="text-2xl font-bold text-rose-600">${metaAds.cpm.toFixed(2)}</p>
+                  <p className="text-sm font-medium text-foreground">CPM</p>
+                </div>
+                <div className="rounded-lg bg-cyan-50 border border-cyan-100 p-4 text-center space-y-1">
+                  <p className="text-2xl font-bold text-cyan-600">{metaAds.ctr.toFixed(2)}%</p>
+                  <p className="text-sm font-medium text-foreground">CTR</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+        {metaAds && metaAds.error && (
+          <Card className="shadow-sm border-amber-200 bg-amber-50">
+            <CardContent className="py-4">
+              <p className="text-sm text-amber-700">Meta Ads: {metaAds.error}</p>
+            </CardContent>
+          </Card>
+        )}
 
         {/* ============================================================ */}
         {/* FULL FUNNEL */}
