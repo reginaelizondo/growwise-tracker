@@ -654,7 +654,7 @@ function getEstimatedTotalForAge(ageMonths: number): number {
 // META ADS DATA
 // ============================================================
 async function getMetaAdsData(filters: ReportFilters) {
-  const token = Deno.env.get('META_ACCESS_TOKEN');
+  const token = Deno.env.get('META_ADS_ACCESS_TOKEN') || Deno.env.get('META_ACCESS_TOKEN');
   const adAccountId = Deno.env.get('META_AD_ACCOUNT_ID');
   const adsetId = Deno.env.get('META_ADSET_ID');
 
