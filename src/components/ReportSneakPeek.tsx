@@ -90,12 +90,6 @@ export default function ReportSneakPeek() {
           ))}
         </div>
 
-        {/* Blurred details to create curiosity */}
-        <div className="mt-3 space-y-1.5">
-          <div className="h-2.5 rounded-full bg-gradient-to-r from-gray-200 to-gray-100 w-full" />
-          <div className="h-2.5 rounded-full bg-gradient-to-r from-gray-200 to-gray-100 w-3/4" />
-          <div className="h-2.5 rounded-full bg-gradient-to-r from-gray-200 to-gray-100 w-5/6" />
-        </div>
       </div>
     </div>
   );
