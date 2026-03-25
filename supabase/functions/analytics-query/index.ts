@@ -105,7 +105,17 @@ async function getFullFunnel(supabase: any, filters: ReportFilters) {
   if (filters.endDate) peQuery = peQuery.lte('created_at', filters.endDate);
   const { data: pageEvents } = await peQuery;
 
-  const landingClicks = (pageEvents || []).filter((e: any) => e.event_type === 'landing_start_clicked').length;
+  // Landing page views and A/B variant tracking
+  const landingViews = (pageEvents || []).filter((e: any) => e.event_type === 'landing_page_view');
+  const landingViewsTotal = landingViews.length;
+  const landingViewsA = landingViews.filter((e: any) => e.event_data?.variant === 'A').length;
+  const landingViewsB = landingViews.filter((e: any) => e.event_data?.variant === 'B').length;
+
+  const landingClickEvents = (pageEvents || []).filter((e: any) => e.event_type === 'landing_start_clicked');
+  const landingClicks = landingClickEvents.length;
+  const landingClicksA = landingClickEvents.filter((e: any) => e.event_data?.variant === 'A').length;
+  const landingClicksB = landingClickEvents.filter((e: any) => e.event_data?.variant === 'B').length;
+
   const formNameCompleted = (pageEvents || []).filter((e: any) => e.event_type === 'form_name_completed').length;
   const formBirthdayCompleted = (pageEvents || []).filter((e: any) => e.event_type === 'form_birthday_completed').length;
   const formEmailCompleted = (pageEvents || []).filter((e: any) => e.event_type === 'form_email_completed').length;
@@ -220,6 +230,14 @@ async function getFullFunnel(supabase: any, filters: ReportFilters) {
     emails_opened: emailsOpened,
     email_open_rate: emailsSent > 0 ? (emailsOpened / emailsSent) * 100 : 0,
     completion_rate: totalCreated > 0 ? (completed / totalCreated) * 100 : 0,
+    // A/B test data
+    landing_views: landingViewsTotal,
+    landing_views_a: landingViewsA,
+    landing_views_b: landingViewsB,
+    landing_clicks_a: landingClicksA,
+    landing_clicks_b: landingClicksB,
+    ctr_a: landingViewsA > 0 ? (landingClicksA / landingViewsA) * 100 : 0,
+    ctr_b: landingViewsB > 0 ? (landingClicksB / landingViewsB) * 100 : 0,
   };
 }
 

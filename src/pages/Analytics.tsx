@@ -85,6 +85,14 @@ interface FullFunnelData {
   emails_opened: number;
   email_open_rate: number;
   completion_rate: number;
+  // A/B test
+  landing_views: number;
+  landing_views_a: number;
+  landing_views_b: number;
+  landing_clicks_a: number;
+  landing_clicks_b: number;
+  ctr_a: number;
+  ctr_b: number;
 }
 
 interface MetaAdsData {
@@ -1143,6 +1151,73 @@ export default function Analytics() {
             )}
           </CardContent>
         </Card>
+
+        {/* ============================================================ */}
+        {/* A/B TEST LANDING PAGE */}
+        {/* ============================================================ */}
+        {fullFunnel && (fullFunnel.landing_views_a > 0 || fullFunnel.landing_views_b > 0) && (
+          <Card className="shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Target className="w-5 h-5" />
+                A/B Test — Landing Page
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">A = Foto del bebe | B = Sneak peek del reporte</p>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                {/* Variant A */}
+                <div className="rounded-xl border p-4 space-y-2" style={{ borderColor: '#3b82f6', borderWidth: 2 }}>
+                  <p className="text-sm font-bold text-blue-600 text-center">Variante A</p>
+                  <p className="text-xs text-center text-muted-foreground">Foto del bebe</p>
+                  <div className="text-center space-y-1 pt-2">
+                    <p className="text-2xl font-bold text-foreground">{fullFunnel.landing_views_a}</p>
+                    <p className="text-xs text-muted-foreground">vistas</p>
+                  </div>
+                  <div className="text-center space-y-1">
+                    <p className="text-2xl font-bold text-foreground">{fullFunnel.landing_clicks_a}</p>
+                    <p className="text-xs text-muted-foreground">clicks CTA</p>
+                  </div>
+                  <div className="text-center pt-2 border-t">
+                    <p className="text-3xl font-extrabold text-blue-600">{fullFunnel.ctr_a.toFixed(1)}%</p>
+                    <p className="text-xs font-medium text-muted-foreground">CTR</p>
+                  </div>
+                </div>
+
+                {/* Variant B */}
+                <div className="rounded-xl border p-4 space-y-2" style={{ borderColor: '#8b5cf6', borderWidth: 2 }}>
+                  <p className="text-sm font-bold text-purple-600 text-center">Variante B</p>
+                  <p className="text-xs text-center text-muted-foreground">Sneak peek reporte</p>
+                  <div className="text-center space-y-1 pt-2">
+                    <p className="text-2xl font-bold text-foreground">{fullFunnel.landing_views_b}</p>
+                    <p className="text-xs text-muted-foreground">vistas</p>
+                  </div>
+                  <div className="text-center space-y-1">
+                    <p className="text-2xl font-bold text-foreground">{fullFunnel.landing_clicks_b}</p>
+                    <p className="text-xs text-muted-foreground">clicks CTA</p>
+                  </div>
+                  <div className="text-center pt-2 border-t">
+                    <p className="text-3xl font-extrabold text-purple-600">{fullFunnel.ctr_b.toFixed(1)}%</p>
+                    <p className="text-xs font-medium text-muted-foreground">CTR</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Winner indicator */}
+              {fullFunnel.landing_views_a >= 10 && fullFunnel.landing_views_b >= 10 && (
+                <div className="mt-4 text-center">
+                  {fullFunnel.ctr_b > fullFunnel.ctr_a ? (
+                    <p className="text-sm font-bold text-purple-600">Variante B gana por {(fullFunnel.ctr_b - fullFunnel.ctr_a).toFixed(1)}pp</p>
+                  ) : fullFunnel.ctr_a > fullFunnel.ctr_b ? (
+                    <p className="text-sm font-bold text-blue-600">Variante A gana por {(fullFunnel.ctr_a - fullFunnel.ctr_b).toFixed(1)}pp</p>
+                  ) : (
+                    <p className="text-sm font-bold text-muted-foreground">Empate</p>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* ============================================================ */}
         {/* AGE DISTRIBUTION (collapsible) */}
