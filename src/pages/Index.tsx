@@ -247,7 +247,7 @@ const Index = () => {
             onClick={() => trackAndNavigate('cta_bottom')}
           >
             <span className="flex items-center gap-2">
-              Start Assessment — It's Free
+              Start <span className="font-extrabold">FREE</span> Assessment
               <ArrowRight className="w-5 h-5" strokeWidth={3} />
             </span>
           </Button>
