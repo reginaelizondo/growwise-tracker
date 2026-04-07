@@ -157,8 +157,12 @@ const Index = () => {
           </div>
 
           <h1 className="text-2xl md:text-3xl font-bold text-primary mb-4">
-            Feel unsure about your baby's development?
+            Is your baby on track?
           </h1>
+
+          <p className="text-base md:text-lg text-muted-foreground mb-5 max-w-sm mx-auto">
+            Take this <span className="font-bold">FREE</span> 5-minute milestone assessment and get instant feedback on your baby's development.
+          </p>
 
           {/* Hero visual — A: baby photo, B: report sneak peek */}
           <div className="flex justify-center mb-5">
@@ -182,10 +186,6 @@ const Index = () => {
             )}
           </div>
 
-          <p className="text-base md:text-lg text-muted-foreground mb-5 max-w-sm mx-auto">
-            Answer a few quick questions. Get your baby's personalized development report instantly.
-          </p>
-
           <p className="text-sm font-medium text-muted-foreground mb-4">
             Join <span className="font-bold text-foreground">10M+</span> parents who've already checked
           </p>
@@ -197,7 +197,7 @@ const Index = () => {
             onClick={() => trackAndNavigate('hero_cta')}
           >
             <span className="flex items-center gap-2">
-              Start Assessment — It's Free
+              Start <span className="font-extrabold">FREE</span> Assessment
               <ArrowRight className="w-5 h-5" strokeWidth={3} />
             </span>
           </Button>

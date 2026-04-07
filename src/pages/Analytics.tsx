@@ -181,7 +181,7 @@ export default function Analytics() {
   const [loading, setLoading] = useState(true);
 
   // Date filters
-  const [startDate, setStartDate] = useState<Date | undefined>();
+  const [startDate, setStartDate] = useState<Date | undefined>(new Date('2026-03-20'));
   const [endDate, setEndDate] = useState<Date | undefined>();
   const [startDateOpen, setStartDateOpen] = useState(false);
   const [endDateOpen, setEndDateOpen] = useState(false);
@@ -596,157 +596,7 @@ export default function Analytics() {
         )}
 
         {/* ============================================================ */}
-        {/* META ADS & UNIT ECONOMICS */}
-        {/* ============================================================ */}
-        <Card className="shadow-sm border-2 border-blue-100">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <DollarSign className="w-5 h-5" />
-              Meta Ads & Unit Economics
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Left: Manual Inputs */}
-              <div className="space-y-4">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Inputs Manuales</p>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-muted-foreground">Meta Spend (USD)</label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        placeholder="0.00"
-                        value={metaSpend}
-                        onChange={(e) => setMetaSpend(e.target.value)}
-                        className="pl-7 h-10 text-sm tabular-nums"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-muted-foreground">Free Trial Starts</label>
-                    <Input
-                      type="number"
-                      step="1"
-                      min="0"
-                      placeholder="0"
-                      value={ftStarts}
-                      onChange={(e) => setFtStarts(e.target.value)}
-                      className="h-10 text-sm tabular-nums"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-muted-foreground">FT Conversion (%)</label>
-                    <div className="relative">
-                      <Input
-                        type="number"
-                        step="0.1"
-                        min="0"
-                        max="100"
-                        placeholder="0"
-                        value={ftConversion}
-                        onChange={(e) => setFtConversion(e.target.value)}
-                        className="pr-7 h-10 text-sm tabular-nums"
-                      />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right: Calculated Metrics */}
-              <div className="space-y-4">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Calculados</p>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-xl bg-orange-50 border border-orange-100 p-4 text-center space-y-1">
-                    <p className={`text-2xl font-bold ${costPerFt > 0 ? 'text-orange-600' : 'text-muted-foreground/30'}`}>
-                      {costPerFt > 0 ? `$${costPerFt.toFixed(2)}` : '—'}
-                    </p>
-                    <p className="text-xs font-medium text-foreground">Cost per Free Trial</p>
-                    <p className="text-[10px] text-muted-foreground">Spend / FT Starts</p>
-                  </div>
-                  <div className={`rounded-xl border p-4 text-center space-y-1 ${
-                    contributionMargin > 0
-                      ? 'bg-green-50 border-green-100'
-                      : contributionMargin < 0
-                        ? 'bg-red-50 border-red-100'
-                        : 'bg-slate-50 border-slate-100'
-                  }`}>
-                    <p className={`text-2xl font-bold ${
-                      contributionMargin > 0
-                        ? 'text-green-600'
-                        : contributionMargin < 0
-                          ? 'text-red-600'
-                          : 'text-muted-foreground/30'
-                    }`}>
-                      {metaSpendNum > 0 || ftStartsNum > 0
-                        ? `${contributionMargin >= 0 ? '' : '-'}$${Math.abs(contributionMargin).toFixed(2)}`
-                        : '—'}
-                    </p>
-                    <p className="text-xs font-medium text-foreground">Contribution Margin</p>
-                    <p className="text-[10px] text-muted-foreground">
-                      {ftConverted > 0
-                        ? `${ftConverted} converted × $${revenuePerConversion} − $${metaSpendNum.toFixed(0)} spend`
-                        : 'Revenue − Spend'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* ============================================================ */}
-        {/* KPI CARDS */}
-        {/* ============================================================ */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          <KpiCard
-            label="Total Sesiones"
-            value={fullFunnel?.landing_clicks || 0}
-            icon={<Users className="w-4 h-4" />}
-            iconBg="bg-blue-100 text-blue-600"
-          />
-          <KpiCard
-            label="Assessments Creados"
-            value={fullFunnel?.assessments_created || 0}
-            icon={<Target className="w-4 h-4" />}
-            iconBg="bg-indigo-100 text-indigo-600"
-          />
-          <KpiCard
-            label="Tasa Completado"
-            value={`${completionRate.toFixed(0)}%`}
-            icon={<CheckCircle2 className="w-4 h-4" />}
-            iconBg={completionRate >= 60 ? 'bg-green-100 text-green-600' : completionRate >= 30 ? 'bg-amber-100 text-amber-600' : 'bg-red-100 text-red-600'}
-            valueColor={completionRate >= 60 ? 'text-green-600' : completionRate >= 30 ? 'text-amber-600' : 'text-red-600'}
-          />
-          <KpiCard
-            label="Abandonados"
-            value={abandonedCount}
-            subtitle={totalAssessments > 0 ? `${((abandonedCount / totalAssessments) * 100).toFixed(0)}%` : undefined}
-            icon={<XCircle className="w-4 h-4" />}
-            iconBg="bg-red-100 text-red-600"
-            valueColor="text-red-600"
-          />
-          <KpiCard
-            label="Duración Mediana"
-            value={`${Math.floor(medianDuration / 60)}m ${medianDuration % 60}s`}
-            subtitle="(completados)"
-            icon={<Clock className="w-4 h-4" />}
-            iconBg="bg-amber-100 text-amber-600"
-          />
-          <KpiCard
-            label="Vieron Reporte"
-            value={reportViews}
-            icon={<Eye className="w-4 h-4" />}
-            iconBg="bg-purple-100 text-purple-600"
-          />
-        </div>
-
-        {/* ============================================================ */}
-        {/* META ADS */}
+        {/* META ADS — AD SET (moved above KPIs) */}
         {/* ============================================================ */}
         {metaAds && metaAds.configured && !metaAds.error && (
           <Card className="shadow-sm">
@@ -804,9 +654,67 @@ export default function Analytics() {
         )}
 
         {/* ============================================================ */}
+        {/* KPI CARDS */}
+        {/* ============================================================ */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <KpiCard
+            label="Total Sesiones"
+            value={fullFunnel?.landing_clicks || 0}
+            icon={<Users className="w-4 h-4" />}
+            iconBg="bg-blue-100 text-blue-600"
+          />
+          <KpiCard
+            label="Assessments Creados"
+            value={fullFunnel?.assessments_created || 0}
+            icon={<Target className="w-4 h-4" />}
+            iconBg="bg-indigo-100 text-indigo-600"
+          />
+          <KpiCard
+            label="Tasa Completado"
+            value={`${completionRate.toFixed(0)}%`}
+            icon={<CheckCircle2 className="w-4 h-4" />}
+            iconBg={completionRate >= 60 ? 'bg-green-100 text-green-600' : completionRate >= 30 ? 'bg-amber-100 text-amber-600' : 'bg-red-100 text-red-600'}
+            valueColor={completionRate >= 60 ? 'text-green-600' : completionRate >= 30 ? 'text-amber-600' : 'text-red-600'}
+          />
+          <KpiCard
+            label="Abandonados"
+            value={abandonedCount}
+            subtitle={totalAssessments > 0 ? `${((abandonedCount / totalAssessments) * 100).toFixed(0)}%` : undefined}
+            icon={<XCircle className="w-4 h-4" />}
+            iconBg="bg-red-100 text-red-600"
+            valueColor="text-red-600"
+          />
+          <KpiCard
+            label="Duración Mediana"
+            value={`${Math.floor(medianDuration / 60)}m ${medianDuration % 60}s`}
+            subtitle="(completados)"
+            icon={<Clock className="w-4 h-4" />}
+            iconBg="bg-amber-100 text-amber-600"
+          />
+          <KpiCard
+            label="Vieron Reporte"
+            value={reportViews}
+            icon={<Eye className="w-4 h-4" />}
+            iconBg="bg-purple-100 text-purple-600"
+          />
+        </div>
+
+        {/* ============================================================ */}
         {/* FULL FUNNEL */}
         {/* ============================================================ */}
-        {fullFunnel && fullFunnel.steps && (
+        {fullFunnel && fullFunnel.steps && (() => {
+          // Prepend Meta link_clicks as first funnel step if available
+          const metaStep = metaAds && metaAds.configured && !metaAds.error && metaAds.link_clicks > 0
+            ? [{ label: 'Clicks en Meta', count: metaAds.link_clicks, drop_off_pct: 0 }]
+            : [];
+          const allSteps = [...metaStep, ...fullFunnel.steps];
+          // Recalculate drop-off for the first original step relative to meta clicks
+          if (metaStep.length > 0 && allSteps.length > 1) {
+            const metaCount = allSteps[0].count;
+            const nextCount = allSteps[1].count;
+            allSteps[1] = { ...allSteps[1], drop_off_pct: metaCount > 0 ? ((metaCount - nextCount) / metaCount) * 100 : 0 };
+          }
+          return (
           <Card className="shadow-sm">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg">
@@ -816,8 +724,8 @@ export default function Analytics() {
             </CardHeader>
             <CardContent>
               <div className="space-y-1">
-                {fullFunnel.steps.map((step, i) => {
-                  const maxCount = fullFunnel.steps[0].count || 1;
+                {allSteps.map((step, i) => {
+                  const maxCount = allSteps[0].count || 1;
                   const widthPct = maxCount > 0 ? Math.max((step.count / maxCount) * 100, 8) : 8;
                   const colors = [
                     'bg-blue-600', 'bg-blue-500', 'bg-indigo-500', 'bg-violet-500',
@@ -859,7 +767,8 @@ export default function Analytics() {
               </div>
             </CardContent>
           </Card>
-        )}
+          );
+        })()}
 
         {/* ============================================================ */}
         {/* DAILY TREND CHART */}
