@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
 import { getKineduRedirectUrl } from "@/config/kinedu";
 
 interface SkillResult {
@@ -55,23 +54,39 @@ export const DomainCTA = ({
 
   const lowestSkill = sortedSkills[0];
 
-  const handleClick = () => {
-    // Open URL immediately to avoid popup blocker on mobile
-    window.location.href = getKineduRedirectUrl({ token: kineduToken, email, locale });
-    
-    // Track event in background
+  const handleClick = async () => {
+    const ctaUrl = getKineduRedirectUrl({ token: kineduToken, email, locale });
+
+    // Track event BEFORE navigating — fetch + keepalive survives navigation
     if (assessmentId && babyId) {
-      supabase.from('assessment_events').insert({
-        assessment_id: assessmentId,
-        baby_id: babyId,
-        event_type: 'domain_cta_clicked',
-        event_data: { 
-          domain: lowestSkill.area_name,
-          skill: lowestSkill.skill_name,
-          source: 'domain_section'
-        }
-      });
+      try {
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+        await fetch(`${supabaseUrl}/rest/v1/assessment_events`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': supabaseKey,
+            'Authorization': `Bearer ${supabaseKey}`,
+          },
+          body: JSON.stringify({
+            assessment_id: assessmentId,
+            baby_id: babyId,
+            event_type: 'domain_cta_clicked',
+            event_data: {
+              domain: lowestSkill.area_name,
+              skill: lowestSkill.skill_name,
+              source: 'domain_section'
+            }
+          }),
+          keepalive: true,
+        });
+      } catch (err) {
+        console.error('Domain CTA tracking error:', err);
+      }
     }
+
+    window.location.href = ctaUrl;
   };
 
   return (

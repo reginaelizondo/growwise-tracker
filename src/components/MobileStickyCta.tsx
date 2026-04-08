@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
 import { getKineduRedirectUrl } from "@/config/kinedu";
 
 interface MobileStickyCtaProps {
@@ -20,7 +19,7 @@ export const MobileStickyCta = ({ babyName, assessmentId, babyId, kineduRegister
     console.log('🔵 CTA URL:', ctaUrl);
     console.log('🔵 Token:', kineduToken ? kineduToken.substring(0, 20) + '...' : 'NULL');
 
-    // Track event BEFORE navigating (use sendBeacon as fallback)
+    // Track event BEFORE navigating — use fetch with keepalive so it survives navigation
     if (assessmentId && babyId) {
       try {
         const payload = {
@@ -34,17 +33,19 @@ export const MobileStickyCta = ({ babyName, assessmentId, babyId, kineduRegister
             timestamp: new Date().toISOString()
           }
         };
-        // Use sendBeacon for reliability during navigation
-        const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/assessment_events`;
-        const beaconData = JSON.stringify(payload);
-        const sent = navigator.sendBeacon?.(
-          url + `?apikey=${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          new Blob([beaconData], { type: 'application/json' })
-        );
-        if (!sent) {
-          // Fallback: fire and don't wait
-          supabase.from('assessment_events').insert(payload).then(() => {}).catch(() => {});
-        }
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+        // fetch + keepalive: true supports Content-Type: application/json AND survives navigation
+        await fetch(`${supabaseUrl}/rest/v1/assessment_events`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': supabaseKey,
+            'Authorization': `Bearer ${supabaseKey}`,
+          },
+          body: JSON.stringify(payload),
+          keepalive: true,
+        });
       } catch (err) {
         console.error('CTA tracking error:', err);
       }
