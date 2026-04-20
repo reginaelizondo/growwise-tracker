@@ -158,8 +158,6 @@ const Index = () => {
             <span className="text-muted-foreground">
               Joined by <span className="font-bold text-foreground">10M+</span> parents
             </span>
-            <span className="text-muted-foreground/60">·</span>
-            <span className="text-muted-foreground">Pediatrician-recommended</span>
           </div>
 
           <p className="text-base md:text-lg text-muted-foreground mb-5 max-w-sm mx-auto">
