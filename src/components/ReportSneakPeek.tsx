@@ -28,8 +28,8 @@ const AREAS: Area[] = [
 function getPaceLabel(pace: number): { label: string; emoji: string } {
   if (pace >= 1.8) return { label: 'Mastered!', emoji: '🌟' };
   if (pace >= 1.2) return { label: 'Ahead of pace', emoji: '🚀' };
-  if (pace >= 0.8) return { label: 'On track', emoji: '✓' };
-  return { label: 'Building up', emoji: '🌱' };
+  if (pace >= 1.0) return { label: 'On track', emoji: '✓' };
+  return { label: 'Developing at their own pace', emoji: '🌱' };
 }
 
 /**
