@@ -1,5 +1,5 @@
 /**
- * Report Sneak Peek - Variant B hero component
+ * Report Sneak Peek - landing hero component
  * Shows a preview of the 4 area pace gauges to entice users
  */
 import logoPhysical from "@/assets/Logo_Physical_HD.png";
@@ -7,61 +7,61 @@ import logoCognitive from "@/assets/Logo_Cognitive_HD.png";
 import logoLinguistic from "@/assets/Logo_Linguistic_HD.png";
 import logoEmotional from "@/assets/Logo_Emotional_HD.png";
 
-const AREAS = [
-  { id: 2, name: 'Cognitive', icon: logoCognitive, color: '#00C853', pace: 1.4 },
-  { id: 1, name: 'Physical', icon: logoPhysical, color: '#00A3E0', pace: 1.1 },
-  { id: 3, name: 'Linguistic', icon: logoLinguistic, color: '#FF8A00', pace: 0.8 },
-  { id: 4, name: 'Socio-Emotional', icon: logoEmotional, color: '#F06292', pace: 1.2 },
+type Area = {
+  id: number;
+  name: string;
+  icon: string;
+  color: string;
+  bgTint: string;
+  pace: number;
+  example: string;
+};
+
+const AREAS: Area[] = [
+  { id: 2, name: 'Cognitive', icon: logoCognitive, color: '#00A050', bgTint: 'rgba(0,200,83,0.06)', pace: 1.4, example: 'Problem solving' },
+  { id: 1, name: 'Physical', icon: logoPhysical, color: '#0090CC', bgTint: 'rgba(0,163,224,0.06)', pace: 1.1, example: 'Motor skills' },
+  { id: 3, name: 'Linguistic', icon: logoLinguistic, color: '#E87A00', bgTint: 'rgba(255,138,0,0.06)', pace: 0.8, example: 'First words' },
+  { id: 4, name: 'Socio-Emotional', icon: logoEmotional, color: '#D94A82', bgTint: 'rgba(240,98,146,0.06)', pace: 1.2, example: 'Social bonds' },
 ];
 
 // Same logic as Report.tsx → getPaceLabel
-function getPaceLabel(pace: number): string {
-  if (pace >= 1.8) return 'Mastered this area!';
-  if (pace >= 1.2) return 'Ahead of pace';
-  if (pace >= 0.2) return 'Right on track';
-  return 'Building up — keep practicing!';
+function getPaceLabel(pace: number): { label: string; emoji: string } {
+  if (pace >= 1.8) return { label: 'Mastered!', emoji: '🌟' };
+  if (pace >= 1.2) return { label: 'Ahead of pace', emoji: '🚀' };
+  if (pace >= 0.8) return { label: 'On track', emoji: '✓' };
+  return { label: 'Building up', emoji: '🌱' };
 }
 
-function getPaceColor(_pace: number, areaColor: string): string {
-  return areaColor;
-}
-
-function MiniGauge({ pace, color }: { pace: number; color: string }) {
-  const totalBars = 20;
-  const currentPos = Math.max(0, Math.min(1, pace / 2.0));
+/**
+ * Horizontal progress bar showing the baby's pace position.
+ * Left = 0x, Middle = 1x (typical), Right = 2x.
+ * Filled from 0x to the pace value.
+ */
+function PaceBar({ pace, color }: { pace: number; color: string }) {
+  const fillPct = Math.max(0, Math.min(100, (pace / 2.0) * 100));
 
   return (
-    <div className="flex items-end gap-[1.5px] h-4 w-full justify-center">
-      {Array.from({ length: totalBars }, (_, i) => {
-        const pos = i / (totalBars - 1);
-        const dist = Math.abs(pos - currentPos);
-        let height = 6;
-        let opacity = 0.2;
-        let barColor = '#CBD5E0';
+    <div className="relative mt-2">
+      {/* Bar background */}
+      <div className="h-1.5 w-full rounded-full bg-gray-200 overflow-hidden">
+        <div
+          className="h-full rounded-full transition-all duration-700 ease-out"
+          style={{ width: `${fillPct}%`, background: color }}
+        />
+      </div>
 
-        if (dist < 0.03) {
-          height = 16; opacity = 1; barColor = color;
-        } else if (dist < 0.1) {
-          const intensity = 1 - (dist - 0.03) / 0.07;
-          height = 6 + 10 * intensity;
-          opacity = 0.3 + 0.7 * intensity;
-          barColor = color;
-        }
+      {/* Tick at 1x (middle) */}
+      <div
+        className="absolute top-0 w-[2px] h-1.5 bg-white/80"
+        style={{ left: '50%', transform: 'translateX(-50%)' }}
+      />
 
-        return (
-          <div
-            key={i}
-            className="rounded-t-sm"
-            style={{
-              width: 3,
-              height,
-              background: barColor,
-              opacity,
-              transition: 'height 0.6s ease',
-            }}
-          />
-        );
-      })}
+      {/* Labels */}
+      <div className="flex justify-between mt-1 text-[8px] text-gray-500 font-semibold">
+        <span>0x</span>
+        <span className="text-gray-400">typical</span>
+        <span>2x</span>
+      </div>
     </div>
   );
 }
@@ -69,55 +69,67 @@ function MiniGauge({ pace, color }: { pace: number; color: string }) {
 export default function ReportSneakPeek() {
   return (
     <div className="w-full max-w-xs mx-auto">
-      {/* Blurred report preview card */}
       <div
-        className="rounded-3xl p-4 border-2 border-white/80 shadow-lg"
+        className="rounded-3xl p-4 border-2 border-white/80 shadow-xl"
         style={{ background: 'linear-gradient(135deg, #f8f9ff 0%, #fff5f5 50%, #f0fdf4 100%)' }}
       >
-        <p className="text-[10px] font-bold text-center text-muted-foreground uppercase tracking-wider mb-1 opacity-70">
-          You'll get a report like this
-        </p>
-        <p className="text-[11px] text-center text-muted-foreground mb-3 px-2 leading-snug">
-          See how your baby is developing across <span className="font-semibold">4 key areas</span> compared to peers their age.
-        </p>
+        {/* Header */}
+        <div className="text-center mb-3">
+          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider opacity-70">
+            You'll get a report like this
+          </p>
+          <p className="text-[11px] text-muted-foreground mt-0.5 px-2 leading-snug">
+            Your baby's development across <span className="font-semibold text-foreground">4 key areas</span>, compared to peers their age.
+          </p>
+        </div>
 
-        <div className="grid grid-cols-2 gap-2.5">
-          {AREAS.map((area) => (
-            <div
-              key={area.id}
-              className="rounded-xl p-3 border"
-              style={{ background: 'white', borderColor: '#E8E4DF' }}
-            >
-              <div className="flex items-center gap-1.5 mb-2">
-                <img src={area.icon} alt={area.name} className="w-5 h-5" />
-                <span className="font-bold text-[10px] text-foreground leading-tight">{area.name}</span>
-              </div>
-              <div className="text-xl font-extrabold text-center leading-none" style={{ color: area.color }}>
-                {area.pace.toFixed(1)}x
-              </div>
+        {/* Area cards */}
+        <div className="grid grid-cols-2 gap-2">
+          {AREAS.map((area) => {
+            const { label, emoji } = getPaceLabel(area.pace);
+            return (
               <div
-                className="text-[9px] font-semibold text-center mt-1 leading-tight"
-                style={{ color: getPaceColor(area.pace, area.color) }}
+                key={area.id}
+                className="rounded-xl p-2.5 border"
+                style={{ background: area.bgTint, borderColor: area.color + '30' }}
               >
-                {getPaceLabel(area.pace)}
+                {/* Top row: icon + name */}
+                <div className="flex items-center gap-1 mb-1.5">
+                  <img src={area.icon} alt={area.name} className="w-4 h-4" />
+                  <span className="font-bold text-[10px] text-foreground leading-tight truncate">{area.name}</span>
+                </div>
+
+                {/* Score */}
+                <div className="flex items-baseline justify-center gap-0.5">
+                  <span className="text-2xl font-extrabold leading-none" style={{ color: area.color }}>
+                    {area.pace.toFixed(1)}
+                  </span>
+                  <span className="text-sm font-bold leading-none" style={{ color: area.color }}>×</span>
+                </div>
+
+                {/* Status pill */}
+                <div
+                  className="mt-1.5 rounded-full py-0.5 px-1.5 text-center"
+                  style={{ background: area.color + '18' }}
+                >
+                  <span className="text-[9px] font-bold leading-none" style={{ color: area.color }}>
+                    {emoji} {label}
+                  </span>
+                </div>
+
+                {/* Progress bar */}
+                <PaceBar pace={area.pace} color={area.color} />
               </div>
-              <MiniGauge pace={area.pace} color={area.color} />
-              <div className="flex justify-between mt-1.5">
-                <span className="text-[8px] text-muted-foreground font-semibold">0x</span>
-                <span className="text-[8px] text-muted-foreground font-semibold">1x</span>
-                <span className="text-[8px] text-muted-foreground font-semibold">2x</span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Legend */}
         <div className="mt-3 pt-3 border-t border-white/60">
           <p className="text-[10px] text-center text-muted-foreground leading-snug px-1">
-            <span className="font-semibold text-foreground">1x</span> = typical pace for age · higher = faster development
+            <span className="font-bold text-foreground">1×</span> = typical pace for age · higher = faster development
           </p>
         </div>
-
       </div>
     </div>
   );
