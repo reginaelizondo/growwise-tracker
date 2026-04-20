@@ -14,6 +14,21 @@ const AREAS = [
   { id: 4, name: 'Socio-Emotional', icon: logoEmotional, color: '#F06292', pace: 1.2 },
 ];
 
+// Same logic as Report.tsx → getPaceLabel
+function getPaceLabel(pace: number): string {
+  if (pace >= 1.8) return 'Mastered this area!';
+  if (pace >= 1.2) return 'Ahead of pace';
+  if (pace >= 0.2) return 'Right on track';
+  return 'Building up — keep practicing!';
+}
+
+function getPaceColor(pace: number, areaColor: string): string {
+  if (pace >= 1.8) return 'hsl(145, 60%, 45%)';
+  if (pace >= 1.2) return areaColor;
+  if (pace >= 0.2) return 'hsl(220, 10%, 40%)';
+  return 'hsl(0, 70%, 55%)';
+}
+
 function MiniGauge({ pace, color }: { pace: number; color: string }) {
   const totalBars = 20;
   const currentPos = Math.max(0, Math.min(1, pace / 2.0));
@@ -77,8 +92,14 @@ export default function ReportSneakPeek() {
                 <img src={area.icon} alt={area.name} className="w-5 h-5" />
                 <span className="font-bold text-[10px] text-foreground leading-tight">{area.name}</span>
               </div>
-              <div className="text-xl font-extrabold text-center" style={{ color: area.color }}>
+              <div className="text-xl font-extrabold text-center leading-none" style={{ color: area.color }}>
                 {area.pace.toFixed(1)}x
+              </div>
+              <div
+                className="text-[9px] font-semibold text-center mt-1 leading-tight"
+                style={{ color: getPaceColor(area.pace, area.color) }}
+              >
+                {getPaceLabel(area.pace)}
               </div>
               <MiniGauge pace={area.pace} color={area.color} />
               <div className="flex justify-between mt-1.5">
