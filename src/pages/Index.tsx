@@ -158,6 +158,11 @@ const Index = () => {
             <span className="text-muted-foreground">
               Joined by <span className="font-bold text-foreground">10M+</span> parents
             </span>
+            <span className="text-muted-foreground/60">·</span>
+            <span className="flex items-center gap-1 text-muted-foreground">
+              <GraduationCap className="w-3.5 h-3.5 text-primary" />
+              Stanford-backed
+            </span>
           </div>
 
           {/* Top CTA */}
