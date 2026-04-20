@@ -143,9 +143,24 @@ const Index = () => {
             <img src={kineduLogo} alt="Kinedu" className="h-8 md:h-9" />
           </div>
 
-          <h1 className="text-2xl md:text-3xl font-bold text-primary mb-4">
+          <h1 className="text-2xl md:text-3xl font-bold text-primary mb-3">
             Is your baby on track?
           </h1>
+
+          {/* Social proof — moved up, more prominent */}
+          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs md:text-sm font-medium mb-4">
+            <span className="flex items-center gap-1 text-amber-600">
+              <span className="text-amber-500">★</span>
+              <span className="font-bold text-foreground">4.8</span>
+              <span className="text-muted-foreground">rating</span>
+            </span>
+            <span className="text-muted-foreground/60">·</span>
+            <span className="text-muted-foreground">
+              Joined by <span className="font-bold text-foreground">10M+</span> parents
+            </span>
+            <span className="text-muted-foreground/60">·</span>
+            <span className="text-muted-foreground">Pediatrician-recommended</span>
+          </div>
 
           <p className="text-base md:text-lg text-muted-foreground mb-5 max-w-sm mx-auto">
             Take this <span className="font-bold">FREE</span> 5-minute milestone assessment and get instant feedback on your baby's development.
@@ -155,7 +170,7 @@ const Index = () => {
           <Button
             variant="success"
             size="xl"
-            className="rounded-full px-10 py-6 shadow-lg hover:shadow-xl transition-all text-lg mb-6"
+            className="rounded-full px-10 py-6 shadow-lg hover:shadow-xl transition-all text-lg mb-3"
             onClick={() => trackAndNavigate('hero_cta_top')}
           >
             <span className="flex items-center gap-2">
@@ -164,19 +179,27 @@ const Index = () => {
             </span>
           </Button>
 
-          {/* Hero visual — report sneak peek */}
-          <div className="flex justify-center mb-5">
-            <ReportSneakPeek />
+          <div className="flex items-center justify-center gap-3 text-xs md:text-sm text-muted-foreground font-medium mb-6">
+            <span className="flex items-center gap-1">
+              <Timer className="w-3.5 h-3.5 text-primary" />
+              Takes only <span className="font-semibold text-foreground">2 min</span>
+            </span>
+            <span className="text-muted-foreground/60">·</span>
+            <span className="flex items-center gap-1">
+              <Lock className="w-3.5 h-3.5 text-primary" />
+              No credit card
+            </span>
           </div>
 
-          <p className="text-sm font-medium text-muted-foreground mb-4">
-            Join <span className="font-bold text-foreground">10M+</span> parents who've already checked
-          </p>
+          {/* Hero visual — report sneak peek */}
+          <div className="flex justify-center mb-6">
+            <ReportSneakPeek />
+          </div>
 
           <Button
             variant="success"
             size="xl"
-            className="rounded-full px-10 py-6 shadow-lg hover:shadow-xl transition-all text-lg mb-4"
+            className="rounded-full px-10 py-6 shadow-lg hover:shadow-xl transition-all text-lg mb-3"
             onClick={() => trackAndNavigate('hero_cta')}
           >
             <span className="flex items-center gap-2">
@@ -185,17 +208,12 @@ const Index = () => {
             </span>
           </Button>
 
-          <div className="flex items-center justify-center gap-2 text-xs md:text-sm text-muted-foreground mb-4">
+          <div className="flex items-center justify-center gap-3 text-xs md:text-sm text-muted-foreground font-medium mb-4">
             <span className="flex items-center gap-1">
               <Timer className="w-3.5 h-3.5 text-primary" />
-              2 min
+              Takes only <span className="font-semibold text-foreground">2 min</span>
             </span>
-            <span>·</span>
-            <span className="flex items-center gap-1">
-              <Lock className="w-3.5 h-3.5 text-primary" />
-              No credit card
-            </span>
-            <span>·</span>
+            <span className="text-muted-foreground/60">·</span>
             <span className="flex items-center gap-1">
               <GraduationCap className="w-3.5 h-3.5 text-primary" />
               Stanford-backed
