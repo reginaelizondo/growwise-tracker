@@ -190,13 +190,17 @@ const Index = () => {
               No credit card
             </span>
             <span className="text-muted-foreground/60">·</span>
-            <span className="font-semibold text-green-600">100% free</span>
+            <span>100% free</span>
           </div>
 
           {/* Hero visual — report sneak peek */}
-          <div className="flex justify-center mb-6">
+          <div className="flex justify-center mb-5">
             <ReportSneakPeek />
           </div>
+
+          <p className="text-base md:text-lg text-muted-foreground mb-5 max-w-sm mx-auto">
+            Take this <span className="font-bold">FREE</span> 5-minute milestone assessment and get instant feedback on your baby's development.
+          </p>
 
           <Button
             variant="success"
@@ -216,7 +220,7 @@ const Index = () => {
               Takes only <span className="font-semibold text-foreground">2 min</span>
             </span>
             <span className="text-muted-foreground/60">·</span>
-            <span className="font-semibold text-green-600">100% free</span>
+            <span>100% free</span>
             <span className="text-muted-foreground/60">·</span>
             <span className="flex items-center gap-1">
               <GraduationCap className="w-3.5 h-3.5 text-primary" />

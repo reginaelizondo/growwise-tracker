@@ -75,7 +75,7 @@ export default function ReportSneakPeek() {
         style={{ background: 'linear-gradient(135deg, #f8f9ff 0%, #fff5f5 50%, #f0fdf4 100%)' }}
       >
         <p className="text-[10px] font-bold text-center text-muted-foreground uppercase tracking-wider mb-3 opacity-70">
-          Sample Report Preview
+          You'll get a report like this
         </p>
 
         <div className="grid grid-cols-2 gap-2.5">
