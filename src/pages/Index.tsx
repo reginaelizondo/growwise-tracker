@@ -137,19 +137,32 @@ const Index = () => {
       )}
 
       {/* Hero Section */}
-      <section className="container mx-auto px-4 pt-12 pb-6 md:pt-20 md:pb-10">
+      <section className="container mx-auto px-4 pt-4 pb-6 md:pt-6 md:pb-10">
         <div className="max-w-lg mx-auto text-center animate-fade-in">
-          <div className="flex justify-center mb-8">
-            <img src={kineduLogo} alt="Kinedu" className="h-10 md:h-12" />
+          <div className="flex justify-center mb-4">
+            <img src={kineduLogo} alt="Kinedu" className="h-8 md:h-9" />
           </div>
 
-          <h1 className="text-2xl md:text-3xl font-bold text-primary mb-4 bg-muted/50 rounded-2xl py-4 px-6 inline-block">
+          <h1 className="text-2xl md:text-3xl font-bold text-primary mb-4">
             Is your baby on track?
           </h1>
 
           <p className="text-base md:text-lg text-muted-foreground mb-5 max-w-sm mx-auto">
             Take this <span className="font-bold">FREE</span> 5-minute milestone assessment and get instant feedback on your baby's development.
           </p>
+
+          {/* Top CTA */}
+          <Button
+            variant="success"
+            size="xl"
+            className="rounded-full px-10 py-6 shadow-lg hover:shadow-xl transition-all text-lg mb-6"
+            onClick={() => trackAndNavigate('hero_cta_top')}
+          >
+            <span className="flex items-center gap-2">
+              Start <span className="font-extrabold">FREE</span> Assessment
+              <ArrowRight className="w-5 h-5" strokeWidth={3} />
+            </span>
+          </Button>
 
           {/* Hero visual — report sneak peek */}
           <div className="flex justify-center mb-5">
