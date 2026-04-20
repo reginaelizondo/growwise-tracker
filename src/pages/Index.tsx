@@ -160,10 +160,6 @@ const Index = () => {
             </span>
           </div>
 
-          <p className="text-base md:text-lg text-muted-foreground mb-5 max-w-sm mx-auto">
-            Take this <span className="font-bold">FREE</span> 5-minute milestone assessment and get instant feedback on your baby's development.
-          </p>
-
           {/* Top CTA */}
           <Button
             variant="success"
