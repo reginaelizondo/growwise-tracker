@@ -190,7 +190,8 @@ async function getFullFunnel(supabase: any, filters: ReportFilters) {
   } catch { /* ignore */ }
 
   const steps = [
-    { label: 'Landing Click', count: landingClicks },
+    { label: 'Vio Landing Page', count: landingViewsTotal },
+    { label: 'Click en Start FREE Assessment', count: landingClicks },
     { label: '① Nombre', count: formNameCompleted },
     { label: '② Cumpleaños', count: formBirthdayCompleted },
     { label: '③ Email', count: formEmailCompleted },
@@ -212,6 +213,7 @@ async function getFullFunnel(supabase: any, filters: ReportFilters) {
 
   return {
     steps: stepsWithDropOff,
+    landing_views: landingViewsTotal,
     landing_clicks: landingClicks,
     profile_clicks: profileClicks,
     form_name_completed: formNameCompleted,

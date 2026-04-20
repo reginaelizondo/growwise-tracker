@@ -36,6 +36,8 @@ import logoKineduBlue from '@/assets/logo-kinedu-blue.png';
 const ANALYTICS_PASSWORD = import.meta.env.VITE_ANALYTICS_PASSWORD || 'kinedu2024';
 
 const FUNNEL_LABEL_MAP: Record<string, string> = {
+  'Vio Landing Page': 'Vio Landing Page',
+  'Click en Start FREE Assessment': 'Click Start FREE Assessment',
   'Landing Click': 'Clic en Landing',
   'Nombre': 'Nombre',
   'Cumpleaños': 'Cumpleaños',
