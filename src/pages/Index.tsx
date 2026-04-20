@@ -1,32 +1,19 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Timer, Lock, GraduationCap, LayoutDashboard, Play } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { useEffect, useState, useMemo } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import kineduLogo from "@/assets/logo-kinedu-blue.png";
-import heroBabyPhoto from "@/assets/hero-baby-real.jpg";
 import { getSessionId } from "@/hooks/useSessionId";
 import SocialProofBlock from "@/components/SocialProofBlock";
 import WhyTrustUs from "@/components/WhyTrustUs";
 import AcademicLogosBar from "@/components/AcademicLogosBar";
 import ReportSneakPeek from "@/components/ReportSneakPeek";
-import { getLandingVariant, setLandingVariant, type ABVariant } from "@/utils/abTest";
 
 const Index = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  // A/B test: check URL override first (?variant=A or ?variant=B), else use persistent random
-  const variant = useMemo<ABVariant>(() => {
-    const urlVariant = searchParams.get('variant')?.toUpperCase();
-    if (urlVariant === 'A' || urlVariant === 'B') {
-      setLandingVariant(urlVariant);
-      return urlVariant;
-    }
-    return getLandingVariant();
-  }, [searchParams]);
 
   const [recoveryData, setRecoveryData] = useState<{
     assessment_id: string;
@@ -82,21 +69,21 @@ const Index = () => {
     navigate(`/assessment/${recoveryData.assessment_id}?resume=true`);
   };
 
-  // Track landing page view with variant on mount
+  // Track landing page view on mount
   useEffect(() => {
     supabase.from('page_events').insert({
       event_type: 'landing_page_view',
-      event_data: { variant },
+      event_data: {},
       user_agent: navigator.userAgent,
       session_id: getSessionId()
     }).then(() => {}).catch(() => {});
-  }, [variant]);
+  }, []);
 
   const trackAndNavigate = async (source: string) => {
     try {
       await supabase.from('page_events').insert({
         event_type: 'landing_start_clicked',
-        event_data: { source, variant },
+        event_data: { source },
         user_agent: navigator.userAgent,
         session_id: getSessionId()
       });
@@ -164,26 +151,9 @@ const Index = () => {
             Take this <span className="font-bold">FREE</span> 5-minute milestone assessment and get instant feedback on your baby's development.
           </p>
 
-          {/* Hero visual — A: baby photo, B: report sneak peek */}
+          {/* Hero visual — report sneak peek */}
           <div className="flex justify-center mb-5">
-            {variant === 'B' ? (
-              <ReportSneakPeek />
-            ) : (
-              <div className="relative py-4 px-6">
-                <div className="absolute top-0 left-2 w-7 h-7 rounded-full border-[3px] border-orange-400 opacity-80" />
-                <div className="absolute top-1 left-12 w-6 h-6 rounded-full bg-purple-500 opacity-70" />
-                <div className="absolute top-1/3 -right-2 w-12 h-4 rounded-md bg-pink-400 opacity-60" />
-                <div className="absolute bottom-2 left-4 w-7 h-7 rounded-full bg-blue-500 opacity-70" />
-                <div className="absolute bottom-1/4 -right-3 text-green-500 text-2xl font-bold opacity-70">+</div>
-                <div className="absolute top-1/2 -left-3 w-5 h-5 rounded-full bg-yellow-400 opacity-60" />
-                <div className="absolute bottom-0 right-6 w-4 h-4 rounded-full border-[2px] border-pink-400 opacity-60" />
-                <img
-                  src={heroBabyPhoto}
-                  alt="Happy baby smiling"
-                  className="relative z-10 w-44 md:w-52 h-60 md:h-80 rounded-[2.5rem] object-cover shadow-lg border-4 border-white"
-                />
-              </div>
-            )}
+            <ReportSneakPeek />
           </div>
 
           <p className="text-sm font-medium text-muted-foreground mb-4">
