@@ -208,20 +208,6 @@ const Index = () => {
             </span>
           </Button>
 
-          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs md:text-sm text-muted-foreground font-medium mb-4">
-            <span className="flex items-center gap-1">
-              <Timer className="w-3.5 h-3.5 text-primary" />
-              Takes only <span className="font-semibold text-foreground">2 min</span>
-            </span>
-            <span className="text-muted-foreground/60">·</span>
-            <span>100% free</span>
-            <span className="text-muted-foreground/60">·</span>
-            <span className="flex items-center gap-1">
-              <GraduationCap className="w-3.5 h-3.5 text-primary" />
-              Stanford-backed
-            </span>
-          </div>
-
           <AcademicLogosBar />
         </div>
       </section>
