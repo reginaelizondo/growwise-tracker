@@ -20,7 +20,7 @@ type Area = {
 const AREAS: Area[] = [
   { id: 2, name: 'Cognitive', icon: logoCognitive, color: '#00A050', bgTint: 'rgba(0,200,83,0.06)', pace: 1.4, example: 'Problem solving' },
   { id: 1, name: 'Physical', icon: logoPhysical, color: '#0090CC', bgTint: 'rgba(0,163,224,0.06)', pace: 1.1, example: 'Motor skills' },
-  { id: 3, name: 'Linguistic', icon: logoLinguistic, color: '#E87A00', bgTint: 'rgba(255,138,0,0.06)', pace: 0.8, example: 'First words' },
+  { id: 3, name: 'Linguistic', icon: logoLinguistic, color: '#E87A00', bgTint: 'rgba(255,138,0,0.06)', pace: 0.2, example: 'First words' },
   { id: 4, name: 'Socio-Emotional', icon: logoEmotional, color: '#D94A82', bgTint: 'rgba(240,98,146,0.06)', pace: 1.2, example: 'Social bonds' },
 ];
 
