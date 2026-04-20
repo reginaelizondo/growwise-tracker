@@ -74,8 +74,11 @@ export default function ReportSneakPeek() {
         className="rounded-3xl p-4 border-2 border-white/80 shadow-lg"
         style={{ background: 'linear-gradient(135deg, #f8f9ff 0%, #fff5f5 50%, #f0fdf4 100%)' }}
       >
-        <p className="text-[10px] font-bold text-center text-muted-foreground uppercase tracking-wider mb-3 opacity-70">
+        <p className="text-[10px] font-bold text-center text-muted-foreground uppercase tracking-wider mb-1 opacity-70">
           You'll get a report like this
+        </p>
+        <p className="text-[11px] text-center text-muted-foreground mb-3 px-2 leading-snug">
+          See how your baby is developing across <span className="font-semibold">4 key areas</span> compared to peers their age.
         </p>
 
         <div className="grid grid-cols-2 gap-2.5">
@@ -106,6 +109,13 @@ export default function ReportSneakPeek() {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Legend */}
+        <div className="mt-3 pt-3 border-t border-white/60">
+          <p className="text-[10px] text-center text-muted-foreground leading-snug px-1">
+            <span className="font-semibold text-foreground">1x</span> = typical pace for age · higher = faster development
+          </p>
         </div>
 
       </div>
