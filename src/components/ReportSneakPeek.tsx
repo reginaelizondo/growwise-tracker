@@ -22,11 +22,8 @@ function getPaceLabel(pace: number): string {
   return 'Building up — keep practicing!';
 }
 
-function getPaceColor(pace: number, areaColor: string): string {
-  if (pace >= 1.8) return 'hsl(145, 60%, 45%)';
-  if (pace >= 1.2) return areaColor;
-  if (pace >= 0.2) return 'hsl(220, 10%, 40%)';
-  return 'hsl(0, 70%, 55%)';
+function getPaceColor(_pace: number, areaColor: string): string {
+  return areaColor;
 }
 
 function MiniGauge({ pace, color }: { pace: number; color: string }) {
