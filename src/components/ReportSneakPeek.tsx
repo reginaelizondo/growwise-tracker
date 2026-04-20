@@ -75,7 +75,7 @@ export default function ReportSneakPeek() {
       >
         {/* Header */}
         <div className="text-center mb-3">
-          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider opacity-70">
+          <p className="text-[11px] font-bold text-foreground uppercase tracking-wider">
             You'll get a report like this
           </p>
           <p className="text-[11px] text-muted-foreground mt-0.5 px-2 leading-snug">
