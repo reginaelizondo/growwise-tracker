@@ -171,16 +171,24 @@ async function getFullFunnel(supabase: any, filters: ReportFilters) {
   });
 
   // 4. Report views and CTA clicks from assessment_events
-  let evQuery = supabase.from('assessment_events').select('event_type, assessment_id')
-    .in('event_type', ['report_view', 'cta_clicked', 'email_captured_post_assessment']);
+  // Only count events whose assessment was created in the date range.
+  // If there are no assessments in the range, there are no report views / CTA clicks to report either.
+  let events: any[] = [];
   if (assessmentIds.length > 0) {
-    evQuery = evQuery.in('assessment_id', assessmentIds.slice(0, 500));
+    const evBatchSize = 500;
+    for (let i = 0; i < assessmentIds.length; i += evBatchSize) {
+      const batch = assessmentIds.slice(i, i + evBatchSize);
+      const { data } = await supabase.from('assessment_events')
+        .select('event_type, assessment_id')
+        .in('event_type', ['report_view', 'cta_clicked', 'email_captured_post_assessment'])
+        .in('assessment_id', batch);
+      if (data) events = events.concat(data);
+    }
   }
-  const { data: events } = await evQuery;
 
-  const reportViewAssessments = new Set((events || []).filter((e: any) => e.event_type === 'report_view').map((e: any) => e.assessment_id));
-  const ctaClickAssessments = new Set((events || []).filter((e: any) => e.event_type === 'cta_clicked').map((e: any) => e.assessment_id));
-  const emailCapturedPost = new Set((events || []).filter((e: any) => e.event_type === 'email_captured_post_assessment').map((e: any) => e.assessment_id));
+  const reportViewAssessments = new Set(events.filter((e: any) => e.event_type === 'report_view').map((e: any) => e.assessment_id));
+  const ctaClickAssessments = new Set(events.filter((e: any) => e.event_type === 'cta_clicked').map((e: any) => e.assessment_id));
+  const emailCapturedPost = new Set(events.filter((e: any) => e.event_type === 'email_captured_post_assessment').map((e: any) => e.assessment_id));
 
   // Count babies with email (profile-level)
   let babiesWithEmail = 0;
