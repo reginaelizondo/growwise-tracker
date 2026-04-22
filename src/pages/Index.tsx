@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Timer, Lock, GraduationCap, LayoutDashboard, Play, FileText } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import { Link, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import kineduLogo from "@/assets/logo-kinedu-blue.png";
 import { getSessionId } from "@/hooks/useSessionId";
@@ -10,10 +10,28 @@ import SocialProofBlock from "@/components/SocialProofBlock";
 import WhyTrustUs from "@/components/WhyTrustUs";
 import AcademicLogosBar from "@/components/AcademicLogosBar";
 import ReportSneakPeek from "@/components/ReportSneakPeek";
+import { getLandingVariant, setLandingVariant, type ABVariant } from "@/utils/abTest";
 
 const Index = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // A/B test — headline variant
+  // A: "Is your baby on track?"
+  // B: "Most parents miss early signs — don't be one of them"
+  const variant = useMemo<ABVariant>(() => {
+    const urlVariant = searchParams.get('variant')?.toUpperCase();
+    if (urlVariant === 'A' || urlVariant === 'B') {
+      setLandingVariant(urlVariant);
+      return urlVariant;
+    }
+    return getLandingVariant();
+  }, [searchParams]);
+
+  const headline = variant === 'B'
+    ? <>Most parents miss early signs — <span className="italic">don't be one of them</span></>
+    : 'Is your baby on track?';
 
   const [recoveryData, setRecoveryData] = useState<{
     assessment_id: string;
@@ -69,21 +87,21 @@ const Index = () => {
     navigate(`/assessment/${recoveryData.assessment_id}?resume=true`);
   };
 
-  // Track landing page view on mount
+  // Track landing page view with variant on mount
   useEffect(() => {
     supabase.from('page_events').insert({
       event_type: 'landing_page_view',
-      event_data: {},
+      event_data: { variant },
       user_agent: navigator.userAgent,
       session_id: getSessionId()
     }).then(() => {}).catch(() => {});
-  }, []);
+  }, [variant]);
 
   const trackAndNavigate = async (source: string) => {
     try {
       await supabase.from('page_events').insert({
         event_type: 'landing_start_clicked',
-        event_data: { source },
+        event_data: { source, variant },
         user_agent: navigator.userAgent,
         session_id: getSessionId()
       });
@@ -143,8 +161,8 @@ const Index = () => {
             <img src={kineduLogo} alt="Kinedu" className="h-8 md:h-9" />
           </div>
 
-          <h1 className="text-2xl md:text-3xl font-bold text-primary mb-3">
-            Is your baby on track?
+          <h1 className="text-2xl md:text-3xl font-bold text-primary mb-3 leading-tight">
+            {headline}
           </h1>
 
           {/* Social proof — moved up, more prominent */}

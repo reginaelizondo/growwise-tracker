@@ -1073,14 +1073,14 @@ export default function Analytics() {
                 <Target className="w-5 h-5" />
                 A/B Test — Landing Page
               </CardTitle>
-              <p className="text-xs text-muted-foreground">A = Foto del bebe | B = Sneak peek del reporte</p>
+              <p className="text-xs text-muted-foreground">A = "Is your baby on track?" | B = "Most parents miss early signs..."</p>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-4">
                 {/* Variant A */}
                 <div className="rounded-xl border p-4 space-y-2" style={{ borderColor: '#3b82f6', borderWidth: 2 }}>
                   <p className="text-sm font-bold text-blue-600 text-center">Variante A</p>
-                  <p className="text-xs text-center text-muted-foreground">Foto del bebe</p>
+                  <p className="text-xs text-center text-muted-foreground">"Is your baby on track?"</p>
                   <div className="text-center space-y-1 pt-2">
                     <p className="text-2xl font-bold text-foreground">{fullFunnel.landing_views_a}</p>
                     <p className="text-xs text-muted-foreground">vistas</p>
@@ -1098,7 +1098,7 @@ export default function Analytics() {
                 {/* Variant B */}
                 <div className="rounded-xl border p-4 space-y-2" style={{ borderColor: '#8b5cf6', borderWidth: 2 }}>
                   <p className="text-sm font-bold text-purple-600 text-center">Variante B</p>
-                  <p className="text-xs text-center text-muted-foreground">Sneak peek reporte</p>
+                  <p className="text-xs text-center text-muted-foreground">"Most parents miss early signs..."</p>
                   <div className="text-center space-y-1 pt-2">
                     <p className="text-2xl font-bold text-foreground">{fullFunnel.landing_views_b}</p>
                     <p className="text-xs text-muted-foreground">vistas</p>
