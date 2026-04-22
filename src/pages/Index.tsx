@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Timer, Lock, GraduationCap, LayoutDashboard, Play } from "lucide-react";
+import { ArrowRight, Timer, Lock, GraduationCap, LayoutDashboard, Play, FileText } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -189,7 +189,10 @@ const Index = () => {
               No credit card
             </span>
             <span className="text-muted-foreground/60">·</span>
-            <span>100% free</span>
+            <span className="flex items-center gap-1">
+              <FileText className="w-3.5 h-3.5 text-primary" />
+              Full report
+            </span>
           </div>
 
           {/* Hero visual — report sneak peek */}
