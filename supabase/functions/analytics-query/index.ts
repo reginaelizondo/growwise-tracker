@@ -105,22 +105,48 @@ async function getFullFunnel(supabase: any, filters: ReportFilters) {
   if (filters.endDate) peQuery = peQuery.lte('created_at', filters.endDate);
   const { data: pageEvents } = await peQuery;
 
-  // Landing page views and A/B variant tracking
-  const landingViews = (pageEvents || []).filter((e: any) => e.event_type === 'landing_page_view');
-  const landingViewsTotal = landingViews.length;
-  const landingViewsA = landingViews.filter((e: any) => e.event_data?.variant === 'A').length;
-  const landingViewsB = landingViews.filter((e: any) => e.event_data?.variant === 'B').length;
+  // Landing page views and A/B variant tracking — count unique sessions, not raw page views
+  const landingViewEvents = (pageEvents || []).filter((e: any) => e.event_type === 'landing_page_view');
+  const landingSessions = new Set<string>();
+  const landingSessionsA = new Set<string>();
+  const landingSessionsB = new Set<string>();
+  for (const e of landingViewEvents) {
+    if (!e.session_id) continue;
+    landingSessions.add(e.session_id);
+    if (e.event_data?.variant === 'A') landingSessionsA.add(e.session_id);
+    else if (e.event_data?.variant === 'B') landingSessionsB.add(e.session_id);
+  }
+  const landingViewsTotal = landingSessions.size;
+  const landingViewsA = landingSessionsA.size;
+  const landingViewsB = landingSessionsB.size;
 
-  const landingClickEvents = (pageEvents || []).filter((e: any) => e.event_type === 'landing_start_clicked');
-  const landingClicks = landingClickEvents.length;
-  const landingClicksA = landingClickEvents.filter((e: any) => e.event_data?.variant === 'A').length;
-  const landingClicksB = landingClickEvents.filter((e: any) => e.event_data?.variant === 'B').length;
+  // Count unique sessions per funnel step (not raw events) so each step = unique users
+  const uniqueSessionsForEvent = (
+    type: string,
+    predicate?: (e: any) => boolean,
+  ): Set<string> => {
+    const s = new Set<string>();
+    for (const e of pageEvents || []) {
+      if (e.event_type !== type) continue;
+      if (predicate && !predicate(e)) continue;
+      if (!e.session_id) continue;
+      s.add(e.session_id);
+    }
+    return s;
+  };
 
-  const formNameCompleted = (pageEvents || []).filter((e: any) => e.event_type === 'form_name_completed').length;
-  const formBirthdayCompleted = (pageEvents || []).filter((e: any) => e.event_type === 'form_birthday_completed').length;
-  const formEmailCompleted = (pageEvents || []).filter((e: any) => e.event_type === 'form_email_completed').length;
-  const emailsProvidedAtProfile = (pageEvents || []).filter((e: any) => e.event_type === 'form_email_completed' && e.event_data?.has_email === true).length;
-  const profileClicks = (pageEvents || []).filter((e: any) => e.event_type === 'profile_continue_clicked').length;
+  const landingClickSessions = uniqueSessionsForEvent('landing_start_clicked');
+  const landingClickSessionsA = uniqueSessionsForEvent('landing_start_clicked', (e) => e.event_data?.variant === 'A');
+  const landingClickSessionsB = uniqueSessionsForEvent('landing_start_clicked', (e) => e.event_data?.variant === 'B');
+  const landingClicks = landingClickSessions.size;
+  const landingClicksA = landingClickSessionsA.size;
+  const landingClicksB = landingClickSessionsB.size;
+
+  const formNameCompleted = uniqueSessionsForEvent('form_name_completed').size;
+  const formBirthdayCompleted = uniqueSessionsForEvent('form_birthday_completed').size;
+  const formEmailCompleted = uniqueSessionsForEvent('form_email_completed').size;
+  const emailsProvidedAtProfile = uniqueSessionsForEvent('form_email_completed', (e) => e.event_data?.has_email === true).size;
+  const profileClicks = uniqueSessionsForEvent('profile_continue_clicked').size;
 
   // 2. Assessments
   let aQuery = supabase.from('assessments').select('id, completed_at, reference_age_months, email_sent_at, email_opened_at');

@@ -705,17 +705,21 @@ export default function Analytics() {
         {/* FULL FUNNEL */}
         {/* ============================================================ */}
         {fullFunnel && fullFunnel.steps && (() => {
+          // Hide steps we don't want shown in the visual funnel
+          const HIDDEN_STEPS = new Set(['Vio Landing Page', '1+ Respuesta']);
+          const funnelSteps = fullFunnel.steps.filter((s) => !HIDDEN_STEPS.has(s.label));
           // Prepend Meta link_clicks as first funnel step if available
           const metaStep = metaAds && metaAds.configured && !metaAds.error && metaAds.link_clicks > 0
             ? [{ label: 'Clicks en Meta', count: metaAds.link_clicks, drop_off_pct: 0 }]
             : [];
-          const allSteps = [...metaStep, ...fullFunnel.steps];
-          // Recalculate drop-off for the first original step relative to meta clicks
-          if (metaStep.length > 0 && allSteps.length > 1) {
-            const metaCount = allSteps[0].count;
-            const nextCount = allSteps[1].count;
-            allSteps[1] = { ...allSteps[1], drop_off_pct: metaCount > 0 ? ((metaCount - nextCount) / metaCount) * 100 : 0 };
-          }
+          const rawAllSteps = [...metaStep, ...funnelSteps];
+          // Recalculate drop-off across the visible steps only, so hidden steps don't skew the numbers
+          const allSteps = rawAllSteps.map((step, i) => {
+            if (i === 0) return { ...step, drop_off_pct: 0 };
+            const prevCount = rawAllSteps[i - 1].count;
+            const dropOff = prevCount > 0 ? ((prevCount - step.count) / prevCount) * 100 : 0;
+            return { ...step, drop_off_pct: dropOff };
+          });
           return (
           <Card className="shadow-sm">
             <CardHeader className="pb-3">
